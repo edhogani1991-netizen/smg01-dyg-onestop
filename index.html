@@ -261,11 +261,10 @@
                     ${menuData.filter(m => m.kat === cat).map(m => {
                         const nL = m.nama.toLowerCase().trim();
                         
-                        // 1. LOGIKA VARIAN NASI (TETAP AMAN)
+                        // 1. VARIAN NASI (TETAP AMAN)
                         const isNasi = cL.includes("hemat") || (cL.includes("wardoy") && nL.includes("nasi"));
                         
-                        // 2. LOGIKA VARIAN SUHU (DIPERKETAT)
-                        // Daftar menu yang HANYA es atau HANYA panas (TIDAK boleh ada pilihan)
+                        // 2. LOGIKA SUHU (DIPERBAIKI UNTUK KATEGORI 'DRINK')
                         const pengecualianSuhu = [
                             'kopi klothok', 'kopi lelet', 'kopi coklat', 'kopi jahe', 
                             'es kopi item', 'es kopiko', "kopi ka'amel", 'kopi susu beri',
@@ -275,12 +274,13 @@
                             'float mangga', 'float stoberi'
                         ];
 
-                        // Cek apakah menu termasuk dalam daftar pengecualian di atas
-                        const isDikecualikan = pengecualianSuhu.some(p => nL.includes(p));
+                        // Cek apakah nama menu mengandung salah satu dari daftar pengecualian
+                        const isDikecualikan = pengecualianSuhu.some(p => nL === p || nL.includes(p));
                         
                         // Syarat Muncul Suhu: 
-                        // Harus di kategori (Hemat atau Minuman) DAN namanya TIDAK ada di daftar pengecualian
-                        const isSuhu = (cL.includes("hemat") || cL.includes("minum")) && !isDikecualikan;
+                        // Kategori mengandung 'hemat' atau 'drink' atau 'minum'
+                        // DAN nama menu tidak masuk dalam daftar pengecualian
+                        const isSuhu = (cL.includes("hemat") || cL.includes("drink") || cL.includes("minum")) && !isDikecualikan;
 
                         // 3. LOGIKA MIE (TETAP AMAN)
                         const isMieG = nL.includes("mie") && nL.includes("goreng") && !nL.includes("lik");
