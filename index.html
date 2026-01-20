@@ -302,6 +302,21 @@
                 const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
                 return { id: 'm'+i, kat: cols[0], nama: cols[1], harga: parseInt(cols[2]) };
             }).filter(m => m.nama);
+const MENU_SUHU_WAJIB = [
+  'kopi susu',
+  'susu teman',
+  'coklat',
+  'jeruk',
+  'teh',
+  'milo',
+  'dancow putih',
+  'susu putih',
+  'susu coklat',
+  'beng-beng',
+  'goodday capucino',
+  'goodday frez',
+  'coffemix'
+];
             renderMenu();
         } catch (e) { showToast("Gagal memuat menu."); }
     }
@@ -368,8 +383,10 @@ function filterMenu() {
                 </div>
                 <div class="menu-list">
                     ${menuData.filter(m => m.kat === cat).map(m => {
+			const namaMenu = m.nama.toLowerCase().trim();
+			const isMinumSuhu = MENU_SUHU_WAJIB.includes(namaMenu);
                         const isNasi = m.nama.toLowerCase().includes('nasi');
-      			const isMinum = m.kat.toLowerCase().includes('minuman') || m.kat.toLowerCase().includes('paket hemat');
+      			const isMinum = m.kat.toLowerCase().includes('paket hemat');
                         const isMieG = m.nama.toLowerCase().includes('mie goreng');
                         const isMieR = m.nama.toLowerCase().includes('mie rebus');
                         return `
@@ -380,7 +397,13 @@ function filterMenu() {
                                     <small style="color:var(--muted);">Rp ${m.harga.toLocaleString()}</small>
                                     <div class="variant-container">
                                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
-                                        ${isMinum ? `<select id="s-${m.id}" class="variant-select"><option value="Es">❄️ Es</option><option value="Panas">🔥 Panas</option></select>` : ''}
+                                        ${isMinumSuhu ? `
+  <select id="s-${m.id}" class="variant-select" required>
+    <option value="" disabled selected>☕ Pilih Suhu</option>
+    <option value="Panas">🔥 Panas</option>
+    <option value="Es">❄️ Es</option>
+  </select>
+` : ''}
                                         ${isMieG ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍜 Pilih Rasa</option>${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                                         ${isMieR ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍲 Pilih Rasa</option>${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                                     </div>
@@ -437,7 +460,14 @@ function filterMenu() {
                 const vObj = VARIAN_NASI.find(v => v.n === variant);
                 if (vObj) extra = vObj.e;
             }
-
+if (document.getElementById(`s-${id}`)) {
+    const suhu = document.getElementById(`s-${id}`).value;
+    if (!suhu) {
+        showToast("Pilih suhu minuman dulu ya ☕");
+        return;
+    }
+    variant = suhu;
+}
             cart.push({ ...item, variant, extra, cartId: Date.now() + Math.random() });
         } else {
             const index = cart.findLastIndex(c => c.id === id);
