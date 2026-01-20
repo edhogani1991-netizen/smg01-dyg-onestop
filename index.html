@@ -1,461 +1,505 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>cloudkitchen.dyg++ | Pemesanan Online</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <style>
-    /* ... (CSS bagian root dan asterisk tetap sama) ... */
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>cloudkitchen.dyg++ | Pemesanan Online</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        :root { 
+            --primary: #7A3E1D; --accent: #F39C12; --bg: #F7F3EE; 
+            --surface: #FFFFFF; --soft: #EFE6D8; --dark: #2C2C2C; --muted: #888; 
+            --success: #27ae60; --danger: #C0392B;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+        body { 
+            margin: 0; padding: 14px; background: var(--bg); 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; color: var(--dark); 
+            padding-bottom: 160px; overflow-x: hidden; scroll-behavior: smooth;
+        }
+        .error-focus { border: 2px solid var(--danger) !important; animation: shake 0.4s ease-in-out; background-color: #fff5f5 !important; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .card { max-width: 480px; margin: auto; background: var(--surface); border-radius: 28px; padding: 20px; box-shadow: 0 15px 35px rgba(0,0,0,.06); opacity: 0; transform: translateY(20px); transition: 0.6s cubic-bezier(0.2, 1, 0.3, 1); }
+        .card.visible { opacity: 1; transform: translateY(0); }
+        .title { text-align: center; font-size: 26px; font-weight: 900; color: var(--primary); margin: 0; letter-spacing: -0.5px; }
+        .address-info { text-align: center; font-size: 11px; color: var(--muted); margin: 5px 0; }
+        .queue-box { background: linear-gradient(135deg, #FFF9F0 0%, #FFF2E0 100%); border: 2px solid var(--accent); border-radius: 20px; padding: 15px; text-align: center; margin: 20px 0; }
+        .queue-number { font-size: 42px; font-weight: 900; color: var(--primary); display: block; }
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mode-option { flex: 1; padding: 12px 5px; text-align: center; border-radius: 18px; border: 2px solid var(--soft); cursor: pointer; background: #fff; transition: 0.3s; font-weight: 700; font-size: 12px; }
+        .mode-option.active { background: #FFF3E6; border-color: var(--accent); color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 15px rgba(243,156,18,0.15); }
+        .section-title { font-size: 13px; font-weight: 800; margin: 25px 0 10px; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
+        .box { background: #fff; border: 1.5px solid var(--soft); border-radius: 16px; padding: 4px 15px; transition: 0.3s; }
+        .box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(243,156,18,0.1); }
+        input, textarea, select { width: 100%; padding: 12px 0; border: none; font-family: inherit; font-size: 14px; background: transparent; color: var(--dark); }
+        .cat-container { border: 1.5px solid var(--soft); border-radius: 20px; margin-bottom: 12px; overflow: hidden; background: #fff; }
+        .cat-header { padding: 16px 20px; font-weight: 800; background: #FBF8F3; display: flex; justify-content: space-between; cursor: pointer; color: var(--primary); }
+        .menu-list { display: none; padding: 0 20px; }
+        .menu-list.active { display: block; }
+        .menu-item { padding: 15px 0; border-bottom: 1px dashed var(--soft); }
+        .variant-container { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .variant-select { padding: 8px; border-radius: 10px; border: 1.5px solid var(--soft); font-size: 11px; background: #fafafa; }
+        .order-row { position: relative; overflow: hidden; background: var(--danger); border-radius: 15px; margin-bottom: 10px; }
+        .order-content { background: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.3s ease; position: relative; z-index: 2; border: 1px solid var(--soft); border-radius: 15px; }
+        .swipe-delete-hint { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: white; font-weight: 800; font-size: 12px; z-index: 1; }
+        .qty-control { display: flex; align-items: center; gap: 12px; }
+        .btn-qty { width: 34px; height: 34px; border-radius: 10px; border: none; background: var(--primary); color: #fff; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-qty:disabled { background: #E0D5C5; cursor: not-allowed; }
+        .sticky-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.92); backdrop-filter: blur(15px); padding: 15px 20px calc(15px + env(safe-area-inset-bottom)); border-top: 1px solid var(--soft); z-index: 999; }
+        .mini-summary { max-width: 480px; margin: auto; display: flex; justify-content: space-between; align-items: center; }
+        .btn-main { background: var(--primary); color: #fff; padding: 16px 30px; border-radius: 18px; border: none; font-weight: 800; cursor: pointer; font-size: 15px; transition: 0.3s; }
+        .btn-main:disabled { background: #ccc; transform: scale(0.98); }
+        #toast-container { position: fixed; top: 25px; left: 50%; transform: translateX(-50%); z-index: 10000; width: 85%; max-width: 320px; }
+        .toast { background: var(--dark); color: #fff; padding: 14px 20px; border-radius: 16px; font-size: 13px; font-weight: 600; margin-bottom: 10px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); opacity: 0; transform: translateY(-20px); transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        #welcome-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 10002; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .welcome-box { background: white; padding: 40px 30px; border-radius: 32px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 400px; }
+        #ongkir-label { display: none; color: var(--success); font-size: 11px; font-weight: 800; margin-bottom: 3px; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 10001; display: none; align-items: center; justify-content: center; }
+        .modal-box { background: #fff; width: 90%; max-width: 360px; border-radius: 32px; padding: 35px; text-align: center; }
+        .branding-footer { text-align: center; margin-top: 40px; margin-bottom: 20px; font-size: 11px; color: #aaa; font-style: italic; letter-spacing: 0.5px; }
+        /* Style Tambahan untuk Banner Dots */
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.5); transition: 0.3s; }
+        .dot.active { background: var(--accent); width: 20px; border-radius: 4px; }
+    </style>
+</head>
+<body>
 
-    /* PERBAIKAN: Pastikan kartu tersembunyi di awal dan hanya muncul setelah tombol ditekan */
-    .card { 
-        max-width: 480px; 
-        margin: auto; 
-        background: var(--surface); 
-        border-radius: 28px; 
-        padding: 20px; 
-        box-shadow: 0 15px 35px rgba(0,0,0,.06); 
-        display: none; /* Default sembunyi */
-        opacity: 0; 
-        transform: translateY(20px); 
-        transition: 0.6s cubic-bezier(0.2, 1, 0.3, 1); 
-    }
+<div id="toast-container"></div>
+
+<div id="welcome-overlay">
+    <div class="welcome-box">
+        <div style="font-size: 60px; margin-bottom: 10px;">📍</div>
+        <h2 style="margin: 0 0 10px;">Validasi Lokasi</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 25px; line-height: 1.5;">Izinkan akses lokasi untuk perhitungan ongkir rute jalan yang akurat.</p>
+        <button class="btn-main" style="width: 100%;" onclick="startApp()">MULAI SEKARANG</button>
+    </div>
+</div>
+
+<div id="modalConfirm" class="modal-overlay">
+    <div class="modal-box">
+        <div style="font-size: 50px;">🚀</div>
+        <h3 style="margin: 15px 0;">Konfirmasi Pesanan?</h3>
+        <p style="font-size: 14px; color: #666; margin-bottom: 25px; line-height: 1.4;">Pastikan menu dan data sudah sesuai. Pesanan akan diteruskan ke tim kami.</p>
+        <div style="display: flex; gap: 12px;">
+            <button onclick="closeModal()" style="flex:1; padding:14px; border:none; border-radius:16px; background:#f0f0f0; font-weight:bold; color:#666;">Batal</button>
+            <button id="btnFinal" onclick="submitOrder()" style="flex:1; padding:14px; border:none; border-radius:16px; background:var(--primary); color:#fff; font-weight:bold;">Kirim!</button>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="main-content">
+    <div id="banner-slider" style="margin: -20px -20px 20px -20px; position: relative; overflow: hidden; border-radius: 28px 28px 0 0; background: #eee; height: 180px;">
+        <div id="banner-track" style="display: flex; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); height: 100%;">
+            </div>
+        <div id="banner-dots" style="position: absolute; bottom: 10px; width: 100%; display: flex; justify-content: center; gap: 5px;"></div>
+    </div>
+
+    <h1 class="title">cloudkitchen.dyg++</h1>
+    <p class="address-info">Jalan taman siswa, Sekaran, Gunungpati, Semarang</p>
     
-    .card.visible { 
-        display: block; 
-        opacity: 1; 
-        transform: translateY(0); 
-    }
+    <div class="queue-box">
+        <small style="color: var(--accent); font-weight: 800; letter-spacing: 1px;">ANTREAN TERAKHIR</small>
+        <span class="queue-number" id="noAntrean">#0</span>
+    </div>
 
-    #welcome-overlay {
-        position: fixed;
-        inset: 0;
-        background: var(--bg);
-        z-index: 10002;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    /* ... (Sisa CSS Anda yang lain) ... */
-</style>
+    <div class="mode-selector">
+        <div id="mDine" class="mode-option active" onclick="changeMode('DINE IN', this)">🍽️ DINE IN</div>
+        <div id="mTake" class="mode-option" onclick="changeMode('TAKE AWAY', this)">🛍️ TAKE AWAY</div>
+        <div id="mDeliv" class="mode-option" onclick="changeMode('DELIVERY', this)">🛵 DELIVERY</div>
+    </div>
 
+    <div id="map" style="height: 180px; border-radius: 20px; margin-bottom: 20px; border: 2px solid var(--soft); background: #eee;"></div>
+
+    <div class="section-title">👤 Data Pemesan</div>
+    <div id="wrapName" class="box"><input type="text" id="custName" placeholder="Nama Lengkap Anda..." autocomplete="name"></div>
+    
+    <div id="boxMeja" style="margin-top: 10px;">
+        <div id="wrapMeja" class="box"><input type="number" id="tableNo" placeholder="Nomor Meja Anda..."></div>
+    </div>
+
+    <div id="boxAlamat" style="margin-top: 10px; display: none;">
+        <div id="wrapAddr" class="box"><textarea id="addressDetail" placeholder="Alamat Lengkap (Jl, No Rumah, Patokan)..." rows="2"></textarea></div>
+    </div>
+
+    <div class="section-title">🍴 Pilihan Menu</div>
+    <div class="box" style="margin-bottom: 15px; border-color: var(--soft);">
+        <input type="text" id="searchMenu" placeholder="Cari menu favorit..." oninput="filterMenu()">
+    </div>
+    <div id="menu-container">Memuat menu...</div>
+
+    <div class="section-title">📝 Catatan Tambahan</div>
+    <div class="box"><textarea id="orderNote" placeholder="Contoh: Sambal dipisah, tanpa bawang..." rows="2"></textarea></div>
+
+    <div id="summary-section" style="display: none; margin-top: 30px; padding: 20px; background: #fdfdfd; border-radius: 24px; border: 1px solid var(--soft);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 style="margin: 0; color: var(--primary); font-size: 16px;">🧾 Ringkasan</h4>
+            <span style="font-size: 10px; color: var(--muted);">Swipe kiri untuk hapus</span>
+        </div>
+        <div id="order-list"></div>
+        <div id="delivery-fee-row" style="display:none; justify-content:space-between; font-size:14px; margin-top:10px; color: var(--accent); font-weight: 700;">
+            <span>Ongkir (<span id="distDisplay">0</span> km)</span>
+            <span id="feeDisplay">Rp 0</span>
+        </div>
+        <hr style="border: none; border-top: 1px dashed var(--soft); margin: 15px 0;">
+        <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 20px;">
+            <span>TOTAL</span>
+            <span style="color: var(--primary);">Rp <span id="totalDisplay">0</span></span>
+        </div>
+    </div>
+
+    <div class="branding-footer">
+        powered by cloudkitchen.dyg++
+    </div>
+</div>
+
+<div class="sticky-bar">
+    <div class="mini-summary">
+        <div id="miniInfo" style="display: none;">
+            <div id="ongkir-label">✓ Termasuk Ongkir</div>
+            <div style="font-weight: 900; color: var(--primary); font-size: 20px; letter-spacing: -0.5px;">Rp <span id="miniPrice">0</span></div>
+        </div>
+        <button id="btnOrder" class="btn-main" onclick="openModal()" disabled>PILIH MENU</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // ... (CONFIG dan Variabel Tetap Sama) ...
+    // 1. CONFIGURASI & DATA
+    const CONFIG = {
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwABSmounQIDQe837alNoVVGOWmH3LoeeEh8yydOgQa3MIXzxbLR8YczVJQydtft8-LLA/exec',
+        MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
+        WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
+        WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
+        TOKEN: 'dyg-access-v2',
+        RADIUS_DINE_IN: 150
+    };
 
-    // FUNGSI BARU: Inisialisasi Banner dipindah ke sini agar tidak error di awal
+    // Link Banner Anda (Maksimal 10)
+    const MY_BANNERS = [
+        'https://placehold.co/600x300/7A3E1D/white?text=Promo+Opening',
+        'https://placehold.co/600x300/F39C12/white?text=Diskon+Delivery',
+        'https://placehold.co/600x300/27ae60/white?text=Menu+Baru'
+    ];
+
+    let menuData = [], cart = [], currentMode = 'DINE IN', isSending = false, userDist = 0, userCoords = null;
+    let bannerIdx = 0;
+
+    const VARIAN_NASI = [
+        { n: 'Nasi Putih', e: 0 }, { n: 'Nasi Uduk', e: 0 },
+        { n: 'Nasi cabeIjo', e: 2000 }, { n: 'Nasi kecombrang', e: 2000 },
+        { n: 'Nasi rumputLaut', e: 2000 }, { n: 'Nasi margarin', e: 2000 }
+    ];
+    const VARIAN_MIE_GORENG = [
+        { n: 'Original (Biasa)', e: 0 }, { n: 'Rasa Rendang', e: 0 }, { n: 'Rasa Salero Padang', e: 0 }
+    ];
+    const VARIAN_MIE_REBUS = [
+        { n: 'Rasa Ayam Bawang', e: 0 }, { n: 'Rasa Soto', e: 0 }
+    ];
+
+    // 2. FUNGSI BANNER
     function initBanner() {
-        const images = BANNER_CONFIG.BANNERS;
         const track = document.getElementById('banner-track');
-        if(!track) return;
+        const dotsContainer = document.getElementById('banner-dots');
         
-        track.innerHTML = images.map(img => `<img src="${img}" style="min-width: 100%; height: 180px; object-fit: cover;" onerror="this.src='https://placehold.co/600x300?text=Promo+Image'">`).join('');
+        // Isi Image
+        track.innerHTML = MY_BANNERS.map(img => `<img src="${img}" style="min-width: 100%; height: 180px; object-fit: cover;">`).join('');
         
-        let touchStartX = 0;
-        track.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
+        // Isi Dots
+        dotsContainer.innerHTML = MY_BANNERS.map((_, i) => `<div class="dot ${i===0?'active':''}"></div>`).join('');
+
+        let xDown = null;
+        track.addEventListener('touchstart', e => xDown = e.touches[0].clientX);
         track.addEventListener('touchend', e => {
-            let touchEndX = e.changedTouches[0].clientX;
-            if (touchStartX - touchEndX > 50) nextBanner();
-            if (touchStartX - touchEndX < -50) prevBanner();
+            if (!xDown) return;
+            let xDiff = xDown - e.changedTouches[0].clientX;
+            if (Math.abs(xDiff) > 50) {
+                if (xDiff > 0) bannerIdx = (bannerIdx + 1) % MY_BANNERS.length;
+                else bannerIdx = (bannerIdx - 1 + MY_BANNERS.length) % MY_BANNERS.length;
+                updateBannerUI();
+            }
+            xDown = null;
         });
-        
-        // Timer otomatis
-        setInterval(nextBanner, 5000);
     }
 
-    let currentIdx = 0;
-    function nextBanner() {
-        currentIdx = (currentIdx + 1) % BANNER_CONFIG.BANNERS.length;
-        updateBanner();
-    }
-    function updateBanner() {
+    function updateBannerUI() {
         const track = document.getElementById('banner-track');
-        if(track) track.style.transform = `translateX(-${currentIdx * 100}%)`;
+        const dots = document.querySelectorAll('.dot');
+        track.style.transform = `translateX(-${bannerIdx * 100}%)`;
+        dots.forEach((d, i) => d.classList.toggle('active', i === bannerIdx));
+    }
+
+    // 3. FUNGSI CORE APLIKASI
+    const showToast = (msg) => {
+        const container = document.getElementById('toast-container');
+        const t = document.createElement('div');
+        t.className = 'toast'; t.innerText = msg;
+        container.appendChild(t);
+        requestAnimationFrame(() => t.classList.add('show'));
+        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 2500);
+    };
+
+    function calculateOngkir(m) {
+        const km = m / 1000;
+        if (km <= 2) return 3000;
+        if (km <= 5) return 5000;
+        return 6000 + (Math.ceil(km - 5) * 2000);
+    }
+
+    async function calculateRouteDistanceOSRM(userLat, userLng) {
+        const url = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${CONFIG.WARUNG_LOCATION[1]},${CONFIG.WARUNG_LOCATION[0]}?overview=false`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (!data.routes || !data.routes.length) throw "Route not found";
+        return data.routes[0].distance; 
     }
 
     async function startApp() {
+        // Panggil Banner & Menu
+        initBanner();
+        
         const btn = document.querySelector("#welcome-overlay .btn-main");
-        btn.innerText = "🔍 Mencari Lokasi..."; 
-        btn.disabled = true;
-
-        if (!navigator.geolocation) {
-            showToast("Geolokasi tidak didukung");
-            return;
-        }
-
+        btn.innerText = "🔍 Mencari Lokasi..."; btn.disabled = true;
+        if (!navigator.geolocation) return showToast("Geolokasi tidak didukung");
+        
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
             userCoords = { lat: latitude, lng: longitude };
-            
-            // 1. Sembunyikan Overlay & Munculkan Card
-            document.getElementById('welcome-overlay').style.display = 'none';
-            const mainCard = document.getElementById('main-content');
-            mainCard.classList.add('visible');
-
-            // 2. Jalankan fungsi pendukung
-            initMap(latitude, longitude);
-            initBanner(); // Panggil banner di sini
-            await loadMenu(); 
-            syncQueue();
-
             try {
                 userDist = await calculateRouteDistanceOSRM(latitude, longitude);
             } catch (e) {
                 userDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.3; 
             }
-
             if (userDist > CONFIG.RADIUS_DINE_IN) {
                 document.getElementById('mDine').style.display = 'none';
                 changeMode('DELIVERY', document.getElementById('mDeliv'));
             }
+            initMap(latitude, longitude);
+            document.getElementById('welcome-overlay').style.display = 'none';
+            document.getElementById('main-content').classList.add('visible');
+            await loadMenu(); syncQueue();
         }, () => {
             showToast("⚠️ GPS Gagal. Pastikan GPS aktif.");
-            btn.innerText = "MULAI SEKARANG"; 
-            btn.disabled = false;
+            btn.innerText = "MULAI SEKARANG"; btn.disabled = false;
         }, { enableHighAccuracy: true });
     }
-    
-    // Hapus pemanggilan initBanner() di luar fungsi agar tidak menyebabkan error sebelum startApp
-</script>
-    const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwXOWVI840Q22XNClv9nef_kxQ7zuZXLLmlM5Y7tPa5nknNos3OgM5D0r3k315xsRN4Bg/exec',
-        MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
-        WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
-        WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
-        TOKEN: 'dyg-access-v2',
-        RADIUS_DINE_IN: 150
-    };
 
-    let menuData = [], cart = [], currentMode = 'DINE IN', isSending = false, userDist = 0, userCoords = null;
+    async function loadMenu() {
+        try {
+            const resp = await fetch(CONFIG.MENU_CSV_URL);
+            const csv = await resp.text();
+            menuData = csv.split('\n').slice(1).map((row, i) => {
+                const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
+                return { id: 'm'+i, kat: cols[0], nama: cols[1], harga: parseInt(cols[2]) };
+            }).filter(m => m.nama);
+            renderMenu();
+        } catch (e) { showToast("Gagal memuat menu."); }
+    }
 
-    const VARIAN_NASI = [
-        { n: 'Nasi Putih', e: 0 }, { n: 'Nasi Uduk', e: 0 },
-        { n: 'Nasi cabeIjo', e: 2000 }, { n: 'Nasi kecombrang', e: 2000 },
-        { n: 'Nasi rumputLaut', e: 2000 }, { n: 'Nasi margarin', e: 2000 }
-    ];
-    const VARIAN_MIE_GORENG = [
-        { n: 'Original (Biasa)', e: 0 }, { n: 'Rasa Rendang', e: 0 }, { n: 'Rasa Salero Padang', e: 0 }
-    ];
-    const VARIAN_MIE_REBUS = [
-        { n: 'Rasa Ayam Bawang', e: 0 }, { n: 'Rasa Soto', e: 0 }
-    ];
+    function renderMenu() {
+        const container = document.getElementById('menu-container');
+        const categories
+= [...new Set(menuData.map(m => m.kat))];
+        
+        container.innerHTML = categories.map(cat => `
+            <div class="cat-container">
+                <div class="cat-header" onclick="toggleCat(this)">
+                    <span>${cat}</span>
+                    <span>▾</span>
+                </div>
+                <div class="menu-list">
+                    ${menuData.filter(m => m.kat === cat).map(m => {
+                        const isNasi = m.nama.toLowerCase().includes('nasi');
+                        const isMinum = m.kat.toLowerCase().includes('minuman');
+                        const isMieG = m.nama.toLowerCase().includes('mie goreng');
+                        const isMieR = m.nama.toLowerCase().includes('mie rebus');
+                        return `
+                        <div class="menu-item">
+                            <div style="display:flex; justify-content:space-between; align-items:start;">
+                                <div style="flex:1;">
+                                    <div style="font-weight:700;">${m.nama}</div>
+                                    <small style="color:var(--muted);">Rp ${m.harga.toLocaleString()}</small>
+                                    <div class="variant-container">
+                                        ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
+                                        ${isMinum ? `<select id="s-${m.id}" class="variant-select"><option value="Es">❄️ Es</option><option value="Panas">🔥 Panas</option></select>` : ''}
+                                        ${isMieG ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍜 Pilih Rasa</option>${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                                        ${isMieR ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍲 Pilih Rasa</option>${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                                    </div>
+                                </div>
+                                <div class="qty-control">
+                                    <button class="btn-qty" onclick="updateCart('${m.id}', -1)" id="min-${m.id}" disabled>−</button>
+                                    <span id="qty-${m.id}" style="font-weight:800; min-width:20px; text-align:center;">0</span>
+                                    <button class="btn-qty" onclick="updateCart('${m.id}', 1)">+</button>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>`).join('');
+    }
 
-    const showToast = (msg) => {
-        const container = document.getElementById('toast-container');
-        const t = document.createElement('div');
-        t.className = 'toast'; t.innerText = msg;
-        container.appendChild(t);
-        requestAnimationFrame(() => t.classList.add('show'));
-        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 2500);
-    };
+    function toggleCat(el) {
+        const list = el.nextElementSibling;
+        list.classList.toggle('active');
+        el.querySelector('span:last-child').innerText = list.classList.contains('active') ? '▴' : '▾';
+    }
 
-    function calculateOngkir(m) {
-        const km = m / 1000;
-        if (km <= 2) return 3000;
-        if (km <= 5) return 5000;
-        return 6000 + (Math.ceil(km - 5) * 2000);
-    }
+    function changeMode(mode, el) {
+        currentMode = mode;
+        document.querySelectorAll('.mode-option').forEach(opt => opt.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('boxMeja').style.display = mode === 'DINE IN' ? 'block' : 'none';
+        document.getElementById('boxAlamat').style.display = mode === 'DELIVERY' ? 'block' : 'none';
+        refreshUI();
+    }
 
-    async function calculateRouteDistanceOSRM(userLat, userLng) {
-        const url = `https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${CONFIG.WARUNG_LOCATION[1]},${CONFIG.WARUNG_LOCATION[0]}?overview=false`;
-        const resp = await fetch(url);
-        const data = await resp.json();
-        if (!data.routes || !data.routes.length) throw "Route not found";
-        return data.routes[0].distance; 
-    }
+    function initMap(lat, lng) {
+        const map = L.map('map').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.marker([lat, lng]).addTo(map).bindPopup("Lokasi Anda").openPopup();
+        L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("CloudKitchen");
+    }
 
-    async function startApp() {
-        const btn = document.querySelector("#welcome-overlay .btn-main");
-        btn.innerText = "🔍 Mencari Lokasi..."; btn.disabled = true;
-        if (!navigator.geolocation) return showToast("Geolokasi tidak didukung");
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            userCoords = { lat: latitude, lng: longitude };
-            try {
-                userDist = await calculateRouteDistanceOSRM(latitude, longitude);
-            } catch (e) {
-                userDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.3; 
-            }
-            if (userDist > CONFIG.RADIUS_DINE_IN) {
-                document.getElementById('mDine').style.display = 'none';
-                changeMode('DELIVERY', document.getElementById('mDeliv'));
-            }
-            initMap(latitude, longitude);
-            document.getElementById('welcome-overlay').style.display = 'none';
-            document.getElementById('main-content').classList.add('visible');
-            await loadMenu(); syncQueue();
-        }, () => {
-            showToast("⚠️ GPS Gagal. Pastikan GPS aktif.");
-            btn.innerText = "MULAI SEKARANG"; btn.disabled = false;
-        }, { enableHighAccuracy: true });
-    }
+    function updateCart(id, delta) {
+        const item = menuData.find(m => m.id === id);
+        const qtyEl = document.getElementById(`qty-${id}`);
+        const minBtn = document.getElementById(`min-${id}`);
+        let currentQty = parseInt(qtyEl.innerText);
+        
+        if (delta > 0) {
+            currentQty++;
+            let variant = "";
+            if (document.getElementById(`n-${id}`)) variant = document.getElementById(`n-${id}`).value;
+            if (document.getElementById(`s-${id}`)) variant = document.getElementById(`s-${id}`).value;
+            if (document.getElementById(`m-${id}`)) variant = document.getElementById(`m-${id}`).value;
+            
+            let extra = 0;
+            if (variant.includes('Nasi')) {
+                const vObj = VARIAN_NASI.find(v => v.n === variant);
+                if (vObj) extra = vObj.e;
+            }
 
-    async function loadMenu() {
-        try {
-            const resp = await fetch(CONFIG.MENU_CSV_URL);
-            const csv = await resp.text();
-            menuData = csv.split('\n').slice(1).map((row, i) => {
-                const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
-                return { id: 'm'+i, kat: cols[0], nama: cols[1], harga: parseInt(cols[2]) };
-            }).filter(m => m.nama);
-            renderMenu();
-        } catch (e) { showToast("Gagal memuat menu."); }
-    }
+            cart.push({ ...item, variant, extra, cartId: Date.now() + Math.random() });
+        } else {
+            const index = cart.findLastIndex(c => c.id === id);
+            if (index !== -1) {
+                cart.splice(index, 1);
+                currentQty--;
+            }
+        }
 
-    function renderMenu() {
-        const container = document.getElementById('menu-container');
-        const categories = [...new Set(menuData.map(m => m.kat))];
-        container.innerHTML = categories.map(cat => `
-            <div class="cat-container">
-                <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('active')">
-                    <span>${cat}</span><span>▼</span>
-                </div>
-                <div class="menu-list">
-                    ${menuData.filter(m => m.kat === cat).map(m => {
-                        const nL = m.nama.toLowerCase();
-                        const isNasi = cat.toLowerCase().includes("hemat") || (cat.toLowerCase().includes("wardoy") && nL.includes("nasi"));
-                        const isMinum = cat.toLowerCase().includes("minum") || cat.toLowerCase().includes("hemat");
-                        const isMieG = nL.includes("mie") && nL.includes("goreng") && !nL.includes("lik");
-                        const isMieR = nL.includes("mie") && nL.includes("rebus") && !nL.includes("lik");
-                        return `
-                        <div class="menu-item">
-                            <div style="display:flex; justify-content:space-between; align-items:start;">
-                                <div style="flex:1;">
-                                    <div style="font-weight:700;">${m.nama}</div>
-                                    <small style="color:var(--muted);">Rp ${m.harga.toLocaleString()}</small>
-                                    <div class="variant-container">
-                                        ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
-                                        ${isMinum ? `<select id="s-${m.id}" class="variant-select"><option value="Es">❄️ Es</option><option value="Panas">🔥 Panas</option></select>` : ''}
-                                        ${isMieG ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍜 Pilih Rasa</option>${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                                        ${isMieR ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍲 Pilih Rasa</option>${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                                    </div>
-                                </div>
-                                <div class="qty-control">
-                                    <button class="btn-qty" onclick="updateCart('${m.id}', -1)" id="min-${m.id}" disabled>−</button>
-                                    <span id="qty-${m.id}" style="font-weight:800; min-width:20px; text-align:center;">0</span>
-                                    <button class="btn-qty" onclick="updateCart('${m.id}', 1)">+</button>
-                                </div>
-                            </div>
-                        </div>`;
-                    }).join('')}
-                </div>
-            </div>`).join('');
-    }
+        qtyEl.innerText = currentQty;
+        minBtn.disabled = currentQty <= 0;
+        refreshUI();
+    }
 
-    function updateCart(id, change) {
-        const item = menuData.find(m => m.id === id);
-        const selN = document.getElementById(`n-${id}`)?.value || null;
-        const selS = document.getElementById(`s-${id}`)?.value || null;
-        const selM = document.getElementById(`m-${id}`)?.value || null;
-        const extra = selN ? (VARIAN_NASI.find(v => v.n === selN)?.e || 0) : 0;
-        if (change > 0) {
-            cart.push({ ...item, vN: selN, vS: selS, vM: selM, ex: extra });
-            showToast(`✅ ${item.nama} +1`);
-        } else {
-            const idx = cart.map(c => c.id).lastIndexOf(id);
-            if (idx !== -1) cart.splice(idx, 1);
-        }
-        refreshUI();
-    }
+    function refreshUI() {
+        const summary = document.getElementById('summary-section');
+        const list = document.getElementById('order-list');
+        const mini = document.getElementById('miniInfo');
+        const btn = document.getElementById('btnOrder');
+        
+        if (cart.length > 0) {
+            summary.style.display = 'block';
+            mini.style.display = 'block';
+            btn.innerText = 'PESAN SEKARANG';
+            btn.disabled = false;
+            
+            list.innerHTML = cart.map(item => `
+                <div class="order-row">
+                    <div class="swipe-delete-hint">HAPUS →</div>
+                    <div class="order-content">
+                        <span style="font-size:14px;"><b>${item.nama}</b><br><small>${item.variant || ''}</small></span>
+                        <span style="font-weight:700;">Rp ${(item.harga + item.extra).toLocaleString()}</span>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            summary.style.display = 'none';
+            mini.style.display = 'none';
+            btn.innerText = 'PILIH MENU';
+            btn.disabled = true;
+        }
 
-    function refreshUI() {
-        let sub = 0; const counts = {};
-        cart.forEach(c => { sub += (c.harga + (c.ex || 0)); counts[c.id] = (counts[c.id] || 0) + 1; });
-        menuData.forEach(m => {
-            if(document.getElementById(`qty-${m.id}`)) document.getElementById(`qty-${m.id}`).innerText = counts[m.id] || 0;
-            if(document.getElementById(`min-${m.id}`)) document.getElementById(`min-${m.id}`).disabled = (counts[m.id] || 0) === 0;
-        });
-        let ong = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
-        document.getElementById('delivery-fee-row').style.display = (currentMode === 'DELIVERY') ? 'flex' : 'none';
-        document.getElementById('ongkir-label').style.display = (currentMode === 'DELIVERY') ? 'block' : 'none';
-        if(currentMode === 'DELIVERY') {
-            document.getElementById('feeDisplay').innerText = "Rp " + ong.toLocaleString();
-            document.getElementById('distDisplay').innerText = (userDist/1000).toFixed(1);
-        }
-        const total = sub + ong;
-        document.getElementById('totalDisplay').innerText = total.toLocaleString();
-        document.getElementById('miniPrice').innerText = total.toLocaleString();
-        document.getElementById('miniInfo').style.display = sub > 0 ? 'block' : 'none';
-        document.getElementById('summary-section').style.display = sub > 0 ? 'block' : 'none';
-        document.getElementById('btnOrder').disabled = sub === 0;
+        let subtotal = cart.reduce((sum, i) => sum + i.harga + i.extra, 0);
+        let ongkir = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
+        
+        document.getElementById('delivery-fee-row').style.display = currentMode === 'DELIVERY' ? 'flex' : 'none';
+        document.getElementById('distDisplay').innerText = (userDist/1000).toFixed(1);
+        document.getElementById('feeDisplay').innerText = 'Rp ' + ongkir.toLocaleString();
+        document.getElementById('totalDisplay').innerText = (subtotal + ongkir).toLocaleString();
+        document.getElementById('miniPrice').innerText = (subtotal + ongkir).toLocaleString();
+        document.getElementById('ongkir-label').style.display = currentMode === 'DELIVERY' ? 'block' : 'none';
+    }
 
-        const summary = {};
-        cart.forEach(c => {
-            let l = c.nama; let tags = [];
-            if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS); if(c.vM) tags.push(c.vM);
-            if(tags.length) l += ` [${tags.join(", ")}]`;
-            summary[l] = (summary[l] || 0) + 1;
-        });
-        document.getElementById('order-list').innerHTML = Object.entries(summary).map(([n, q]) => {
-            const proto = cart.find(c => {
-                let cl = c.nama; let tags = [];
-                if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS); if(c.vM) tags.push(c.vM);
-                if(tags.length) cl += ` [${tags.join(", ")}]`;
-                return cl === n;
-            });
-            return `<div class="order-row" data-label="${n}"><div class="swipe-delete-hint">HAPUS</div><div class="order-content" ontouchstart="hTS(event)" ontouchmove="hTM(event)" ontouchend="hTE(event)"><span>${q}x ${n}</span><span>Rp ${((proto.harga + (proto.ex || 0)) * q).toLocaleString()}</span></div></div>`;
-        }).join('');
-    }
+    async function syncQueue() {
+        try {
+            const r = await fetch(CONFIG.WEB_APP_URL + '?action=getQueue');
+            const d = await r.json();
+            document.getElementById('noAntrean').innerText = '#' + d.queue;
+        } catch (e) {}
+    }
 
-    let xS = null;
-    const hTS = (e) => { xS = e.touches[0].clientX; };
-    const hTM = (e) => {
-        if (!xS) return;
-        let diff = xS - e.touches[0].clientX;
-        if (diff > 30) e.currentTarget.style.transform = `translateX(-80px)`;
-        else if (diff < -30) e.currentTarget.style.transform = `translateX(0)`;
-    };
-    const hTE = (e) => {
-        let diff = xS - e.changedTouches[0].clientX;
-        if (diff > 120) {
-            const lbl = e.currentTarget.parentElement.getAttribute('data-label');
-            e.currentTarget.style.transform = 'translateX(-100%)';
-            setTimeout(() => {
-                cart = cart.filter(c => {
-                    let cl = c.nama; let tags = [];
-                    if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS); if(c.vM) tags.push(c.vM);
-                    if(tags.length) cl += ` [${tags.join(", ")}]`;
-                    return cl !== lbl;
-                });
-                showToast(`🗑️ ${lbl} dihapus`); refreshUI();
-            }, 300);
-        } else { e.currentTarget.style.transform = `translateX(0)`; }
-        xS = null;
-    };
+    function openModal() {
+        if (!document.getElementById('custName').value) {
+            document.getElementById('wrapName').classList.add('error-focus');
+            return showToast("Isi nama Anda dulu ya!");
+        }
+        document.getElementById('modalConfirm').style.display = 'flex';
+    }
 
-    async function submitOrder() {
-        if (isSending) return;
-        const nI = document.getElementById('custName'); const tI = document.getElementById('tableNo'); const aI = document.getElementById('addressDetail');
-        const name = nI.value.trim(); const tNo = tI.value; const addr = aI.value.trim();
-        [nI, tI, aI].forEach(el => { if(el) el.parentElement.classList.remove('error-focus'); });
-        if (!name) { closeModal(); showToast("❗ Nama wajib diisi"); nI.parentElement.classList.add('error-focus'); nI.focus(); return; }
-        if (currentMode === 'DINE IN' && !tNo) { closeModal(); showToast("❗ Nomor meja wajib diisi"); tI.parentElement.classList.add('error-focus'); tI.focus(); return; }
-        if (currentMode === 'DELIVERY' && !addr) { closeModal(); showToast("❗ Alamat wajib diisi"); aI.parentElement.classList.add('error-focus'); aI.focus(); return; }
+    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
 
-        isSending = true; const btn = document.getElementById('btnFinal');
-        btn.innerText = "⏳ Memproses..."; btn.disabled = true;
+    async function submitOrder() {
+        if (isSending) return;
+        isSending = true;
+        const btn = document.getElementById('btnFinal');
+        btn.innerText = "Mengirim...";
+        
+        const name = document.getElementById('custName').value;
+        const note = document.getElementById('orderNote').value;
+        const subtotal = cart.reduce((sum, i) => sum + i.harga + i.extra, 0);
+        const ongkir = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
+        
+        const payload = {
+            token: CONFIG.TOKEN,
+            nama: name,
+            mode: currentMode,
+            meja: document.getElementById('tableNo').value,
+            alamat: document.getElementById('addressDetail').value,
+            pesanan: cart.map(c => `${c.nama} (${c.variant})`).join(', '),
+            total: subtotal + ongkir,
+            catatan: note
+        };
 
-        try {
-            const summary = {};
-            cart.forEach(c => {
-                let l = c.nama; let tags = [];
-                if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS); if(c.vM) tags.push(c.vM);
-                if(tags.length) l += ` [${tags.join(", ")}]`;
-                summary[l] = (summary[l] || 0) + 1;
-            });
-            const pRows = Object.entries(summary).map(([n, q]) => {
-                const proto = cart.find(c => {
-                    let cl = c.nama; let tags = [];
-                    if(c.vN) tags.push(c.vN); if(c.vS) tags.push(c.vS); if(c.vM) tags.push(c.vM);
-                    if(tags.length) cl += ` [${tags.join(", ")}]`;
-                    return cl === n;
-                });
-                return `📦 *${q}x* ${n} (Rp ${(proto.harga + (proto.ex || 0)).toLocaleString()})`;
-            });
+        try {
+            const resp = await fetch(CONFIG.WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-            let sub = cart.reduce((a, b) => a + b.harga + (b.ex || 0), 0);
-            let ong = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
-            const total = sub + ong;
-            const params = new URLSearchParams({ token: CONFIG.TOKEN, nama: name, mode: currentMode, pesanan: pRows.join(', '), total: total, catatan: document.getElementById('orderNote').value });
-            const resp = await fetch(CONFIG.WEB_APP_URL + "?" + params.toString());
-            const qNo = await resp.text();
-            
-            const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-            const locLink = userCoords ? `https://www.google.com/maps?q=${userCoords.lat},${userCoords.lng}` : 'Tidak terdeteksi';
-            let msg = `Halo cloudkitchen.dyg++!\n\n${currentMode === 'DELIVERY' ? '🛵' : (currentMode === 'DINE IN' ? '🍽️' : '🛍️')} *${currentMode}*\n👤 *Nama:* ${name}\n🔢 *ANTREAN: #${qNo}*\n━━━━━━━━━━━━━━\n`;
-            if (currentMode === 'DINE IN') msg += `🪑 *Meja:* ${tNo}\n`;
-            else if (currentMode === 'DELIVERY') msg += `🏠 *Alamat:* ${addr}\n📍 *Lokasi:* ${locLink}\n🛵 *Ongkir:* Rp ${ong.toLocaleString()}\n`;
-            msg += `\n*PESANAN:*\n${pRows.join('\n')}\n\n*CATATAN:* ${document.getElementById('orderNote').value || '-'}\n*TOTAL BAYAR: Rp ${total.toLocaleString()}*\n\n⭐ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\nTerimakasih!`;
-            window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-            setTimeout(() => { location.reload(); }, 3000);
-        } catch (e) { showToast("❌ Gagal mengirim."); isSending = false; btn.innerText = "Kirim!"; btn.disabled = false; }
-    }
-
-    function changeMode(m, el) {
-        currentMode = m; document.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active')); el.classList.add('active');
-        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
-        document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
-        refreshUI();
-    }
-
-    function initMap(lat, lng) {
-        const map = L.map('map', { zoomControl: false }).setView([lat, lng], 16);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker([lat, lng]).addTo(map);
-        L.circle(CONFIG.WARUNG_LOCATION, { radius: CONFIG.RADIUS_DINE_IN, color: 'brown', fillOpacity: 0.1 }).addTo(map);
-    }
-
-    async function syncQueue() {
-        while (true) {
-            try {
-                const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
-                const num = await resp.text();
-                if (num) document.getElementById('noAntrean').innerText = "#" + num;
-                await new Promise(r => setTimeout(r, 10000));
-            } catch(e) { await new Promise(r => setTimeout(r, 5000)); }
-        }
-    }
-
-    function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
-    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-    function filterMenu() {
-        const k = document.getElementById('searchMenu').value.toLowerCase();
-        document.querySelectorAll('.cat-container').forEach(cat => {
-            let hasMatch = false;
-            cat.querySelectorAll('.menu-item').forEach(item => {
-                const iN = item.querySelector('div[style*="font-weight:700"]').innerText.toLowerCase();
-                if (iN.includes(k)) { item.style.display = 'block'; hasMatch = true; } else { item.style.display = 'none'; }
-            });
-            cat.style.display = (k.length > 0 && !hasMatch) ? 'none' : 'block';
-            if(k.length > 0 && hasMatch) cat.querySelector('.menu-list').classList.add('active');
-        });
-    }
-// CONFIGURASI BANNER (Ganti FOLDER_ID dengan ID folder Google Drive Anda)
-const BANNER_CONFIG = {
-    BANNERS: [
-        'https://drive.google.com/uc?export=download&id=1VlelqeRr6IJkjpNukvPVGRmU-dog5a6H',
-        'https://drive.google.com/uc?export=download&id=1QUCZW5FKKrMbwb5wwtFH1rLC-yxvbFRq',
-        'https://drive.google.com/uc?export=download&id=1Vx7HFR2hv8_K4h2t8kSkUDxyb9mFVoSf'
-'https://drive.google.com/uc?export=download&id=1DSSjIJrg-G_d4LozAt60EMtzRnf6RfYx'
-    ]
-};
-let currentIdx = 0;
-const track = document.getElementById('banner-track');
-
-function initBanner() {
-    const images = BANNER_CONFIG.BANNERS;
-    const track = document.getElementById('banner-track');
-    
-    track.innerHTML = images.map(img => `
-        <img src="${img}" 
-             style="min-width: 100%; height: 180px; object-fit: cover;" 
-             onerror="this.src='https://placehold.co/600x300?text=Gambar+Promo+Gagal+Dimuat'">
-    `).join(''); 
-    // Logika Swipe Sederhana
-    let touchStartX = 0;
-    track.addEventListener('touchstart', e => touchStartX = e.touches[0].clientX);
-    track.addEventListener('touchend', e => {
-        let touchEndX = e.changedTouches[0].clientX;
-        if (touchStartX - touchEndX > 50) nextBanner();
-        if (touchStartX - touchEndX < -50) prevBanner();
-    });
-setInterval(nextBanner, 5000); // Geser tiap 5 detik
-}
-
-function nextBanner() {
-    currentIdx = (currentIdx + 1) % BANNER_CONFIG.BANNERS.length;
-    updateBanner();
-}
-function prevBanner() {
-    currentIdx = (currentIdx - 1 + BANNER_CONFIG.BANNERS.length) % BANNER_CONFIG.BANNERS.length;
-    updateBanner();
-}
-function updateBanner() {
-    track.style.transform = `translateX(-${currentIdx * 100}%)`;
-}
-
-// Panggil fungsi ini di dalam startApp()
-initBanner();
+            // Format WhatsApp
+            let waMsg = `*PESANAN BARU - ${currentMode}*\n`;
+            waMsg += `--------------------------\n`;
+            waMsg += `Nama: ${name}\n`;
+            if(currentMode === 'DINE IN') waMsg += `Meja: ${payload.meja}\n`;
+            waMsg += `Pesanan:\n${cart.map(c => `- ${c.nama} (${c.variant})`).join('\n')}\n`;
+            waMsg += `--------------------------\n`;
+            if(currentMode === 'DELIVERY') waMsg += `Ongkir: Rp ${ongkir.toLocaleString()}\n`;
+            waMsg += `*TOTAL: Rp ${(subtotal + ongkir).toLocaleString()}*\n`;
+            if(note) waMsg += `Catatan: ${note}\n`;
+            
+            const waTarget = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+            window.location.href = `https://wa.me/${waTarget}?text=${encodeURIComponent(waMsg)}`;
+            
+        } catch (e) {
+            showToast("Terjadi kesalahan, coba lagi.");
+            isSending = false;
+            btn.innerText = "Kirim!";
+        }
+    }
 </script>
 </body>
 </html>
