@@ -305,6 +305,55 @@
             renderMenu();
         } catch (e) { showToast("Gagal memuat menu."); }
     }
+function filterMenu() {
+    const keyword = document.getElementById('searchMenu').value.toLowerCase();
+    const container = document.getElementById('menu-container');
+
+    if (!keyword) {
+        renderMenu();
+        return;
+    }
+
+    // Filter menu berdasarkan keyword di nama
+    const filtered = menuData.filter(m => m.nama.toLowerCase().includes(keyword));
+    const categories = [...new Set(filtered.map(m => m.kat))];
+
+    container.innerHTML = categories.map(cat => `
+        <div class="cat-container">
+            <div class="cat-header" onclick="toggleCat(this)">
+                <span>${cat}</span>
+                <span>▾</span>
+            </div>
+            <div class="menu-list active">
+                ${filtered.filter(m => m.kat === cat).map(m => {
+                    const isNasi = m.nama.toLowerCase().includes('nasi');
+                    const isMinum = m.kat.toLowerCase().includes('minuman') || m.nama.toLowerCase().includes('es') || m.nama.toLowerCase().includes('teh') || m.nama.toLowerCase().includes('kopi');
+                    const isMieG = m.nama.toLowerCase().includes('mie goreng');
+                    const isMieR = m.nama.toLowerCase().includes('mie rebus');
+                    return `
+                    <div class="menu-item">
+                        <div style="display:flex; justify-content:space-between; align-items:start;">
+                            <div style="flex:1;">
+                                <div style="font-weight:700;">${m.nama}</div>
+                                <small style="color:var(--muted);">Rp ${m.harga.toLocaleString()}</small>
+                                <div class="variant-container">
+                                    ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
+                                    ${isMinum ? `<select id="s-${m.id}" class="variant-select"><option value="Es">❄️ Es</option><option value="Panas">🔥 Panas</option></select>` : ''}
+                                    ${isMieG ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍜 Pilih Rasa</option>${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                                    ${isMieR ? `<select id="m-${m.id}" class="variant-select"><option value="" disabled selected>🍲 Pilih Rasa</option>${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                                </div>
+                            </div>
+                            <div class="qty-control">
+                                <button class="btn-qty" onclick="updateCart('${m.id}', -1)" id="min-${m.id}" disabled>−</button>
+                                <span id="qty-${m.id}" style="font-weight:800; min-width:20px; text-align:center;">0</span>
+                                <button class="btn-qty" onclick="updateCart('${m.id}', 1)">+</button>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`).join('');
+}
 
     function renderMenu() {
         const container = document.getElementById('menu-container');
@@ -320,7 +369,7 @@
                 <div class="menu-list">
                     ${menuData.filter(m => m.kat === cat).map(m => {
                         const isNasi = m.nama.toLowerCase().includes('nasi');
-                        const isMinum = m.kat.toLowerCase().includes('minuman');
+      			const isMinum = m.kat.toLowerCase().includes('minuman') || m.kat.toLowerCase().includes('paket hemat');
                         const isMieG = m.nama.toLowerCase().includes('mie goreng');
                         const isMieR = m.nama.toLowerCase().includes('mie rebus');
                         return `
