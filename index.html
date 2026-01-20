@@ -5,18 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <style>/* Efek getar dan border merah untuk input yang salah */
-.error-focus {
-    border-color: var(--danger) !important;
-    animation: shake 0.4s ease-in-out;
-    background-color: #fff5f5;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-}
+    <style>
         :root { 
             --primary: #7A3E1D; --accent: #F39C12; --bg: #F7F3EE; 
             --surface: #FFFFFF; --soft: #EFE6D8; --dark: #2C2C2C; --muted: #888; 
@@ -29,7 +18,18 @@
             padding-bottom: 160px; overflow-x: hidden; scroll-behavior: smooth;
         }
 
-        /* UI Components */
+        /* Error Focus Animation */
+        .error-focus {
+            border: 2px solid var(--danger) !important;
+            animation: shake 0.4s ease-in-out;
+            background-color: #fff5f5 !important;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
         .card { max-width: 480px; margin: auto; background: var(--surface); border-radius: 28px; padding: 20px; box-shadow: 0 15px 35px rgba(0,0,0,.06); opacity: 0; transform: translateY(20px); transition: 0.6s cubic-bezier(0.2, 1, 0.3, 1); }
         .card.visible { opacity: 1; transform: translateY(0); }
         
@@ -46,13 +46,6 @@
         .section-title { font-size: 13px; font-weight: 800; margin: 25px 0 10px; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
         .box { background: #fff; border: 1.5px solid var(--soft); border-radius: 16px; padding: 4px 15px; transition: 0.3s; }
         .box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(243,156,18,0.1); }
-        
-        .box.error-focus { border-color: var(--danger); animation: shake 0.4s ease-in-out; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
 
         input, textarea, select { width: 100%; padding: 12px 0; border: none; font-family: inherit; font-size: 14px; background: transparent; color: var(--dark); }
 
@@ -190,7 +183,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwHXCOop2otS0EtQ1UL45xMUDxt0yZxmZIxn97qz68A2CbYziZks-LGsnIY_9LTVK95bw/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwABSmounQIDQe837alNoVVGOWmH3LoeeEh8yydOgQa3MIXzxbLR8YczVJQydtft8-LLA/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -230,40 +223,33 @@
         const resp = await fetch(url);
         const data = await resp.json();
         if (!data.routes || !data.routes.length) throw "Route not found";
-        return data.routes[0].distance; // dalam meter
+        return data.routes[0].distance; 
     }
 
     async function startApp() {
         const btn = document.querySelector("#welcome-overlay .btn-main");
         btn.innerText = "🔍 Mencari Lokasi...";
         btn.disabled = true;
-
         if (!navigator.geolocation) return showToast("Geolokasi tidak didukung");
-
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
             userCoords = { lat: latitude, lng: longitude };
-            
-            // Hitung jarak rute asli lewat jalan (OSRM)
             try {
                 userDist = await calculateRouteDistanceOSRM(latitude, longitude);
             } catch (e) {
-                // fallback jika OSRM gagal
                 const straight = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
                 userDist = straight * 1.3; 
             }
-
             if (userDist > CONFIG.RADIUS_DINE_IN) {
                 showToast(`📍 Jarak: ${(userDist/1000).toFixed(1)}km. Mode Dine In ditutup.`);
                 document.getElementById('mDine').style.display = 'none';
                 changeMode('DELIVERY', document.getElementById('mDeliv'));
             }
-
             initMap(latitude, longitude);
             document.getElementById('welcome-overlay').style.display = 'none';
             document.getElementById('main-content').classList.add('visible');
             await loadMenu();
-            syncQueue(); // Mulai long polling
+            syncQueue();
         }, () => {
             showToast("⚠️ GPS Gagal. Pastikan GPS aktif.");
             btn.innerText = "MULAI SEKARANG"; btn.disabled = false;
@@ -322,7 +308,6 @@
         const selNasi = document.getElementById(`n-${id}`)?.value || null;
         const selSuhu = document.getElementById(`s-${id}`)?.value || null;
         const extra = selNasi ? VARIAN_NASI.find(v => v.n === selNasi).e : 0;
-
         if (change > 0) {
             cart.push({ ...item, vN: selNasi, vS: selSuhu, ex: extra });
             showToast(`✅ ${item.nama} +1`);
@@ -336,23 +321,19 @@
     function refreshUI() {
         let sub = 0; const counts = {};
         cart.forEach(c => { sub += (c.harga + (c.ex || 0)); counts[c.id] = (counts[c.id] || 0) + 1; });
-
         menuData.forEach(m => {
             const el = document.getElementById(`qty-${m.id}`);
             if(el) el.innerText = counts[m.id] || 0;
             const btn = document.getElementById(`min-${m.id}`);
             if(btn) btn.disabled = (counts[m.id] || 0) === 0;
         });
-
         let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
         document.getElementById('delivery-fee-row').style.display = (currentMode === 'DELIVERY') ? 'flex' : 'none';
         document.getElementById('ongkir-label').style.display = (currentMode === 'DELIVERY') ? 'block' : 'none';
-
         if(currentMode === 'DELIVERY') {
             document.getElementById('feeDisplay').innerText = "Rp " + ongkir.toLocaleString();
             document.getElementById('distDisplay').innerText = (userDist/1000).toFixed(1);
         }
-
         const total = sub + ongkir;
         document.getElementById('totalDisplay').innerText = total.toLocaleString();
         document.getElementById('miniPrice').innerText = total.toLocaleString();
@@ -406,53 +387,37 @@
         xS = null;
     };
 
-async function submitOrder() {
+    async function submitOrder() {
         if (isSending) return;
-
         const nameInput = document.getElementById('custName');
         const tableInput = document.getElementById('tableNo');
         const addrInput = document.getElementById('addressDetail');
-        
         const name = nameInput.value.trim();
         const tNo = tableInput.value;
         const addr = addrInput.value.trim();
 
-        // Validasi Input
         [nameInput, tableInput, addrInput].forEach(el => {
             if(el) el.parentElement.classList.remove('error-focus');
         });
 
         if (!name) {
-            closeModal();
-            showToast("❗ Nama wajib diisi");
-            nameInput.parentElement.classList.add('error-focus');
-            nameInput.focus();
-            return;
+            closeModal(); showToast("❗ Nama wajib diisi");
+            nameInput.parentElement.classList.add('error-focus'); nameInput.focus(); return;
         }
-
         if (currentMode === 'DINE IN' && !tNo) {
-            closeModal();
-            showToast("❗ Nomor meja wajib diisi");
-            tableInput.parentElement.classList.add('error-focus');
-            tableInput.focus();
-            return;
+            closeModal(); showToast("❗ Nomor meja wajib diisi");
+            tableInput.parentElement.classList.add('error-focus'); tableInput.focus(); return;
         }
-
         if (currentMode === 'DELIVERY' && !addr) {
-            closeModal();
-            showToast("❗ Alamat wajib diisi");
-            addrInput.parentElement.classList.add('error-focus');
-            addrInput.focus();
-            return;
+            closeModal(); showToast("❗ Alamat wajib diisi");
+            addrInput.parentElement.classList.add('error-focus'); addrInput.focus(); return;
         }
 
         isSending = true;
         const btn = document.getElementById('btnFinal');
-        btn.innerText = "⏳ Memproses..."; 
-        btn.disabled = true;
+        btn.innerText = "⏳ Memproses..."; btn.disabled = true;
 
         try {
-            // Mengelompokkan Pesanan untuk Tampilan WA
             const summary = {};
             cart.forEach(c => {
                 let l = c.nama; let tags = [];
@@ -460,7 +425,6 @@ async function submitOrder() {
                 if(tags.length) l += ` [${tags.join(", ")}]`;
                 summary[l] = (summary[l] || 0) + 1;
             });
-
             const pRows = Object.entries(summary).map(([n, q]) => {
                 const proto = cart.find(c => {
                     let cl = c.nama; let tags = [];
@@ -475,72 +439,43 @@ async function submitOrder() {
             let ong = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
             const total = sub + ong;
 
-            // Kirim ke Google Sheets
             const params = new URLSearchParams({
-                token: CONFIG.TOKEN, 
-                nama: name, 
-                mode: currentMode, 
-                pesanan: pRows.join(', '),
-                total: total, 
-                catatan: document.getElementById('orderNote').value
+                token: CONFIG.TOKEN, nama: name, mode: currentMode, 
+                pesanan: pRows.join(', '), total: total, catatan: document.getElementById('orderNote').value
             });
 
             const resp = await fetch(CONFIG.WEB_APP_URL + "?" + params.toString());
             const qNo = await resp.text();
             
-            // Konfigurasi WhatsApp
             const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-            // Cari baris ini di submitOrder() dan ganti menjadi:
-const locLink = userCoords ? `https://www.google.com/maps?q=${userCoords.lat},${userCoords.lng}` : 'Lokasi tidak terdeteksi';
-            const gmapsReview = "https://www.google.com/maps/place/Warung+Doyong/@-7.0452872,110.3921172,17z/data=!4m8!3m7!1s0x2e708bc5a0388b8f:0x222e286905ff8a10!8m2!3d-7.0452872!4d110.3921172!9m1!1b1!16s%2Fg%2F11fxx8xrjp?entry=ttu&g_ep=EgoyMDI2MDExMy4wIKXMDSoASAFQAw%3D%3D"; // Ganti dengan link review asli Anda
+            const locLink = userCoords ? `https://www.google.com/maps?q=${userCoords.lat},${userCoords.lng}` : 'Tidak terdeteksi';
+            const gmapsReview = "https://g.page/r/YOUR_LINK_HERE/review"; 
 
-            // MENYUSUN FORMAT PESAN SESUAI PERMINTAAN
-            let msg = `"Halo cloudkitchen.dyg++!\n\n`;
-            
-            // Mode Emoji
+            let msg = `Halo cloudkitchen.dyg++!\n\n`;
             const modeEmoji = currentMode === 'DELIVERY' ? '🛵' : (currentMode === 'DINE IN' ? '🍽️' : '🛍️');
-            msg += `${modeEmoji} *${currentMode}*\n`;
-            msg += `👤 *Nama:* ${name}\n`;
-            msg += `🔢 *ANTREAN: #${qNo}*\n`;
-            msg += `━━━━━━━━━━━━━━\n`;
+            msg += `${modeEmoji} *${currentMode}*\n👤 *Nama:* ${name}\n🔢 *ANTREAN: #${qNo}*\n━━━━━━━━━━━━━━\n`;
             
-            if (currentMode === 'DINE IN') {
-                msg += `🪑 *Meja:* ${tNo}\n`;
-            } else if (currentMode === 'DELIVERY') {
-                msg += `🏠 *Alamat:* ${addr}\n`;
-                msg += `📍 *Lokasi:* ${locLink}\n`;
-                msg += `🛵 *Ongkir (${(userDist/1000).toFixed(1)} km):* Rp ${ong.toLocaleString()}\n`;
+            if (currentMode === 'DINE IN') msg += `🪑 *Meja:* ${tNo}\n`;
+            else if (currentMode === 'DELIVERY') {
+                msg += `🏠 *Alamat:* ${addr}\n📍 *Lokasi:* ${locLink}\n🛵 *Ongkir (${(userDist/1000).toFixed(1)} km):* Rp ${ong.toLocaleString()}\n`;
             }
 
             msg += `\n*PESANAN:*\n${pRows.join('\n')}\n\n`;
-            
             const catatan = document.getElementById('orderNote').value.trim();
-            msg += `*CATATAN:* ${catatan ? catatan : '-'}\n\n`;
-            
-            msg += `*TOTAL BAYAR: Rp ${total.toLocaleString()}*\n\n`;
-            
-            msg += `⏳ *PROSES PESANAN:*\n`;
-            msg += `Mohon tunggu sebentar ya kak, tim jaga kami sedang mengecek ketersediaan stok menu. Kami akan konfirmasi segera.\n\n`;
-            
-            msg += `💳 *INFO PEMBAYARAN:*\n`;
-            msg += `• *DINE IN / TAKE AWAY:* Langsung di kasir.\n`;
-            msg += `• *DELIVERY ORDER:* Khusus via Transfer Bank / QRIS.\n\n`;
-            
-            msg += `⭐ *REVIEW:*\n`;
-            msg += `Bantu *kami berkembang dengan ulasan di G-Maps* ya kak:\n${gmapsReview}\n\n`;
-            
-            msg += `Terimakasih! "`;
+            msg += `*CATATAN:* ${catatan ? catatan : '-'}\n*TOTAL BAYAR: Rp ${total.toLocaleString()}*\n\n`;
+            msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n⭐ *REVIEW:* ${gmapsReview}\n\nTerimakasih!`;
 
-            window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, '_blank');
-            location.reload();
-            
+            // METODE KIRIM WA PALING STABIL
+            const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+            window.location.href = waUrl;
+
+            setTimeout(() => { location.reload(); }, 3000);
         } catch (e) {
-            showToast("❌ Gagal mengirim.");
-            isSending = false; 
-            btn.innerText = "Kirim!"; 
-            btn.disabled = false;
+            showToast("❌ Gagal mengirim."); isSending = false;
+            btn.innerText = "Kirim!"; btn.disabled = false;
         }
     }
+
     function changeMode(m, el) {
         currentMode = m;
         document.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active'));
@@ -558,17 +493,15 @@ const locLink = userCoords ? `https://www.google.com/maps?q=${userCoords.lat},${
     }
 
     async function syncQueue() {
-    while (true) {
-        try {
-            const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
-            const num = await resp.text();
-            if (num) document.getElementById('noAntrean').innerText = "#" + num;
-            await new Promise(r => setTimeout(r, 10000)); // Cek setiap 10 detik
-        } catch(e) {
-            await new Promise(r => setTimeout(r, 5000)); // Jeda 5 detik jika error
+        while (true) {
+            try {
+                const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
+                const num = await resp.text();
+                if (num) document.getElementById('noAntrean').innerText = "#" + num;
+                await new Promise(r => setTimeout(r, 10000));
+            } catch(e) { await new Promise(r => setTimeout(r, 5000)); }
         }
     }
-}
 
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
