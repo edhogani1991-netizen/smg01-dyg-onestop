@@ -2,171 +2,181 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CloudKitchen | Order</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CloudKitchen Pro</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --primary: #7A3E1D; --accent: #F39C12; --bg: #F7F3EE; }
-        body { font-family: sans-serif; background: var(--bg); padding: 10px; padding-bottom: 120px; color: #333; }
-        .card { max-width: 480px; margin: auto; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .q-box { text-align: center; background: #FFF9F0; border: 2px solid var(--accent); border-radius: 20px; padding: 15px; margin-bottom: 20px; }
-        .section-title { font-size: 13px; font-weight: 800; margin: 20px 0 10px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
-        .mode-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
-        .option { flex: 1; min-width: 100px; padding: 12px 5px; text-align: center; border: 2px solid #eee; border-radius: 12px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; padding-bottom: 120px; }
+        #welcome-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .card { max-width: 480px; margin: auto; background: white; border-radius: 25px; padding: 20px; display: none; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .section-title { font-size: 13px; font-weight: 800; margin: 20px 0 10px; color: var(--primary); text-transform: uppercase; }
+        .mode-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+        .option { flex: 1; min-width: 100px; padding: 12px 5px; text-align: center; border: 2px solid #eee; border-radius: 12px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .option.active { border-color: var(--accent); background: #FFF3E6; color: var(--primary); }
-        input, textarea { width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 12px; box-sizing: border-box; font-family: inherit; }
-        .menu-card { border: 2px solid #eee; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-add { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
-        .sticky-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 20px; border-top: 1px solid #eee; text-align: center; }
-        .btn-send { width: 100%; max-width: 400px; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 18px; font-weight: 900; font-size: 16px; cursor: pointer; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #eee; border-radius: 12px; margin-bottom: 8px; }
+        .btn-main { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 18px; font-weight: bold; cursor: pointer; }
+        #variant-nasi, #variant-suhu { display: none; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="q-box">
-        <small style="color:var(--accent); font-weight: bold;">NOMOR ANTREAN</small>
-        <div id="noAntrean" style="font-size: 45px; font-weight: 900; color: var(--primary);">#0</div>
-    </div>
-
-    <div class="section-title">👤 Nama Pelanggan</div>
-    <input type="text" id="custName" placeholder="Tulis nama Anda...">
-
-    <div class="section-title">📍 Mode Makan</div>
-    <div class="mode-selector">
-        <div class="option active" onclick="selectMode('DINE IN', this)">DINE IN</div>
-        <div class="option" onclick="selectMode('TAKE AWAY', this)">TAKE AWAY</div>
-        <div class="option" onclick="selectMode('DELIVERY', this)">DELIVERY</div>
-    </div>
-
-    <div class="section-title">🍚 Pilih Varian Nasi</div>
-    <div class="mode-selector">
-        <div class="option active" onclick="selectNasi('Nasi Putih', 0, this)">Putih (+0)</div>
-        <div class="option" onclick="selectNasi('Nasi Uduk', 0, this)">Uduk (+0)</div>
-        <div class="option" onclick="selectNasi('Nasi Cabe Ijo', 2000, this)">Cabe Ijo (+2rb)</div>
-        <div class="option" onclick="selectNasi('Kecombrang', 2000, this)">Kecombrang (+2rb)</div>
-        <div class="option" onclick="selectNasi('Rumput Laut', 2000, this)">R. Laut (+2rb)</div>
-        <div class="option" onclick="selectNasi('Margarin', 2000, this)">Margarin (+2rb)</div>
-    </div>
-
-    <div class="section-title">🌡️ Suhu Minuman</div>
-    <div class="mode-selector">
-        <div class="option active" onclick="selectSuhu('Dingin/Es', this)">DINGIN / ES</div>
-        <div class="option" onclick="selectSuhu('Panas/Hangat', this)">PANAS</div>
-    </div>
-
-    <div class="section-title">🍴 Pilih Menu</div>
-    <div id="menu-container">
-        <div class="menu-card">
-            <div><b>Ayam Geprek</b><br><small>Rp 15.000</small></div>
-            <button class="btn-add" onclick="addToCart('Ayam Geprek', 15000)">Tambah</button>
-        </div>
-        <div class="menu-card">
-            <div><b>Es Teh Manis</b><br><small>Rp 5.000</small></div>
-            <button class="btn-add" onclick="addToCart('Es Teh Manis', 5000)">Tambah</button>
-        </div>
-    </div>
-
-    <div class="section-title">📝 Catatan Tambahan</div>
-    <textarea id="orderNote" placeholder="Contoh: Sambal dipisah..."></textarea>
-
-    <div id="summary" style="margin-top: 25px; padding: 15px; background: #fdfdfd; border: 2px dashed #eee; border-radius: 15px; display:none;">
-        <div id="cart-list"></div>
-        <div id="nasi-extra" style="color:var(--accent); font-weight: bold; margin-top: 5px;"></div>
-        <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
-        <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 18px;">
-            <span>TOTAL</span>
-            <span id="totalDisplay">Rp 0</span>
-        </div>
+<div id="welcome-overlay">
+    <div style="background:white; padding:40px; border-radius:30px; width:80%;">
+        <div style="font-size:50px;">📍</div>
+        <h2>Akses Lokasi</h2>
+        <p>Klik tombol di bawah untuk validasi lokasi dan memulai pesanan.</p>
+        <button class="btn-main" onclick="startApp()">IZINKAN GPS</button>
+        <p id="gps-err" style="color:red; font-size:12px; margin-top:10px;"></p>
     </div>
 </div>
 
-<div class="sticky-bar">
-    <button class="btn-send" id="btnSubmit" onclick="submitOrder()">KONFIRMASI PESANAN</button>
+<div class="card" id="app">
+    <div id="noAntrean" style="text-align:center; font-size:40px; font-weight:900; color:var(--accent);">#0</div>
+
+    <div class="section-title">👤 Nama</div>
+    <input type="text" id="custName" style="width:100%; padding:12px; border:2px solid #eee; border-radius:12px; box-sizing:border-box;">
+
+    <div id="variant-nasi">
+        <div class="section-title">🍚 Varian Nasi</div>
+        <div class="mode-selector">
+            <div class="option active" onclick="setNasi('Putih', 0, this)">Putih (+0)</div>
+            <div class="option" onclick="setNasi('Uduk', 0, this)">Uduk (+0)</div>
+            <div class="option" onclick="setNasi('Cabe Ijo', 2000, this)">Cabe Ijo (+2k)</div>
+            <div class="option" onclick="setNasi('Kecombrang', 2000, this)">Kecombrang (+2k)</div>
+            <div class="option" onclick="setNasi('Rumput Laut', 2000, this)">R.Laut (+2k)</div>
+            <div class="option" onclick="setNasi('Margarin', 2000, this)">Margarin (+2k)</div>
+        </div>
+    </div>
+
+    <div id="variant-suhu">
+        <div class="section-title">🌡️ Suhu (Paket Hemat)</div>
+        <div class="mode-selector">
+            <div class="option active" onclick="setSuhu('Dingin/Es', this)">Dingin/Es</div>
+            <div class="option" onclick="setSuhu('Panas', this)">Panas</div>
+        </div>
+    </div>
+
+    <div class="section-title">🍴 Menu</div>
+    <div id="menu-box">Memuat menu...</div>
+
+    <div id="summary" style="margin-top:20px; padding:15px; background:#f9f9f9; border-radius:15px; display:none;">
+        <div id="cart-list"></div>
+        <hr>
+        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            <span>TOTAL</span>
+            <span id="total-txt">Rp 0</span>
+        </div>
+    </div>
+
+    <button class="btn-main" style="margin-top:20px;" onclick="submitOrder()">KIRIM KE WHATSAPP</button>
 </div>
 
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxBnWAOvToqhPXMOta58HRoX3EHcv66l2cfpgqWqPy8pFaJy4-VU09xh_5GmCBdmr4JeQ/exec',
-        TOKEN: 'dyg-access-v2'
+        BACKEND: 'https://script.google.com/macros/s/AKfycbxDQvepHw_RQ484cfxlZa3eM22Noja6MQTk6fqSHdr3gq-pjiaLJLEs2jUg-0wBNd6x-g/exec',
+        CSV: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
+        WARUNG: [-7.045132, 110.392160]
     };
 
-    let cart = [], mode = 'DINE IN', nasi = 'Nasi Putih', addOnNasi = 0, suhu = 'Dingin/Es';
+    let menu = [], cart = [], selectedNasi = 'Putih', nasiHarga = 0, selectedSuhu = 'Dingin/Es';
 
-    function selectMode(val, el) { toggleClass(el); mode = val; }
-    function selectSuhu(val, el) { toggleClass(el); suhu = val; }
-    
-    function selectNasi(val, harga, el) { 
-        toggleClass(el); 
-        nasi = val; 
-        addOnNasi = harga; 
-        updateUI(); 
+    async function startApp() {
+        navigator.geolocation.getCurrentPosition(async (p) => {
+            document.getElementById('welcome-overlay').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            await loadMenu();
+            syncQueue();
+        }, () => {
+            document.getElementById('gps-err').innerText = "GPS Wajib Aktif!";
+        });
     }
 
-    function toggleClass(el) {
-        Array.from(el.parentElement.children).forEach(c => c.classList.remove('active'));
+    async function loadMenu() {
+        const r = await fetch(CONFIG.CSV);
+        const t = await r.text();
+        menu = t.split('\n').slice(1).map(row => {
+            const c = row.split(',');
+            return { kat: c[0], nama: c[1], harga: parseInt(c[2]) };
+        }).filter(m => m.nama);
+        renderMenu();
+    }
+
+    function renderMenu() {
+        const box = document.getElementById('menu-box');
+        const cats = [...new Set(menu.map(m => m.kat))];
+        box.innerHTML = cats.map(cat => `
+            <div style="font-weight:bold; margin:10px 0;">${cat}</div>
+            ${menu.filter(m => m.kat === cat).map(m => `
+                <div class="menu-item">
+                    <span>${m.nama} <br><small>Rp ${m.harga.toLocaleString()}</small></span>
+                    <button onclick="addToCart('${m.nama}', ${m.harga}, '${m.kat}')">+</button>
+                </div>
+            `).join('')}
+        `).join('');
+    }
+
+    function addToCart(nama, harga, kat) {
+        cart.push({nama, harga, kat});
+        updateLogic();
+    }
+
+    function updateLogic() {
+        // Cek apakah ada menu "Paket Hemat" atau "Wardoy" (mengandung kata nasi)
+        const hasNasiKat = cart.some(i => i.kat.toLowerCase().includes('wardoy') || i.kat.toLowerCase().includes('paket hemat'));
+        const hasHemat = cart.some(i => i.kat.toLowerCase().includes('paket hemat'));
+
+        document.getElementById('variant-nasi').style.display = hasNasiKat ? 'block' : 'none';
+        document.getElementById('variant-suhu').style.display = hasHemat ? 'block' : 'none';
+
+        if(!hasNasiKat) { selectedNasi = "-"; nasiHarga = 0; }
+        if(!hasHemat) { selectedSuhu = "-"; }
+
+        let sub = cart.reduce((a, b) => a + b.harga, 0);
+        let total = sub + nasiHarga;
+        
+        document.getElementById('summary').style.display = cart.length > 0 ? 'block' : 'none';
+        document.getElementById('cart-list').innerHTML = cart.map(i => `<div>${i.nama}</div>`).join('');
+        document.getElementById('total-txt').innerText = `Rp ${total.toLocaleString()}`;
+    }
+
+    function setNasi(n, h, el) {
+        document.querySelectorAll('#variant-nasi .option').forEach(o => o.classList.remove('active'));
         el.classList.add('active');
+        selectedNasi = n; nasiHarga = h; updateLogic();
     }
 
-    function addToCart(nama, harga) {
-        cart.push({nama, harga});
-        updateUI();
-    }
-
-    function updateUI() {
-        const summary = document.getElementById('summary');
-        if (cart.length === 0) { summary.style.display = 'none'; return; }
-        
-        summary.style.display = 'block';
-        document.getElementById('cart-list').innerHTML = cart.map(i => `<div style="display:flex; justify-content:space-between;"><span>${i.nama}</span><span>Rp ${i.harga.toLocaleString()}</span></div>`).join('');
-        
-        document.getElementById('nasi-extra').innerText = addOnNasi > 0 ? `+ ${nasi} (Rp ${addOnNasi.toLocaleString()})` : '';
-        
-        let total = cart.reduce((a, b) => a + b.harga, 0) + addOnNasi;
-        document.getElementById('totalDisplay').innerText = `Rp ${total.toLocaleString()}`;
+    function setSuhu(s, el) {
+        document.querySelectorAll('#variant-suhu .option').forEach(o => o.classList.remove('active'));
+        el.classList.add('active');
+        selectedSuhu = s;
     }
 
     async function submitOrder() {
-        const nama = document.getElementById('custName').value;
-        if (!nama || cart.length === 0) return alert("Lengkapi nama dan pilih menu!");
-
-        const btn = document.getElementById('btnSubmit');
-        btn.disabled = true; btn.innerText = "Mengirim...";
-
-        const totalFinal = cart.reduce((a, b) => a + b.harga, 0) + addOnNasi;
-        const listMenu = cart.map(i => i.nama).join(', ');
-
+        const name = document.getElementById('custName').value;
+        if(!name || cart.length === 0) return alert("Lengkapi data!");
+        
         const params = new URLSearchParams({
-            token: CONFIG.TOKEN,
-            nama: nama,
-            mode: mode,
-            nasi: nasi,
-            suhu: suhu,
-            pesanan: listMenu,
-            total: totalFinal,
-            catatan: document.getElementById('orderNote').value
+            token: 'dyg-access-v2', nama: name, mode: 'DINE IN',
+            nasi: selectedNasi, suhu: selectedSuhu,
+            pesanan: cart.map(i => i.nama).join(', '),
+            total: cart.reduce((a, b) => a + b.harga, 0) + nasiHarga
         });
 
-        try {
-            const r = await fetch(CONFIG.WEB_APP_URL + "?" + params.toString());
-            const qNo = await r.text();
-            
-            const waMsg = `*PESANAN BARU - #${qNo}*\n------------------\n👤 *Nama:* ${nama}\n📍 *Mode:* ${mode}\n🍚 *Nasi:* ${nasi}\n🌡️ *Suhu:* ${suhu}\n🍴 *Menu:* ${listMenu}\n💰 *Total:* Rp ${totalFinal.toLocaleString()}\n📝 *Catatan:* ${params.get('catatan') || '-'}`;
-            
-            window.open(`https://wa.me/628123456789?text=${encodeURIComponent(waMsg)}`);
-            location.reload();
-        } catch(e) { alert("Terjadi kesalahan!"); btn.disabled = false; }
+        const r = await fetch(CONFIG.BACKEND + "?" + params.toString());
+        const qNo = await r.text();
+        alert("Pesanan Terkirim! Nomor Antrean: #" + qNo);
+        location.reload();
     }
 
     async function syncQueue() {
         while(true) {
             try {
-                const r = await fetch(CONFIG.WEB_APP_URL + "?waitQueue=true");
-                const n = await r.text();
-                document.getElementById('noAntrean').innerText = "#" + n;
+                const r = await fetch(CONFIG.BACKEND + "?waitQueue=true");
+                document.getElementById('noAntrean').innerText = "#" + (await r.text());
             } catch(e) { await new Promise(res => setTimeout(res, 5000)); }
         }
     }
-    syncQueue();
 </script>
 </body>
 </html>
