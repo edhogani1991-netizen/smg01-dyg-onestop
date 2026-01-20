@@ -487,67 +487,58 @@ async function startApp() {
         });
     }
 // --- BAGIAN YANG DIUBAH (SANGAT AMAN) ---
-
-// 1. Link gambar harus direct (langsung ke file) agar muncul
+let bannerInitialized = false;
 // CONFIG BANNER
-// --- BAGIAN BANNER (SANGAT AMAN) ---
-
-// 1. Daftar Gambar Promo
 const MY_BANNERS = [
-    "https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg",
-    "https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg",
-    "https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg",
-    "https://i.ibb.co/Y4gC1qCm/Chat-GPT-Image-Jan-20-2026-06-35-53-PM.jpg"
+  "https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg",
+  "https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg",
+  "https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg",
+  "https://i.ibb.co/Y4gC1qCm/Chat-GPT-Image-Jan-20-2026-06-35-53-PM.jpg"
 ];
 
 let bannerIdx = 0;
 
 function initBanner() {
-    const track = document.getElementById('banner-track');
-    const dots = document.getElementById('banner-dots');
-    
-    if (!track || !dots) return;
+  if (bannerInitialized) return; // ⬅️ pengaman
+  bannerInitialized = true;
 
-    // Masukkan gambar ke dalam slider
-    track.innerHTML = MY_BANNERS.map(img => 
-        `<img src="${img}" style="min-width: 100%; height: 180px; object-fit: cover;">`
-    ).join('');
-    
-    // Buat titik navigasi
-    dots.innerHTML = MY_BANNERS.map((_, i) => 
-        `<div class="dot" style="width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.5); transition:0.3s"></div>`
-    ).join('');
-    
-    updateBannerUI();
+  const track = document.getElementById('banner-track');
+  const dots = document.getElementById('banner-dots');
+  if (!track || !dots) return;
 
-    // Jalankan slide otomatis setiap 5 detik
-    setInterval(() => {
-        bannerIdx = (bannerIdx + 1) % MY_BANNERS.length;
-        updateBannerUI();
-    }, 5000);
+  track.innerHTML = MY_BANNERS.map(img =>
+    `<img src="${img}" style="min-width:100%; height:180px; object-fit:cover;">`
+  ).join('');
+
+  dots.innerHTML = MY_BANNERS.map(() =>
+    `<div class="dot" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.5)"></div>`
+  ).join('');
+
+  updateBannerUI();
+  setInterval(nextBanner, 5000);
+}
+function nextBanner() {
+  bannerIdx = (bannerIdx + 1) % MY_BANNERS.length;
+  updateBannerUI();
 }
 
 function updateBannerUI() {
-    const track = document.getElementById('banner-track');
-    if (track) track.style.transform = `translateX(-${bannerIdx * 100}%)`;
-    
-    const dots = document.querySelectorAll('#banner-dots .dot');
-    dots.forEach((dot, i) => {
-        dot.style.background = i === bannerIdx ? '#F39C12' : 'rgba(255,255,255,0.5)';
-        dot.style.width = i === bannerIdx ? '20px' : '8px';
-        dot.style.borderRadius = i === bannerIdx ? '4px' : '50%';
-    });
-}
+  document.getElementById('banner-track').style.transform =
+    `translateX(-${bannerIdx * 100}%)`;
 
-// 2. AKTIVASI BANNER (Setelah Validasi Lokasi Berhasil)
-// Kita membungkus fungsi startApp lama agar banner otomatis jalan saat app terbuka
+  document.querySelectorAll('#banner-dots .dot').forEach((d, i) => {
+    d.style.background = i === bannerIdx ? '#F39C12' : 'rgba(255,255,255,.5)';
+    d.style.width = i === bannerIdx ? '20px' : '8px';
+  });
+}
 const originalStartApp = startApp;
-startApp = async function() {
-    await originalStartApp(); 
-    if (document.getElementById('main-content').classList.contains('visible')) {
-        initBanner();
-    }
+startApp = async function () {
+  await originalStartApp();
+  if (document.getElementById('main-content').classList.contains('visible')) {
+    initBanner();
+  }
 };
+
 </script>
 </body>
 </html>
