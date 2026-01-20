@@ -450,18 +450,53 @@
 
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-    function filterMenu() {
-        const k = document.getElementById('searchMenu').value.toLowerCase();
-        document.querySelectorAll('.cat-container').forEach(cat => {
-            let hasMatch = false;
-            cat.querySelectorAll('.menu-item').forEach(item => {
-                const iN = item.querySelector('div[style*="font-weight:700"]').innerText.toLowerCase();
-                if (iN.includes(k)) { item.style.display = 'block'; hasMatch = true; } else { item.style.display = 'none'; }
-            });
-            cat.style.display = (k.length > 0 && !hasMatch) ? 'none' : 'block';
-            if(k.length > 0 && hasMatch) cat.querySelector('.menu-list').classList.add('active');
+function filterMenu() {
+    const k = document.getElementById('searchMenu').value.toLowerCase();
+    const categories = document.querySelectorAll('.cat-container');
+
+    categories.forEach(cat => {
+        let hasMatch = false;
+        const menuList = cat.querySelector('.menu-list');
+        const items = cat.querySelectorAll('.menu-item');
+
+        items.forEach(item => {
+            const nameElement = item.querySelector('div[style*="font-weight:700"]');
+            const originalText = nameElement.getAttribute('data-orig') || nameElement.innerText;
+            
+            // Simpan teks asli jika belum ada
+            if (!nameElement.getAttribute('data-orig')) {
+                nameElement.setAttribute('data-orig', originalText);
+            }
+
+            if (k.length > 0 && originalText.toLowerCase().includes(k)) {
+                item.style.display = 'block';
+                hasMatch = true;
+                
+                // Berikan Highlight Kuning
+                const regex = new RegExp(`(${k})`, 'gi');
+                nameElement.innerHTML = originalText.replace(regex, `<mark style="background: #FFEB3B; color: #000; border-radius: 4px; padding: 0 2px;">$1</mark>`);
+            } else if (k.length === 0) {
+                item.style.display = 'block';
+                nameElement.innerHTML = originalText; // Reset ke teks asli
+            } else {
+                item.style.display = 'none';
+            }
         });
-    }
+
+        // Logika Auto Open/Close Kategori
+        if (k.length > 0) {
+            if (hasMatch) {
+                cat.style.display = 'block';
+                menuList.classList.add('active'); // Otomatis Buka jika cocok
+            } else {
+                cat.style.display = 'none';
+            }
+        } else {
+            cat.style.display = 'block';
+            menuList.classList.remove('active'); // Otomatis Tutup jika kosong
+        }
+    });
+}
 
     // --- BAGIAN BANNER ---
     let bannerInitialized = false;
