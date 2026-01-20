@@ -449,7 +449,8 @@
             
             const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
             const locLink = userCoords ? `https://www.google.com/maps?q=${userCoords.lat},${userCoords.lng}` : 'Tidak terdeteksi';
-            const gmapsReview = "https://g.page/r/YOUR_LINK_HERE/review"; 
+            // Link sakti langsung muncul jendela ulasan bintang 5 untuk Warung Doyong
+const gmapsReview = "https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI";
 
             let msg = `Halo cloudkitchen.dyg++!\n\n`;
             const modeEmoji = currentMode === 'DELIVERY' ? '🛵' : (currentMode === 'DINE IN' ? '🍽️' : '🛍️');
