@@ -533,10 +533,15 @@ function updateBannerUI() {
 }
 const originalStartApp = startApp;
 startApp = async function () {
-  await originalStartApp();
-  if (document.getElementById('main-content').classList.contains('visible')) {
-    initBanner();
-  }
+  originalStartApp(); // ❌ jangan await
+
+  const waitBanner = setInterval(() => {
+    const main = document.getElementById('main-content');
+    if (main && main.classList.contains('visible')) {
+      clearInterval(waitBanner);
+      initBanner();
+    }
+  }, 100);
 };
 
 </script>
