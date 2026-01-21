@@ -357,23 +357,50 @@ mark {
         const counts = {}; 
         cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
+        // 1. Daftar pengecualian (mentah)
+        const rawExclusions = [
+            "Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", 
+            "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", 
+            "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", 
+            "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", 
+            "Float Mangga", "Float Stoberi"
+        ];
+
+        // 2. Normalisasi daftar pengecualian (huruf kecil semua & trim spasi)
+        const cleanExclusions = rawExclusions.map(name => name.toLowerCase().trim());
+
         document.getElementById('menu-container').innerHTML = items.map(m => {
-            const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
+            const kl = m.kat.toLowerCase().trim();
+            const nl = m.nama.toLowerCase().trim(); // Nama menu dari CSV yang sudah dibersihkan
+            const originalName = m.nama; // Untuk tampilan UI
+
             const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
             const isMieG = nl.includes("mie") && nl.includes("goreng");
             const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
+            
+            // 3. Logika Filter DRINK yang Ketat
             const isPaket = kl.includes("paket");
+            
+            // Cek apakah kategori adalah DRINK
+            const isDrinkKat = kl.includes("drink");
+            
+            // Cek apakah nama menu ada di daftar pengecualian (menggunakan data yang sudah di-clean)
+            const isExcluded = cleanExclusions.includes(nl);
+
+            // Tampilkan varian suhu jika:
+            // (Kategori PAKET) ATAU (Kategori DRINK tapi BUKAN menu pengecualian)
+            const showSuhu = isPaket || (isDrinkKat && !isExcluded);
 
             return `
             <div class="menu-item">
                 <div class="menu-info">
-                    <h4 data-name="${m.nama}">${m.nama}</h4>
+                    <h4 data-name="${originalName}">${originalName}</h4>
                     <div class="price">Rp ${m.harga.toLocaleString()}</div>
                     <div class="variant-area">
                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
                         ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                         ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${showSuhu ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                     </div>
                 </div>
                 <div class="qty-box">
