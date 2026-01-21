@@ -6,6 +6,14 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
+@keyframes waving {
+    0% { transform: rotate(0deg); }
+    20% { transform: rotate(-15deg); }
+    40% { transform: rotate(10deg); }
+    60% { transform: rotate(-10deg); }
+    80% { transform: rotate(5deg); }
+    100% { transform: rotate(0deg); }
+}
         :root { 
             --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
             --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
@@ -209,7 +217,7 @@ mark {
 
 <!-- BARIS 1 : MODE ORDER -->
 <div class="mode-container" style="margin-top: -10px;">
-    <div id="mDine" class="mode-item active" onclick="changeMode('DINE IN', this)">🍽️ Dine In</div>
+    <div id="mDine" class="mode-item" onclick="changeMode('DINE IN', this)">🍽️ Dine In</div>
     <div id="mTake" class="mode-item" onclick="changeMode('TAKE AWAY', this)">🛍️ Take Away</div>
     <div id="mDeliv" class="mode-item" onclick="changeMode('DELIVERY', this)">🛵 Delivery</div>
 </div>
@@ -276,10 +284,29 @@ mark {
     </div>
 </div>
 
+<div id="modalMode" class="modal-overlay" style="display: none; backdrop-filter: blur(8px); z-index: 9999;">
+    <div class="modal-card" style="position: relative; padding-top: 40px;">
+        <button onclick="closeModeSelection()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; color: #BBB; cursor: pointer; line-height: 1;">&times;</button>
+        
+        <div style="font-size: 60px; margin-bottom: 10px; animation: waving 1.5s infinite; display: inline-block;">🙋‍♂️</div>
+        
+        <h3 style="font-weight: 900; margin-bottom: 10px; font-size: 18px;">Halo, Broh! 👋</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 25px; line-height: 1.5;">
+            Pilih mode pesananmu dulu ya, baru lanjut pilih menu.<br>Selamat berbelanja!
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button onclick="selectModeFromModal('DINE IN', 'mDine')" class="order-btn" style="background: white; color: var(--primary); border: 2px solid var(--primary); padding: 12px; border-radius: 12px; font-weight: 700;">🍽️ Makan di Sini (Dine In)</button>
+            <button onclick="selectModeFromModal('TAKE AWAY', 'mTake')" class="order-btn" style="background: white; color: var(--primary); border: 2px solid var(--primary); padding: 12px; border-radius: 12px; font-weight: 700;">🛍️ Bawa Pulang (Take Away)</button>
+            <button onclick="selectModeFromModal('DELIVERY', 'mDeliv')" class="order-btn" style="background: var(--primary); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700;">🛵 Antar ke Rumah (Delivery)</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyPKJ8Q9u-upqGFQDFxSC7kHGpPe4EECUKDBlU704DyLMfyXUwUJhHSVeYa1FbNockFyA/exec',
+    //WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyPKJ8Q9u-upqGFQDFxSC7kHGpPe4EECUKDBlU704DyLMfyXUwUJhHSVeYa1FbNockFyA/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -293,37 +320,7 @@ mark {
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0;
-
-    async function startApp() {
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        
-        // --- BAGIAN INI YANG PENTING ---
-        // Kita simpan ke "window" agar bisa dibaca oleh fungsi submitOrder()
-        window.userLat = latitude;
-        window.userLng = longitude;
-        // -------------------------------
-
-        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-        userDist = straightLineDist * 1.45; 
-
-        if (userDist > CONFIG.RADIUS_DINE_IN) {
-            const dineBtn = document.getElementById('mDine');
-            if(dineBtn) {
-                dineBtn.classList.add('disabled');
-                dineBtn.onclick = () => showOutOfRangeAlert();
-            }
-            changeMode('DELIVERY', document.getElementById('mDeliv'));
-        }
-        
-        initMap(latitude, longitude);
-        initBanner();
-        document.getElementById('welcome-overlay').style.display = 'none';
-        await loadMenu();
-        syncQueue();
-    }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
-}
+    let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
@@ -332,7 +329,35 @@ mark {
         if (km <= 5) return 8000;
         return 8000 + (Math.ceil(km - 5) * 2000);
     }
+async function startApp() {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        window.userLat = latitude;
+        window.userLng = longitude;
 
+        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+        userDist = straightLineDist * 1.45; 
+
+        // Cek jika lokasi terlalu jauh untuk Dine In
+        if (userDist > CONFIG.RADIUS_DINE_IN) {
+            const dineBtn = document.getElementById('mDine');
+            if(dineBtn) {
+                dineBtn.classList.add('disabled');
+                dineBtn.onclick = () => showOutOfRangeAlert();
+            }
+        }
+        
+        initMap(latitude, longitude);
+        initBanner();
+        document.getElementById('welcome-overlay').style.display = 'none';
+        
+        // --- INI PERUBAHANNYA: Membuka Pop-up Mode ---
+        openModeSelection();
+        
+        await loadMenu();
+        syncQueue();
+    }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
+}
     async function loadMenu() {
         try {
             const resp = await fetch(CONFIG.MENU_CSV_URL);
@@ -705,6 +730,25 @@ if (navigator.vibrate) navigator.vibrate(50); // Getar halus 50ms (seperti sentu
     function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
+// Taruh ini di bagian bawah script
+function openModeSelection() {
+    document.getElementById('modalMode').style.display = 'flex';
+}
+
+function closeModeSelection() {
+    document.getElementById('modalMode').style.display = 'none';
+}
+
+// Fungsi agar tombol di pop-up bisa memilih mode dan menutup modal
+function selectModeFromModal(mode, elementId) {
+    const el = document.getElementById(elementId);
+    if (el.classList.contains('disabled')) {
+        showOutOfRangeAlert();
+        return;
+    }
+    changeMode(mode, el);
+    closeModeSelection();
+}
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
