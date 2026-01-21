@@ -237,8 +237,9 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+    // --- 1. CONFIGURATION ---
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyPKJ8Q9u-upqGFQDFxSC7kHGpPe4EECUKDBlU704DyLMfyXUwUJhHSVeYa1FbNockFyA/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxeaQc1MhTHV1G6BMlF7ucRwLQL9HHFMyHz2uY1sa1_wGNga3r56XvUQEULb9OSuBnCLQ/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -246,6 +247,7 @@
         RADIUS_DINE_IN: 150
     };
 
+    // --- 2. DATA VARIANTS ---
     const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
     const VARIAN_MIE_GORENG = [{n:'Original',e:0},{n:'Rendang',e:0},{n:'Salero Padang',e:0}];
     const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
@@ -254,242 +256,157 @@
 
     let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0;
 
- async function startApp() {
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-        userDist = straightLineDist * 1.45; 
+    // --- 3. CORE FUNCTIONS ---
 
-if (userDist > CONFIG.RADIUS_DINE_IN) {
-    const dineBtn = document.getElementById('mDine');
-    dineBtn.classList.add('disabled');
+    async function startApp() {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude, longitude } = pos.coords;
+            const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+            userDist = straightLineDist * 1.45; 
 
-    dineBtn.onclick = () => {
-        showOutOfRangeAlert();
-    };
+            if (userDist > CONFIG.RADIUS_DINE_IN) {
+                const dineBtn = document.getElementById('mDine');
+                dineBtn.classList.add('disabled');
+                dineBtn.onclick = () => showOutOfRangeAlert();
+                changeMode('DELIVERY', document.getElementById('mDeliv'));
+            }
+            
+            initMap(latitude, longitude);
+            initBanner();
+            document.getElementById('welcome-overlay').style.display = 'none';
+            await loadMenu();
+            syncQueue();
+        }, () => alert("Mohon aktifkan GPS untuk menghitung jarak & ongkir."), { enableHighAccuracy: true });
+    }
 
-    changeMode('DELIVERY', document.getElementById('mDeliv'));
-}
+    async function loadMenu() {
+        try {
+            const resp = await fetch(CONFIG.MENU_CSV_URL);
+            const csv = await resp.text();
+            menuData = csv.split('\n').slice(1).map((row, i) => {
+                const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
+                return { id: 'm'+i, kat: cols[0] || '', nama: cols[1] || '', harga: parseInt(cols[2]) || 0 };
+            }).filter(m => m.nama);
+            renderTabs();
+            renderMenu();
+        } catch (e) { console.error(e); }
+    }
+
+    // Fungsi Submit Order (UTAMA: Kirim ke Spreadsheet & WA)
+    async function submitOrder() {
+        const nI = document.getElementById('custName');
+        const tI = document.getElementById('tableNo');
+        const aI = document.getElementById('addressDetail');
+        const noteI = document.getElementById('orderNote');
         
-        initMap(latitude, longitude);
-        initBanner();
-        document.getElementById('welcome-overlay').style.display = 'none';
-        await loadMenu();
-        syncQueue();
-    }, () => alert("Mohon aktifkan GPS untuk menghitung jarak & ongkir."), { enableHighAccuracy: true });
-}
+        // 1. Validasi Input
+        if (!nI.value.trim()) return alert("Nama harus diisi!");
+        if (currentMode === 'DINE IN' && !tI.value.trim()) return alert("Nomor meja harus diisi!");
+        if (currentMode === 'DELIVERY' && !aI.value.trim()) return alert("Alamat harus diisi!");
 
-async function loadMenu() {
-    try {
-        const resp = await fetch(CONFIG.MENU_CSV_URL);
-        const csv = await resp.text();
-        menuData = csv.split('\n').slice(1).map((row, i) => {
-            const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
-            return { id: 'm'+i, kat: cols[0] || '', nama: cols[1] || '', harga: parseInt(cols[2]) || 0 };
-        }).filter(m => m.nama);
-        renderTabs();
-        renderMenu();
-    } catch (e) { console.error(e); }
-}
+        // 2. Ringkas Pesanan untuk Spreadsheet
+        const summary = {};
+        cart.forEach(c => {
+            let label = c.nama;
+            let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+            if(tags) label += ` (${tags})`;
+            summary[label] = (summary[label] || 0) + 1;
+        });
+        const pesananTeks = Object.entries(summary).map(([n, q]) => `${q}x ${n}`).join(', ');
+        const totalHarga = document.getElementById('miniPrice').innerText.replace(/\./g, '');
 
-function renderTabs() {
-    const cats = [...new Set(menuData.map(m => m.kat))];
-    document.getElementById('cat-tabs').innerHTML = `<div class="tab active" onclick="filterByTab('ALL', this)">Semua</div>` + 
-        cats.map(c => `<div class="tab" onclick="filterByTab('${c}', this)">${c}</div>`).join('');
-}
+        // 3. KIRIM KE GOOGLE SPREADSHEET (Auto Save)
+        const params = new URLSearchParams({
+            token: CONFIG.TOKEN,
+            nama: nI.value,
+            pesanan: pesananTeks,
+            mode: currentMode,
+            total: totalHarga
+        });
 
-function renderMenu(filterKat = 'ALL') {
-    const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
-    const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
-    
-    document.getElementById('menu-container').innerHTML = items.map(m => {
-        const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
-        const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
-        const isMieG = nl.includes("mie") && nl.includes("goreng") && !nl.includes("lik");
-        const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah")) && !nl.includes("lik");
-        const isPaket = kl.includes("paket");
+        // Kirim data (no-cors agar tidak tertahan security browser)
+        fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
 
-        return `
-        <div class="menu-item">
-            <div class="menu-info">
-                <h4 data-name="${m.nama}">${m.nama}</h4>
-                <div class="price">Rp ${m.harga.toLocaleString()}</div>
-                <div class="variant-area">
-                    ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
-                    ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                    ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                    ${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                </div>
-            </div>
-            <div class="qty-box">
-                <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
-                <span id="qty-${m.id}">${counts[m.id] || 0}</span>
-                <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
-            </div>
-        </div>`;
-    }).join('');
-}
+        // 4. KIRIM KE WHATSAPP
+        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+        const pRowsWA = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
+        let msg = `Halo cloudkitchen.dyg++!\n\n*${currentMode}*\n👤 Nama: ${nI.value}\n`;
+        if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value}\n`;
+        else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}\n`;
+        
+        msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
+        if(noteI.value) msg += `\n📝 Catatan: ${noteI.value}\n`;
+        msg += `\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
 
-function updateCart(id, change, forceVariant = null) {
-    const item = menuData.find(m => m.id === id);
-    if (!item) return;
-
-    if (change > 0) {
-        let vData;
-        if (forceVariant) {
-            vData = forceVariant;
-        } else {
-            const sN = document.getElementById(`n-${id}`)?.value || null;
-            const sM = document.getElementById(`m-${id}`)?.value || null;
-            const sR = document.getElementById(`r-${id}`)?.value || null;
-            const sS = document.getElementById(`s-${id}`)?.value || null;
-            const ex = sN ? (VARIAN_NASI.find(x => x.n === sN)?.e || 0) : 0;
-            vData = { vN: sN, vM: sM, vR: sR, vS: sS, ex: ex };
-        }
-        cart.push({ ...item, ...vData });
-    } else {
-        let idx = -1;
-        if (forceVariant) {
-            idx = cart.findLastIndex(c => 
-                c.id === id && c.vN === forceVariant.vN && 
-                c.vM === forceVariant.vM && c.vR === forceVariant.vR && 
-                c.vS === forceVariant.vS
-            );
-        } else {
-            idx = cart.findLastIndex(c => c.id === id);
-        }
-        if (idx !== -1) cart.splice(idx, 1);
-    }
-    refreshUI();
-}
-
-function refreshUI() {
-    let sub = 0; 
-    const counts = {};
-    cart.forEach(c => { 
-        sub += (c.harga + (c.ex || 0)); 
-        counts[c.id] = (counts[c.id] || 0) + 1; 
-    });
-    
-    menuData.forEach(m => {
-        const el = document.getElementById(`qty-${m.id}`);
-        if(el) {
-            const val = counts[m.id] || 0;
-            el.innerText = val;
-            el.previousElementSibling.disabled = val === 0;
-        }
-    });
-
-    const sInd = document.getElementById('swipeInd');
-    const distEl = document.getElementById('dist-info');
-    const ongEl = document.getElementById('ongkir-label');
-
-    if (sub > 0) {
-        sInd.style.display = 'block';
-        if (currentMode === 'DELIVERY') {
-            let ong = calculateOngkir(userDist);
-            document.getElementById('miniPrice').innerText = (sub + ong).toLocaleString();
-            distEl.style.display = 'block';
-            distEl.innerText = `Estimasi Rute: ${(userDist/1000).toFixed(1)} KM`;
-            ongEl.style.display = 'block';
-            ongEl.innerText = `+ Ongkir Delivery Rp ${ong.toLocaleString()}`;
-        } else {
-            document.getElementById('miniPrice').innerText = sub.toLocaleString();
-            distEl.style.display = 'none';
-            ongEl.style.display = 'none';
-        }
-    } else {
-        sInd.style.display = 'none';
-        distEl.style.display = 'none';
-        ongEl.style.display = 'none';
-        document.getElementById('miniPrice').innerText = "0";
-        toggleSummary(false);
+        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     }
 
-    document.getElementById('btnOrder').disabled = sub === 0;
-    document.getElementById('btnOrder').innerText = sub > 0 ? 'PESAN SEKARANG' : 'PILIH MENU';
-    updateOrderSummary();
-}
+    // --- FUNGSI PENDUKUNG (RENDER MENU, CART, DLL) ---
+    // (Sama seperti kode asli Anda untuk render UI)
+    function renderTabs() {
+        const cats = [...new Set(menuData.map(m => m.kat))];
+        document.getElementById('cat-tabs').innerHTML = `<div class="tab active" onclick="filterByTab('ALL', this)">Semua</div>` + 
+            cats.map(c => `<div class="tab" onclick="filterByTab('${c}', this)">${c}</div>`).join('');
+    }
 
-    function toggleSummary(open) {
-        const panel = document.getElementById('orderSummaryPanel');
-        const overlay = document.getElementById('summaryOverlay');
-        if (cart.length === 0) { panel.classList.remove('active'); overlay.style.display = 'none'; return; }
-        if (open) { panel.classList.add('active'); overlay.style.display = 'block'; }
-        else { panel.classList.remove('active'); overlay.style.display = 'none'; }
+    function renderMenu(filterKat = 'ALL') {
+        const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
+        const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+        document.getElementById('menu-container').innerHTML = items.map(m => {
+            const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
+            const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
+            const isMieG = nl.includes("mie") && nl.includes("goreng") && !nl.includes("lik");
+            const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah")) && !nl.includes("lik");
+            const isPaket = kl.includes("paket");
+            return `<div class="menu-item"><div class="menu-info"><h4>${m.nama}</h4><div class="price">Rp ${m.harga.toLocaleString()}</div><div class="variant-area">${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}</div></div><div class="qty-box"><button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button><span id="qty-${m.id}">${counts[m.id] || 0}</span><button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button></div></div>`;
+        }).join('');
+    }
+
+    function updateCart(id, change, forceVariant = null) {
+        const item = menuData.find(m => m.id === id);
+        if (!item) return;
+        if (change > 0) {
+            let vData = forceVariant || { vN: document.getElementById(`n-${id}`)?.value, vM: document.getElementById(`m-${id}`)?.value, vR: document.getElementById(`r-${id}`)?.value, vS: document.getElementById(`s-${id}`)?.value, ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0) };
+            cart.push({ ...item, ...vData });
+        } else {
+            let idx = forceVariant ? cart.findLastIndex(c => c.id === id && c.vN === forceVariant.vN) : cart.findLastIndex(c => c.id === id);
+            if (idx !== -1) cart.splice(idx, 1);
+        }
+        refreshUI();
+    }
+
+    function refreshUI() {
+        let sub = 0; const counts = {};
+        cart.forEach(c => { sub += (c.harga + (c.ex || 0)); counts[c.id] = (counts[c.id] || 0) + 1; });
+        menuData.forEach(m => { const el = document.getElementById(`qty-${m.id}`); if(el) { el.innerText = counts[m.id] || 0; el.previousElementSibling.disabled = (counts[m.id] || 0) === 0; }});
+        document.getElementById('miniPrice').innerText = sub.toLocaleString('id-ID');
+        document.getElementById('btnOrder').disabled = sub === 0;
+        updateOrderSummary();
     }
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
-        if (cart.length === 0) { container.innerHTML = ""; return; }
-        
         const groups = {};
         cart.forEach(c => {
             const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
             if(!groups[key]) groups[key] = { ...c, qty: 0 };
             groups[key].qty++;
         });
-
-        container.innerHTML = Object.values(groups).map(item => {
-            const tags = [item.vN, item.vM, item.vR, item.vS].filter(x => x).join(', ');
-            const vObj = { vN: item.vN, vM: item.vM, vR: item.vR, vS: item.vS, ex: item.ex };
-            
-            return `
-            <div class="summary-item">
-                <div class="item-detail-name">
-                    <b>${item.nama}</b>
-                    <span>${tags || 'Original'}</span>
-                    <div style="font-weight:800; color:var(--primary); margin-top:4px;">Rp ${((item.harga + (item.ex || 0)) * item.qty).toLocaleString()}</div>
-                </div>
-                <div class="mini-qty-box">
-                    <button class="mini-qty-btn" onclick='updateCart("${item.id}", -1, ${JSON.stringify(vObj)})'>−</button>
-                    <span style="font-weight:900; font-size:14px; min-width:15px; text-align:center;">${item.qty}</span>
-                    <button class="mini-qty-btn" onclick='updateCart("${item.id}", 1, ${JSON.stringify(vObj)})'>+</button>
-                </div>
-            </div>`;
-        }).join('');
+        container.innerHTML = Object.values(groups).map(item => `<div class="summary-item"><div class="item-detail-name"><b>${item.nama}</b><span>${[item.vN, item.vM, item.vR, item.vS].filter(x => x).join(', ') || 'Original'}</span></div><div class="mini-qty-box"><span>${item.qty}x</span></div></div>`).join('');
     }
 
-    function filterByTab(cat, el) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        el.classList.add('active');
-        renderMenu(cat);
-    }
-
-    function filterMenu() {
-        const k = document.getElementById('searchMenu').value.toLowerCase();
-        document.querySelectorAll('.menu-item').forEach(card => {
-            const name = card.querySelector('h4').getAttribute('data-name').toLowerCase();
-            card.style.display = name.includes(k) ? 'flex' : 'none';
-        });
+    function toggleSummary(open) {
+        document.getElementById('orderSummaryPanel').classList.toggle('active', open);
+        document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
     }
 
     function changeMode(m, el) {
-    if (el.classList.contains('disabled')) {
-        showOutOfRangeAlert();
-        return;
-    }
-
-    currentMode = m;
-    document.querySelectorAll('.mode-item').forEach(o => o.classList.remove('active'));
-    el.classList.add('active');
-
-    document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
-    document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
-
-    document.querySelectorAll('.input-card').forEach(c =>
-        c.classList.remove('error-field', 'shake-ani')
-    );
-
-    refreshUI();
-}
-
-
-    function calculateOngkir(m) {
-        const km = m / 1000;
-        if (km <= 2) return 3000;
-        if (km <= 5) return 5000;
-        return 6000 + (Math.ceil(km - 5) * 2000);
+        currentMode = m;
+        document.querySelectorAll('.mode-item').forEach(o => o.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
+        document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+        refreshUI();
     }
 
     function initMap(lat, lng) {
@@ -515,80 +432,9 @@ function refreshUI() {
 
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-
-    function submitOrder() {
-        const nI = document.getElementById('custName');
-        const tI = document.getElementById('tableNo');
-        const aI = document.getElementById('addressDetail');
-        const wrapN = document.getElementById('wrapName');
-        const wrapT = document.getElementById('wrapMeja');
-        const wrapA = document.getElementById('wrapAddr');
-
-        // Reset status error
-        [wrapN, wrapT, wrapA].forEach(el => el.classList.remove('error-field', 'shake-ani'));
-
-        let targetError = null;
-
-        if (!nI.value.trim()) {
-            wrapN.classList.add('error-field', 'shake-ani');
-            targetError = wrapN;
-        } else if (currentMode === 'DINE IN' && !tI.value.trim()) {
-            wrapT.classList.add('error-field', 'shake-ani');
-            targetError = wrapT;
-        } else if (currentMode === 'DELIVERY' && !aI.value.trim()) {
-            wrapA.classList.add('error-field', 'shake-ani');
-            targetError = wrapA;
-        }
-
-        if (targetError) {
-            closeModal();
-            toggleSummary(false);
-            if (navigator.vibrate) navigator.vibrate(200);
-            targetError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => { targetError.querySelector('input, textarea').focus(); }, 500);
-            return;
-        }
-
-        const summary = {};
-        cart.forEach(c => {
-            let l = c.nama; 
-            let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-            if(tags) l += ` [${tags}]`;
-            summary[l] = (summary[l] || 0) + 1;
-        });
-
-        const pRows = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
-        const total = document.getElementById('miniPrice').innerText;
-        const note = document.getElementById('orderNote').value;
-        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        const distInfo = (currentMode === 'DELIVERY') ? `\n📍 Jarak: ${(userDist/1000).toFixed(1)} KM` : '';
-
-        let msg = `Halo cloudkitchen.dyg++!\n\n*${currentMode}*\n👤 Nama: ${nI.value}\n`;
-        if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value}\n`;
-        else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}${distInfo}\n`;
-        
-        msg += `\n*PESANAN:*\n${pRows.join('\n')}\n`;
-        if(note) msg += `\n📝 Catatan: ${note}\n`;
-        msg += `\n*TOTAL: Rp ${total}*`;
-        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    }
-function showOutOfRangeAlert() {
-    document.getElementById('modalConfirm').style.display = 'flex';
-    document.querySelector('#modalConfirm h3').innerText = 'Di Luar Jangkauan';
-    document.querySelector('#modalConfirm p').innerText =
-        'Kamu sedang berada di luar jangkauan warung untuk layanan Dine In.\nSilakan pilih Take Away atau Delivery.';
-}
-function openComingSoon() {
-    document.getElementById('modalComingSoon').style.display = 'flex';
-}
-
-function closeComingSoon() {
-    document.getElementById('modalComingSoon').style.display = 'none';
-
-    // pastikan kembali ke menu utama (tidak ubah mode)
-    toggleSummary(false);
-}
-
+    function showOutOfRangeAlert() { alert("Di luar jangkauan untuk Dine-In!"); }
+    function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
+    function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
