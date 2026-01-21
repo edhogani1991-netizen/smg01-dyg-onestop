@@ -40,7 +40,6 @@
         .input-card label { display: block; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 5px; }
         .input-card input, .input-card textarea { width: 100%; border: none; font-size: 14px; font-weight: 600; outline: none; background: transparent; }
 
-        /* SEARCH FIX */
         .search-wrapper { margin: 15px 0; background: white; border-radius: 15px; border: 1.5px solid var(--soft); padding: 0 15px; display: flex; align-items: center; }
         #searchMenu { width: 100%; padding: 12px 0; border: none; font-size: 14px; background: transparent; }
 
@@ -52,13 +51,12 @@
         .menu-item { background: white; border-radius: 20px; padding: 12px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between; }
         .menu-info h4 { margin: 0 0 4px; font-size: 13px; font-weight: 800; min-height: 34px; line-height: 1.3; }
         .menu-info .price { font-size: 14px; font-weight: 900; color: var(--primary); margin-bottom: 10px; }
-        .variant-select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #F0F0F0; font-size: 11px; background: #FAFAFA; margin-bottom: 6px; font-weight: 600; color: var(--text); }
+        .variant-select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #F0F0F0; font-size: 11px; background: #FAFAFA; margin-bottom: 6px; font-weight: 600; }
         
         .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 10px; padding: 4px; margin-top: 10px; }
         .qty-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
 
-        /* SUMMARY DROPDOWN */
         .order-summary-mini {
             position: fixed; bottom: 95px; left: 20px; right: 20px; background: white;
             border-radius: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1); padding: 12px 15px;
@@ -122,14 +120,14 @@
     <div style="font-weight: 800; font-size: 15px; margin-top: 25px;">🍴 Pilih Menu</div>
     
     <div class="search-wrapper">
-        <input type="text" id="searchMenu" placeholder="Cari Mie Lik, Nasi Goreng, Es Teh..." oninput="filterMenu()">
+        <input type="text" id="searchMenu" placeholder="Cari Mie, Nasi Goreng, Es Teh..." oninput="filterMenu()">
     </div>
 
     <div class="category-tabs" id="cat-tabs"></div>
     <div class="menu-grid" id="menu-container">Memuat menu...</div>
 
     <div style="font-weight: 800; font-size: 15px; margin: 25px 0 10px;">Catatan Tambahan</div>
-    <div class="input-card"><textarea id="orderNote" placeholder="Contoh: Tidak pakai sayur, pedas sedang..." rows="2"></textarea></div>
+    <div class="input-card"><textarea id="orderNote" placeholder="Contoh: Pedas sedang, tanpa timun..." rows="2"></textarea></div>
 </div>
 
 <div id="orderSummaryPanel" class="order-summary-mini">
@@ -220,14 +218,9 @@
             const nameLower = m.nama.toLowerCase();
             const catLower = m.kat.toLowerCase();
             
-            // LOGIKA VARIAN NASI
+            // VARIAN NASI
             const isNasi = catLower.includes("hemat") || (catLower.includes("wardoy") && nameLower.includes("nasi"));
-            
-            // LOGIKA VARIAN DRINK (Es/Panas) - Kecuali Jus
-            const isDrink = catLower.includes("drink") || catLower.includes("minuman") || catLower.includes("hemat");
-            const isSuhu = isDrink && !nameLower.includes("jus") && !nameLower.includes("mineral");
-
-            // LOGIKA VARIAN MIE
+            // VARIAN MIE
             const isMieGoreng = nameLower.includes("mie") && nameLower.includes("goreng") && !nameLower.includes("lik");
             const isMieRebus = nameLower.includes("mie") && (nameLower.includes("rebus") || nameLower.includes("kuah")) && !nameLower.includes("lik");
 
@@ -238,7 +231,6 @@
                     <div class="price">Rp ${m.harga.toLocaleString()}</div>
                     <div class="variant-area">
                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
-                        ${isSuhu ? `<select id="s-${m.id}" class="variant-select"><option value="Es">Es</option><option value="Panas">Panas</option></select>` : ''}
                         ${isMieGoreng ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                         ${isMieRebus ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                     </div>
@@ -256,12 +248,10 @@
         const item = menuData.find(m => m.id === id);
         if (change > 0) {
             const selN = document.getElementById(`n-${id}`)?.value || null;
-            const selS = document.getElementById(`s-${id}`)?.value || null;
             const selM = document.getElementById(`m-${id}`)?.value || null;
             const selR = document.getElementById(`r-${id}`)?.value || null;
-            
             const extra = selN ? (VARIAN_NASI.find(v => v.n === selN)?.e || 0) : 0;
-            cart.push({ ...item, vN: selN, vS: selS, vM: selM, vR: selR, ex: extra });
+            cart.push({ ...item, vN: selN, vM: selM, vR: selR, ex: extra });
         } else {
             const idx = cart.map(c => c.id).lastIndexOf(id);
             if (idx !== -1) cart.splice(idx, 1);
@@ -314,16 +304,15 @@
         const summary = {};
         cart.forEach(c => {
             let name = c.nama;
-            let tags = [c.vN, c.vS, c.vM, c.vR].filter(x => x).join(', ');
+            let tags = [c.vN, c.vM, c.vR].filter(x => x).join(', ');
             if(tags) name += ` (${tags})`;
             summary[name] = (summary[name] || 0) + 1;
         });
 
         container.innerHTML = Object.entries(summary).map(([name, qty]) => {
-            // Cari harga item asli untuk tampilan subtotal di summary
             const baseItem = cart.find(c => {
                 let check = c.nama;
-                let tags = [c.vN, c.vS, c.vM, c.vR].filter(x => x).join(', ');
+                let tags = [c.vN, c.vM, c.vR].filter(x => x).join(', ');
                 if(tags) check += ` (${tags})`;
                 return check === name;
             });
@@ -392,16 +381,12 @@
 
     function submitOrder() {
         const nI = document.getElementById('custName');
-        if(!nI.value.trim()) { 
-            nI.focus();
-            alert("Silakan masukkan nama Anda."); 
-            return; 
-        }
+        if(!nI.value.trim()) { nI.focus(); alert("Masukkan nama Anda."); return; }
         
         const summary = {};
         cart.forEach(c => {
             let l = c.nama; 
-            let tags = [c.vN, c.vS, c.vM, c.vR].filter(x => x).join(', ');
+            let tags = [c.vN, c.vM, c.vR].filter(x => x).join(', ');
             if(tags) l += ` [${tags}]`;
             summary[l] = (summary[l] || 0) + 1;
         });
@@ -409,13 +394,11 @@
         const pRows = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
         const total = document.getElementById('miniPrice').innerText;
         const note = document.getElementById('orderNote').value;
-
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        let msg = `Halo Waroeng Doyong!\n\n*${currentMode}*\n👤 Nama: ${nI.value}\n`;
         
+        let msg = `Halo Waroeng Doyong!\n\n*${currentMode}*\n👤 Nama: ${nI.value}\n`;
         if (currentMode === 'DINE IN') msg += `🪑 Meja: ${document.getElementById('tableNo').value || '-'}\n`;
         else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${document.getElementById('addressDetail').value}\n`;
-        
         msg += `\n*PESANAN:*\n${pRows.join('\n')}\n`;
         if(note) msg += `\n📝 Catatan: ${note}\n`;
         msg += `\n*TOTAL: Rp ${total}*`;
