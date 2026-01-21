@@ -285,25 +285,34 @@ mark {
     let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0;
 
     async function startApp() {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-            userDist = straightLineDist * 1.45; 
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        
+        // --- BAGIAN INI YANG PENTING ---
+        // Kita simpan ke "window" agar bisa dibaca oleh fungsi submitOrder()
+        window.userLat = latitude;
+        window.userLng = longitude;
+        // -------------------------------
 
-            if (userDist > CONFIG.RADIUS_DINE_IN) {
-                const dineBtn = document.getElementById('mDine');
+        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+        userDist = straightLineDist * 1.45; 
+
+        if (userDist > CONFIG.RADIUS_DINE_IN) {
+            const dineBtn = document.getElementById('mDine');
+            if(dineBtn) {
                 dineBtn.classList.add('disabled');
                 dineBtn.onclick = () => showOutOfRangeAlert();
-                changeMode('DELIVERY', document.getElementById('mDeliv'));
             }
-            
-            initMap(latitude, longitude);
-            initBanner();
-            document.getElementById('welcome-overlay').style.display = 'none';
-            await loadMenu();
-            syncQueue();
-        }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
-    }
+            changeMode('DELIVERY', document.getElementById('mDeliv'));
+        }
+        
+        initMap(latitude, longitude);
+        initBanner();
+        document.getElementById('welcome-overlay').style.display = 'none';
+        await loadMenu();
+        syncQueue();
+    }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
+}
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
@@ -486,78 +495,85 @@ mark {
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
+    const noAntrean = document.getElementById('noAntrean').innerText;
 
-    // 1. Ambil semua card pembungkus untuk membersihkan efek lama
-    const cards = [
-        nI.closest('.input-card'), 
-        tI ? tI.closest('.input-card') : null, 
-        aI ? aI.closest('.input-card') : null
-    ];
+    // --- 1. Validasi Input (Friendly UI) ---
+    const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
+    cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
 
-    cards.forEach(card => {
-        if(card) card.classList.remove('error-field', 'shake-ani');
-    });
-
-    // 2. Tentukan target input mana yang kosong
     let targetEl = null;
     if (!nI.value.trim()) targetEl = nI;
     else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
     else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
 
     if (targetEl) {
-        // Ambil kartu pembungkusnya agar efek visual lebih luas & friendly
         const targetCard = targetEl.closest('.input-card');
-
-        // Tutup modal konfirmasi dulu agar user bisa melihat kolom yang kosong
         closeModal();
-
-        // Tambah efek merah & picu ulang animasi shake (Magic Reflow)
         targetCard.classList.add('error-field');
-        void targetCard.offsetWidth; // Memicu ulang render browser
+        void targetCard.offsetWidth; 
         targetCard.classList.add('shake-ani');
-
-        // Scroll smooth ke arah kartu yang bermasalah
         targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-        // Fokuskan kursor agar pelanggan langsung bisa mengetik
         targetEl.focus();
-
-        // Getar HP (Vibrate)
         if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-
-        // Hapus class shake setelah animasi selesai agar bersih kembali
         setTimeout(() => targetCard.classList.remove('shake-ani'), 500);
         return; 
     }
 
-    // --- PROSES KIRIM (Jika Validasi Lolos) ---
+    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
     const summary = {};
     cart.forEach(c => {
         let label = c.nama;
         let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-        if(tags) label += ` (${tags})`;
-        summary[label] = (summary[label] || 0) + 1;
+        if(tags) label += ` [${tags}]`;
+        const itemKey = label;
+        const itemPrice = c.harga + (c.ex || 0);
+        
+        if (!summary[itemKey]) {
+            summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
+        }
+        summary[itemKey].qty++;
     });
 
-    const pesananTeks = Object.entries(summary).map(([n, q]) => `${q}x ${n}`).join(', ');
-    const finalPrice = document.getElementById('miniPrice').innerText.replace(/\./g, '');
+    const pRowsWA = Object.entries(summary).map(([name, data]) => 
+        `🍴 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
+    );
 
-    // Kirim data ke Google Sheets/Database
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice}`, { mode: 'no-cors' });
-
-    // Format Pesanan WhatsApp
-    const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-    const pRowsWA = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
+    // --- 3. Hitung Data Delivery ---
+    const distKM = (userDist/1000).toFixed(1);
+    const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
+    const finalPrice = document.getElementById('miniPrice').innerText;
     
-    let msg = `*PESANAN BARU - ${currentMode}*\n\n👤 Nama: ${nI.value}\n`;
-    if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value}\n`;
-    else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}\n📍 Jarak: ${(userDist/1000).toFixed(1)} KM\n`;
+    // Gunakan format standar Google Maps agar langsung bisa diklik di WA
+const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
-    msg += `\n*DAFTAR MENU:*\n${pRowsWA.join('\n')}\n`;
-    const catatan = document.getElementById('orderNote').value;
-    if(catatan) msg += `\n📝 Catatan: ${catatan}\n`;
-    msg += `\n*TOTAL BAYAR: Rp ${document.getElementById('miniPrice').innerText}*`;
+    // --- 4. Susun Pesanan Teks untuk WhatsApp ---
+    let msg = `Halo cloudkitchen.dyg++!\n\n`;
+    msg += `🛵 *${currentMode}*\n`;
+    msg += `👤 *Nama:* ${nI.value}\n`;
+    msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
+    msg += `━━━━━━━━━━━━━━\n`;
 
+    if (currentMode === 'DINE IN') {
+        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
+    } else {
+        msg += `📍 *Alamat:* ${aI.value}\n`;
+        msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
+        msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
+    }
+
+    msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
+    
+    const catatan = document.getElementById('orderNote').value || '-';
+    msg += `\n*CATATAN:* ${catatan}\n`;
+    msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
+    
+    msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
+    msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
+    msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
+    msg += `Terimakasih!`;
+
+    // --- 5. Kirim ---
+    const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
     window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
 }
 
