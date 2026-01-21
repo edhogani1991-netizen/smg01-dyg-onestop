@@ -11,6 +11,7 @@
             --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
             --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
             --soft: #F0F0F0; --danger: #D63031; --success: #00B894;
+            --disabled: #E0E0E0;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
@@ -34,6 +35,7 @@
         .mode-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 0 20px 15px; }
         .mode-item { background: white; padding: 12px 5px; border-radius: 12px; text-align: center; font-size: 11px; font-weight: 700; border: 1.5px solid #F0F0F0; cursor: pointer; transition: 0.2s; }
         .mode-item.active { background: #E8F5E9; border-color: var(--success); color: var(--primary); }
+        .mode-item.disabled { background: #f5f5f5; color: #aaa; border-color: #eee; cursor: not-allowed; }
 
         #map { height: 130px; border-radius: 20px; margin: 0 20px 20px; border: 1px solid #EFEFEF; }
 
@@ -42,7 +44,6 @@
         .input-card label { display: block; font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
         .input-card input, .input-card textarea { width: 100%; border: none; font-size: 13px; font-weight: 600; outline: none; background: transparent; color: var(--text); }
 
-        /* Validasi & Shake */
         .error-field { border-color: var(--danger) !important; background-color: #FFF5F5 !important; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-6px); } }
         .shake-ani { animation: shake 0.4s ease-in-out; }
@@ -66,14 +67,12 @@
         .order-summary-mini { position: fixed; bottom: -100%; left: 0; right: 0; background: white; border-radius: 25px 25px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.2); z-index: 999; max-height: 70vh; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; }
         .order-summary-mini.active { bottom: 0; }
         .sheet-header { padding: 15px; text-align: center; border-bottom: 1px solid #F5F5F5; }
-        .sheet-handle { width: 40px; height: 4px; background: #DDD; border-radius: 10px; margin: 0 auto 8px; }
         #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px 20px 25px; border-radius: 25px 25px 0 0; box-shadow: 0 -8px 25px rgba(0,0,0,0.1); z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
         .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
         .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
 
-        /* Modal Custom */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 350px; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 15px 50px rgba(0,0,0,0.3); }
         .powered-by { margin-top: 18px; font-size: 10px; color: #999; font-weight: 500; letter-spacing: 0.5px; }
@@ -142,16 +141,14 @@
 <div id="summaryOverlay" onclick="toggleSummary(false)"></div>
 <div id="orderSummaryPanel" class="order-summary-mini">
     <div class="sheet-header" onclick="toggleSummary(false)">
-        <div class="sheet-handle"></div>
+        <div style="width: 40px; height: 4px; background: #DDD; border-radius: 10px; margin: 0 auto 8px;"></div>
         <div style="font-weight: 800; font-size: 11px; color: var(--muted);">RINCIAN PESANAN</div>
     </div>
     <div class="summary-scroll" id="summaryItems" style="padding: 15px; overflow-y: auto;"></div>
 </div>
 
 <div class="bottom-bar" onclick="toggleSummary(true)">
-    <div>
-        <div class="price-total">Rp <span id="miniPrice">0</span></div>
-    </div>
+    <div><div class="price-total">Rp <span id="miniPrice">0</span></div></div>
     <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
 </div>
 
@@ -174,17 +171,29 @@
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
-        TOKEN: 'dyg-access-v2'
+        TOKEN: 'dyg-access-v2',
+        RADIUS_DINE_IN: 150
     };
 
     const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000}];
+    const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg"];
 
-    let menuData = [], cart = [], currentMode = 'DINE IN', bannerIdx = 0;
+    let menuData = [], cart = [], currentMode = 'DINE IN', isTooFar = false, bannerIdx = 0;
 
     async function startApp() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
-            initMap(pos.coords.latitude, pos.coords.longitude);
+            const { latitude, longitude } = pos.coords;
+            const dist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+            
+            if (dist > CONFIG.RADIUS_DINE_IN) {
+                isTooFar = true;
+                const mDine = document.getElementById('mDine');
+                mDine.classList.add('disabled');
+                changeMode('DELIVERY', document.getElementById('mDeliv'));
+            }
+            
+            initMap(latitude, longitude);
             initBanner();
             document.getElementById('welcome-overlay').style.display = 'none';
             await loadMenu();
@@ -193,13 +202,19 @@
     }
 
     function devMode() {
-        Swal.fire({
-            title: 'MAAF!',
-            text: 'SEDANG DALAM PENGEMBANGAN, TUNGGU UPDATE SELANJUTNYA.',
-            icon: 'info',
-            confirmButtonText: 'KEMBALI',
-            confirmButtonColor: '#1B4332'
-        });
+        Swal.fire({ title: 'MAAF!', text: 'SEDANG DALAM PENGEMBANGAN, TUNGGU UPDATE SELANJUTNYA.', icon: 'info', confirmButtonText: 'KEMBALI', confirmButtonColor: '#1B4332' });
+    }
+
+    function changeMode(m, el) {
+        if (m === 'DINE IN' && isTooFar) {
+            Swal.fire({ title: 'MAAF!', text: 'Kamu sedang berada di luar jangkauan warung untuk mode Dine In.', icon: 'warning', confirmButtonText: 'OKE', confirmButtonColor: '#1B4332' });
+            return;
+        }
+        currentMode = m;
+        document.querySelectorAll('.mode-item').forEach(o => o.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
+        document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
     }
 
     async function loadMenu() {
@@ -223,10 +238,14 @@
         const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
         const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
         document.getElementById('menu-container').innerHTML = items.map(m => {
-            const hasNas = m.nama.toLowerCase().includes("nasi");
+            const nl = m.nama.toLowerCase();
+            const kl = m.kat.toLowerCase();
+            const hasNas = nl.includes("nasi");
+            const hasSuhu = kl.includes("paket hemat");
             return `<div class="menu-item">
                 <div class="menu-info"><h4>${m.nama}</h4><div class="price">Rp ${m.harga.toLocaleString()}</div>
                 ${hasNas ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                ${hasSuhu ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                 </div>
                 <div class="qty-box"><button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button><span>${counts[m.id] || 0}</span><button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button></div>
             </div>`;
@@ -237,7 +256,8 @@
         const item = menuData.find(m => m.id === id);
         if (change > 0) {
             const vN = document.getElementById(`n-${id}`)?.value || null;
-            cart.push({ ...item, vN });
+            const vS = document.getElementById(`s-${id}`)?.value || null;
+            cart.push({ ...item, vN, vS });
         } else {
             const idx = cart.findLastIndex(c => c.id === id); if (idx !== -1) cart.splice(idx, 1);
         }
@@ -256,8 +276,8 @@
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
-        const groups = {}; cart.forEach(c => { const k = `${c.id}-${c.vN}`; groups[k] = groups[k] || { ...c, qty: 0 }; groups[k].qty++; });
-        container.innerHTML = Object.values(groups).map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px;"><div><b>${i.nama}</b><br><small>${i.vN || ''}</small></div><div>${i.qty}x</div></div>`).join('');
+        const groups = {}; cart.forEach(c => { const k = `${c.id}-${c.vN}-${c.vS}`; groups[k] = groups[k] || { ...c, qty: 0 }; groups[k].qty++; });
+        container.innerHTML = Object.values(groups).map(i => `<div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px;"><div><b>${i.nama}</b><br><small>${[i.vN, i.vS].filter(x=>x).join(', ')}</small></div><div>${i.qty}x</div></div>`).join('');
     }
 
     function toggleSummary(open) {
@@ -266,40 +286,20 @@
         document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
     }
 
-    function changeMode(m, el) {
-        currentMode = m;
-        document.querySelectorAll('.mode-item').forEach(o => o.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
-        document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
-    }
-
     function submitOrder() {
         const nI = document.getElementById('custName'), tI = document.getElementById('tableNo'), aI = document.getElementById('addressDetail');
         const wN = document.getElementById('wrapName'), wM = document.getElementById('wrapMeja'), wA = document.getElementById('wrapAddr');
-
         [wN, wM, wA].forEach(el => el.classList.remove('error-field', 'shake-ani'));
         let target = null;
-
         if (!nI.value.trim()) { wN.classList.add('error-field', 'shake-ani'); target = wN; }
         else if (currentMode === 'DINE IN' && !tI.value.trim()) { wM.classList.add('error-field', 'shake-ani'); target = wM; }
         else if (currentMode === 'DELIVERY' && !aI.value.trim()) { wA.classList.add('error-field', 'shake-ani'); target = wA; }
-
-        if (target) {
-            closeModal();
-            if (navigator.vibrate) navigator.vibrate(200);
-            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
-
+        if (target) { closeModal(); if (navigator.vibrate) navigator.vibrate(200); target.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
         let msg = `Halo cloudkitchen.dyg++!\n*MODE: ${currentMode}*\n👤 Nama: ${nI.value}\n`;
         if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value}\n`;
         if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}\n`;
-        
-        const summary = {}; cart.forEach(c => { let l = c.nama; if(c.vN) l += ` (${c.vN})`; summary[l] = (summary[l] || 0) + 1; });
-        msg += `\n*PESANAN:*\n` + Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`).join('\n');
-        msg += `\n\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
-
+        const summary = {}; cart.forEach(c => { let l = c.nama; const tags = [c.vN, c.vS].filter(x=>x).join(', '); if(tags) l += ` (${tags})`; summary[l] = (summary[l] || 0) + 1; });
+        msg += `\n*PESANAN:*\n` + Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`).join('\n') + `\n\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     }
