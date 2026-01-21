@@ -63,7 +63,7 @@
         .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
 
-        /* MODAL RINCIAN (FIXED SWIPE & STYLE) */
+        /* MODAL RINCIAN */
         .order-summary-mini { position: fixed; bottom: -100%; left: 0; right: 0; background: white; border-radius: 25px 25px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.2); z-index: 1001; max-height: 75vh; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); display: flex; flex-direction: column; }
         .order-summary-mini.active { bottom: 0; }
         .sheet-header { padding: 15px; text-align: center; border-bottom: 1px solid #F5F5F5; cursor: pointer; }
@@ -80,7 +80,11 @@
 
         .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 20px 25px; border-radius: 25px 25px 0 0; box-shadow: 0 -8px 25px rgba(0,0,0,0.1); z-index: 1002; display: flex; justify-content: space-between; align-items: center; }
         .btn-open-rincian { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); background: var(--primary); color: white; padding: 4px 15px; border-radius: 20px; font-size: 10px; font-weight: 800; display: none; }
+        
+        .price-container { display: flex; flex-direction: column; }
+        .ongkir-text { font-size: 10px; color: var(--accent); font-weight: 800; margin-bottom: -2px; }
         .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
+        
         .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10003; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -146,7 +150,10 @@
 
 <div class="bottom-bar" id="bottomBar" onclick="toggleSummary(true)">
     <div id="btnOpenSummary" class="btn-open-rincian">LIHAT RINCIAN ▲</div>
-    <div><div class="price-total">Rp <span id="miniPrice">0</span></div></div>
+    <div class="price-container">
+        <span id="ongkirLabel" class="ongkir-text"></span>
+        <div class="price-total">Rp <span id="miniPrice">0</span></div>
+    </div>
     <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
 </div>
 
@@ -177,24 +184,40 @@
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg"];
 
-    let menuData = [], cart = [], currentMode = 'DINE IN', isTooFar = false, bannerIdx = 0;
+    let menuData = [], cart = [], currentMode = 'DINE IN', isTooFar = false, bannerIdx = 0, userDistance = 0;
 
     async function startApp() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
-            const dist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-            if (dist > CONFIG.RADIUS_DINE_IN) { isTooFar = true; document.getElementById('mDine').classList.add('disabled'); changeMode('DELIVERY', document.getElementById('mDeliv')); }
+            userDistance = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+            
+            if (userDistance > CONFIG.RADIUS_DINE_IN) { 
+                isTooFar = true; 
+                document.getElementById('mDine').classList.add('disabled'); 
+                changeMode('DELIVERY', document.getElementById('mDeliv')); 
+            }
             initMap(latitude, longitude); initBanner(); document.getElementById('welcome-overlay').style.display = 'none';
             await loadMenu(); syncQueue();
         }, () => alert("Mohon aktifkan GPS."), { enableHighAccuracy: true });
     }
 
-    function devMode() { Swal.fire({ title: 'MAAF!', text: 'SEDANG DALAM PENGEMBANGAN, TUNGGU UPDATE SELANJUTNYA.', icon: 'info', confirmButtonText: 'KEMBALI', confirmButtonColor: '#1B4332' }); }
+    // Fungsi Ongkir Realistis
+    function getOngkir() {
+        if (currentMode !== 'DELIVERY') return 0;
+        const km = userDistance / 1000;
+        if (km <= 1) return 3000;
+        if (km <= 3) return 5000;
+        return 5000 + (Math.ceil(km - 3) * 2000); // 5rb + 2rb per km selanjutnya
+    }
+
+    function devMode() { Swal.fire({ title: 'MAAF!', text: 'SEDANG DALAM PENGEMBANGAN.', icon: 'info', confirmButtonText: 'OKE', confirmButtonColor: '#1B4332' }); }
 
     function changeMode(m, el) {
-        if (m === 'DINE IN' && isTooFar) { Swal.fire({ title: 'MAAF!', text: 'Kamu sedang berada di luar jangkauan warung.', icon: 'warning', confirmButtonText: 'OKE', confirmButtonColor: '#1B4332' }); return; }
+        if (m === 'DINE IN' && isTooFar) { Swal.fire({ title: 'MAAF!', text: 'Jarakmu terlalu jauh untuk makan di tempat.', icon: 'warning', confirmButtonText: 'OKE', confirmButtonColor: '#1B4332' }); return; }
         currentMode = m; document.querySelectorAll('.mode-item').forEach(o => o.classList.remove('active')); el.classList.add('active');
-        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none'; document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none'; 
+        document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+        refreshUI();
     }
 
     async function loadMenu() {
@@ -218,11 +241,10 @@
         const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
         document.getElementById('menu-container').innerHTML = items.map(m => {
             const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
-            const hasNas = nl.includes("nasi"); const hasSuhu = kl.includes("paket hemat");
             return `<div class="menu-item">
                 <div class="menu-info"><h4>${m.nama}</h4><div class="price">Rp ${m.harga.toLocaleString()}</div>
-                ${hasNas ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                ${hasSuhu ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                ${nl.includes("nasi") ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                ${kl.includes("paket hemat") ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                 </div>
                 <div class="qty-box"><button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button><span id="qty-${m.id}">${counts[m.id] || 0}</span><button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button></div>
             </div>`;
@@ -236,37 +258,47 @@
             const vS = manualVariant ? manualVariant.vS : (document.getElementById(`s-${id}`)?.value || null);
             cart.push({ ...item, vN, vS });
         } else {
-            let idx = -1;
-            if(manualVariant) {
-                idx = cart.findLastIndex(c => c.id === id && c.vN === manualVariant.vN && c.vS === manualVariant.vS);
-            } else {
-                idx = cart.findLastIndex(c => c.id === id);
-            }
+            let idx = manualVariant ? cart.findLastIndex(c => c.id === id && c.vN === manualVariant.vN && c.vS === manualVariant.vS) : cart.findLastIndex(c => c.id === id);
             if (idx !== -1) cart.splice(idx, 1);
         }
         refreshUI();
     }
 
     function refreshUI() {
-        let sub = 0; const counts = {}; cart.forEach(c => { sub += c.harga; counts[c.id] = (counts[c.id] || 0) + 1; });
-        document.getElementById('miniPrice').innerText = sub.toLocaleString();
-        document.getElementById('btnOrder').disabled = sub === 0;
-        document.getElementById('btnOrder').innerText = sub > 0 ? 'PESAN SEKARANG' : 'PILIH MENU';
-        document.getElementById('btnOpenSummary').style.display = sub > 0 ? 'block' : 'none';
+        let sub = 0; const counts = {}; 
+        cart.forEach(c => { 
+            let extra = 0;
+            if(c.vN === 'Nasi Cabe Ijo') extra = 2000;
+            sub += (c.harga + extra); 
+            counts[c.id] = (counts[c.id] || 0) + 1; 
+        });
 
+        // Update Ongkir Info
+        const ongkir = getOngkir();
+        const total = sub + ongkir;
+        document.getElementById('ongkirLabel').innerText = ongkir > 0 ? `+ Ongkir Rp ${ongkir.toLocaleString()}` : '';
+        document.getElementById('miniPrice').innerText = total.toLocaleString();
+
+        // Update UI Menu List
         menuData.forEach(m => {
             const el = document.getElementById(`qty-${m.id}`);
             if(el) { el.innerText = counts[m.id] || 0; el.previousElementSibling.disabled = !(counts[m.id]); }
         });
 
-        if(sub === 0) toggleSummary(false);
-        updateOrderSummary();
+        // Tombol & Panel Visibility
+        document.getElementById('btnOrder').disabled = cart.length === 0;
+        document.getElementById('btnOpenSummary').style.display = cart.length > 0 ? 'block' : 'none';
+
+        // FIX: Jika item 0, PAKSA TUTUP rincian
+        if (cart.length === 0) {
+            toggleSummary(false);
+        } else {
+            updateOrderSummary();
+        }
     }
 
-    // FIX FUNGSI RINCIAN PESANAN
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
-        if(cart.length === 0) { container.innerHTML = ''; return; }
         const groups = {}; 
         cart.forEach(c => { const k = `${c.id}-${c.vN}-${c.vS}`; groups[k] = groups[k] || { ...c, qty: 0 }; groups[k].qty++; });
         
@@ -284,32 +316,38 @@
     }
 
     function toggleSummary(open) {
-        if (cart.length === 0) return;
+        // Jangan biarkan terbuka jika keranjang kosong
+        if (open && cart.length === 0) return;
         document.getElementById('orderSummaryPanel').classList.toggle('active', open);
         document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
     }
 
     function submitOrder() {
         const nI = document.getElementById('custName'), tI = document.getElementById('tableNo'), aI = document.getElementById('addressDetail');
-        const wN = document.getElementById('wrapName'), wM = document.getElementById('wrapMeja'), wA = document.getElementById('wrapAddr');
-        [wN, wM, wA].forEach(el => el.classList.remove('error-field', 'shake-ani'));
-        let target = null;
-        if (!nI.value.trim()) { wN.classList.add('error-field', 'shake-ani'); target = wN; }
-        else if (currentMode === 'DINE IN' && !tI.value.trim()) { wM.classList.add('error-field', 'shake-ani'); target = wM; }
-        else if (currentMode === 'DELIVERY' && !aI.value.trim()) { wA.classList.add('error-field', 'shake-ani'); target = wA; }
-        if (target) { closeModal(); if (navigator.vibrate) navigator.vibrate(200); target.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+        if (!nI.value.trim()) { alert("Masukkan nama!"); return; }
+        
         let msg = `Halo cloudkitchen.dyg++!\n*MODE: ${currentMode}*\n👤 Nama: ${nI.value}\n`;
-        if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value}\n`;
-        if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value}\n`;
-        const summary = {}; cart.forEach(c => { let l = c.nama; const tags = [c.vN, c.vS].filter(x=>x).join(', '); if(tags) l += ` (${tags})`; summary[l] = (summary[l] || 0) + 1; });
-        msg += `\n*PESANAN:*\n` + Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`).join('\n') + `\n\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
+        if (currentMode === 'DINE IN') msg += `🪑 Meja: ${tI.value || '-'}\n`;
+        if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${aI.value || '-'}\n`;
+        
+        const summary = {}; 
+        cart.forEach(c => { 
+            let l = c.nama; 
+            const tags = [c.vN, c.vS].filter(x=>x).join(', '); 
+            if(tags) l += ` (${tags})`; 
+            summary[l] = (summary[l] || 0) + 1; 
+        });
+        
+        msg += `\n*PESANAN:*\n` + Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`).join('\n');
+        msg += `\n\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
+        
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     }
 
     function filterByTab(c, el) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderMenu(c); }
     function filterMenu() { const k = document.getElementById('searchMenu').value.toLowerCase(); document.querySelectorAll('.menu-item').forEach(c => c.style.display = c.querySelector('h4').innerText.toLowerCase().includes(k) ? 'flex' : 'none'); }
-    function initMap(lat, lng) { const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); L.marker([lat, lng]).addTo(map); }
+    function initMap(lat, lng) { const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map); L.marker([lat, lng]).addTo(map); L.marker(CONFIG.WARUNG_LOCATION, {icon: L.icon({iconUrl: 'https://cdn-icons-png.flaticon.com/512/6108/6108318.png', iconSize: [30, 30]})}).addTo(map); }
     function initBanner() { const track = document.getElementById('banner-track'); track.innerHTML = MY_BANNERS.map(img => `<img src="${img}">`).join(''); setInterval(() => { bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; track.style.transform = `translateX(-${bannerIdx * 100}%)`; }, 5000); }
     async function syncQueue() { try { const r = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`); const n = await r.text(); if (n) document.getElementById('noAntrean').innerText = "#" + n; } catch(e) {} setTimeout(syncQueue, 15000); }
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
