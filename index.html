@@ -57,7 +57,7 @@
         .qty-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
 
-        /* BOTTOM SHEET REFINED */
+        /* BOTTOM SHEET */
         .order-summary-mini {
             position: fixed; bottom: -100%; left: 0; right: 0; 
             background: white; border-radius: 30px 30px 0 0; 
@@ -74,11 +74,11 @@
 
         .summary-scroll { flex: 1; overflow-y: auto; padding: 0 20px 140px; }
         
-        .summary-item-wrapper { position: relative; margin-bottom: 5px; overflow: hidden; border-radius: 15px; }
+        .summary-item-wrapper { position: relative; margin-bottom: 5px; overflow: hidden; border-radius: 15px; background: var(--danger); }
         .delete-action { 
             position: absolute; right: 0; top: 0; bottom: 0; width: 80px; 
             background: var(--danger); color: white; display: flex; align-items: center; 
-            justify-content: center; font-weight: 800; font-size: 12px; border-radius: 0 15px 15px 0;
+            justify-content: center; font-weight: 800; font-size: 12px;
             z-index: 1;
         }
         .summary-item { 
@@ -217,7 +217,7 @@
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0, startX = 0, startY = 0;
+    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0, startY = 0;
 
     async function startApp() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -261,11 +261,9 @@
         document.getElementById('menu-container').innerHTML = items.map(m => {
             const nameLower = m.nama.toLowerCase();
             const catLower = m.kat.toLowerCase();
-            
             const isNasi = catLower.includes("hemat") || (catLower.includes("wardoy") && nameLower.includes("nasi"));
             const isMieGoreng = nameLower.includes("mie") && nameLower.includes("goreng") && !nameLower.includes("lik");
             const isMieRebus = nameLower.includes("mie") && (nameLower.includes("rebus") || nameLower.includes("kuah")) && !nameLower.includes("lik");
-            // Suhu hanya muncul di Paket, TIDAK di Drink (sesuai request)
             const isPaketSuhu = catLower.includes("paket");
 
             return `
@@ -376,16 +374,6 @@
         else { p.classList.remove('active'); o.style.display = 'none'; ind.innerHTML = "▲ LIHAT DETAIL"; }
     }
 
-    document.addEventListener('touchstart', e => { 
-        startY = e.touches[0].clientY; startX = e.touches[0].clientX; 
-    }, {passive: true});
-    
-    document.addEventListener('touchend', e => {
-        const dy = startY - e.changedTouches[0].clientY;
-        if (dy > 70 && startY > window.innerHeight - 150) toggleSummary(true); 
-        if (dy < -70 && document.getElementById('orderSummaryPanel').classList.contains('active')) toggleSummary(false);
-    }, {passive: true});
-
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
         if (cart.length === 0) { toggleSummary(false); return; }
@@ -422,16 +410,18 @@
     }
 
     let iSX = 0;
-    function hS(el, e) { iSX = e.touches[0].clientX; }
+    function hS(el, e) { iSX = e.touches[0].clientX; el.style.transition = 'none'; }
     function hM(el, e) {
         let dx = iSX - e.touches[0].clientX;
-        if (dx > 0 && dx < 100) el.style.transform = `translateX(-${dx}px)`;
+        if (dx > 0 && dx < 120) el.style.transform = `translateX(-${dx}px)`;
     }
     function hE(el) {
+        el.style.transition = 'transform 0.3s ease';
         let tx = parseInt(el.style.transform.replace(/[^\d.-]/g, '')) || 0;
-        el.style.transform = tx < -50 ? `translateX(-80px)` : `translateX(0px)`;
+        el.style.transform = tx < -60 ? `translateX(-80px)` : `translateX(0px)`;
     }
 
+    // Navigasi & Utility
     function filterByTab(cat, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
@@ -489,7 +479,6 @@
     function submitOrder() {
         const nI = document.getElementById('custName');
         if(!nI.value.trim()) { nI.focus(); alert("Masukkan nama Anda."); return; }
-        
         const summary = {};
         cart.forEach(c => {
             let l = c.nama; 
@@ -497,19 +486,16 @@
             if(tags) l += ` [${tags}]`;
             summary[l] = (summary[l] || 0) + 1;
         });
-
         const pRows = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
         const total = document.getElementById('miniPrice').innerText;
         const note = document.getElementById('orderNote').value;
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        
         let msg = `Halo Waroeng Doyong!\n\n*${currentMode}*\n👤 Nama: ${nI.value}\n`;
         if (currentMode === 'DINE IN') msg += `🪑 Meja: ${document.getElementById('tableNo').value || '-'}\n`;
         else if (currentMode === 'DELIVERY') msg += `🏠 Alamat: ${document.getElementById('addressDetail').value}\n`;
         msg += `\n*PESANAN:*\n${pRows.join('\n')}\n`;
         if(note) msg += `\n📝 Catatan: ${note}\n`;
         msg += `\n*TOTAL: Rp ${total}*`;
-        
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     }
 </script>
