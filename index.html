@@ -72,12 +72,7 @@
         .sheet-title { font-size: 12px; font-weight: 800; color: var(--muted); letter-spacing: 1px; }
 
         .summary-scroll { flex: 1; overflow-y: auto; padding: 10px 20px 140px; }
-        
-        .summary-item { 
-            background: white; padding: 15px 0; 
-            display: flex; justify-content: space-between; align-items: center; 
-            border-bottom: 1px solid #F5F5F5;
-        }
+        .summary-item { background: white; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F5F5F5; }
 
         .item-detail-name { flex: 1; margin-right: 10px; }
         .item-detail-name b { display: block; font-size: 14px; margin-bottom: 2px; }
@@ -102,7 +97,8 @@
         }
 
         .price-total { font-size: 20px; font-weight: 900; color: var(--primary); }
-        .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
+        .dist-info { font-size: 9px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
+        .ongkir-tag { font-size: 11px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
         .order-btn { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 15px; font-weight: 800; }
         .order-btn:disabled { opacity: 0.5; }
         
@@ -175,6 +171,7 @@
 <div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
     <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
     <div>
+        <div id="dist-info" class="dist-info"></div>
         <div id="ongkir-label" class="ongkir-tag"></div>
         <div class="price-total">Rp <span id="miniPrice">0</span></div>
     </div>
@@ -329,16 +326,28 @@
         });
 
         const sInd = document.getElementById('swipeInd');
+        const distEl = document.getElementById('dist-info');
+        const ongEl = document.getElementById('ongkir-label');
+
         if (sub > 0) {
-            let ong = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
             sInd.style.display = 'block';
-            document.getElementById('miniPrice').innerText = (sub + ong).toLocaleString();
-            document.getElementById('ongkir-label').style.display = (currentMode === 'DELIVERY') ? 'block' : 'none';
-            document.getElementById('ongkir-label').innerText = `+ Ongkir Rp ${ong.toLocaleString()}`;
+            if (currentMode === 'DELIVERY') {
+                let ong = calculateOngkir(userDist);
+                document.getElementById('miniPrice').innerText = (sub + ong).toLocaleString();
+                distEl.style.display = 'block';
+                distEl.innerText = `Jarak: ${(userDist/1000).toFixed(1)} KM`;
+                ongEl.style.display = 'block';
+                ongEl.innerText = `+ Ongkir Rp ${ong.toLocaleString()}`;
+            } else {
+                document.getElementById('miniPrice').innerText = sub.toLocaleString();
+                distEl.style.display = 'none';
+                ongEl.style.display = 'none';
+            }
         } else {
             sInd.style.display = 'none';
+            distEl.style.display = 'none';
+            ongEl.style.display = 'none';
             document.getElementById('miniPrice').innerText = "0";
-            document.getElementById('ongkir-label').style.display = 'none';
             toggleSummary(false);
         }
 
