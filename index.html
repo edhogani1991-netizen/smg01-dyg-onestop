@@ -248,7 +248,7 @@
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
         TOKEN: 'dyg-access-v2',
-        RADIUS_DINE_IN: 150 // Jarak maks (meter) untuk bisa klik Dine In
+        RADIUS_DINE_IN: 150
     };
 
     const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
@@ -262,13 +262,9 @@
     async function startApp() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude, longitude } = pos.coords;
-            // Hitung jarak garis lurus (Haversine)
             const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-            
-            // Faktor koreksi rute jalan raya (1.45x) agar mendekati rute Google Maps
             userDist = straightLineDist * 1.45; 
 
-            // Validasi radius Dine In
             if (userDist > CONFIG.RADIUS_DINE_IN) {
                 const dineBtn = document.getElementById('mDine');
                 dineBtn.classList.add('disabled');
@@ -284,13 +280,11 @@
         }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
     }
 
-    // --- LOGIKA ONGKIR REALISTIS ---
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
         if (km <= 1.5) return 3000;
         if (km <= 3) return 5000;
         if (km <= 5) return 8000;
-        // Di atas 5km, tambah 2000 per km
         return 8000 + (Math.ceil(km - 5) * 2000);
     }
 
@@ -351,30 +345,27 @@
         if (!item) return;
 
         if (change > 0) {
-            let vData = forceVariant || {
-                vN: document.getElementById(`n-${id}`)?.value,
-                vM: document.getElementById(`m-${id}`)?.value,
-                vR: document.getElementById(`r-${id}`)?.value,
-                vS: document.getElementById(`s-${id}`)?.value,
+            let vData = forceVariant ? {...forceVariant} : {
+                vN: document.getElementById(`n-${id}`)?.value || null,
+                vM: document.getElementById(`m-${id}`)?.value || null,
+                vR: document.getElementById(`r-${id}`)?.value || null,
+                vS: document.getElementById(`s-${id}`)?.value || null,
                 ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
             };
             cart.push({ ...item, ...vData });
-        }else {
-    let idx = cart.findLastIndex(c =>
-        c.id === id &&
-        (!forceVariant || (
-            c.vN === forceVariant.vN &&
-            c.vM === forceVariant.vM &&
-            c.vR === forceVariant.vR &&
-            c.vS === forceVariant.vS
-        ))
-    );
-    if (idx !== -1) cart.splice(idx, 1);
-}
+        } else {
+            let idx = cart.findLastIndex(c => 
+                c.id === id && 
+                c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
+                c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
+                c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
+                c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
+            );
+            if (idx !== -1) cart.splice(idx, 1);
+        }
         refreshUI();
     }
 
-    // --- REFRESH UI: ONGKIR & DETAIL BAR ---
     function refreshUI() {
         let subtotal = 0; 
         const counts = {};
@@ -383,7 +374,6 @@
             counts[c.id] = (counts[c.id] || 0) + 1; 
         });
 
-        // Update angka qty di grid menu
         menuData.forEach(m => {
             const el = document.getElementById(`qty-${m.id}`);
             if(el) {
@@ -399,7 +389,7 @@
         const priceEl = document.getElementById('miniPrice');
 
         if (subtotal > 0) {
-            sInd.style.display = 'block'; // Munculkan "Lihat Rincian"
+            sInd.style.display = 'block';
             if (currentMode === 'DELIVERY') {
                 let ongkir = calculateOngkir(userDist);
                 priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
@@ -421,9 +411,50 @@
             priceEl.innerText = "0";
             document.getElementById('btnOrder').disabled = true;
             document.getElementById('btnOrder').innerText = 'PILIH MENU';
-            toggleSummary(false);
+            toggleSummary(false); // Tutup rincian jika item habis
         }
         updateOrderSummary();
+    }
+
+    function updateOrderSummary() {
+        const container = document.getElementById('summaryItems');
+        if (cart.length === 0) {
+            container.innerHTML = `<div style="text-align:center;padding:40px;color:#999;font-size:12px;">Keranjang kosong</div>`;
+            return;
+        }
+
+        const groups = {};
+        cart.forEach(c => {
+            const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
+            if (!groups[key]) groups[key] = { ...c, qty: 0, key: key };
+            groups[key].qty++;
+        });
+
+        container.innerHTML = Object.values(groups).map(item => `
+            <div class="summary-item">
+                <div class="item-detail-name">
+                    <b>${item.nama}</b>
+                    <span>${[item.vN, item.vM, item.vR, item.vS].filter(Boolean).join(', ') || 'Original'}</span>
+                    <div style="font-size:11px;font-weight:800;color:var(--primary);margin-top:3px;">
+                        Rp ${(item.qty * (item.harga + (item.ex || 0))).toLocaleString('id-ID')}
+                    </div>
+                </div>
+                <div class="mini-qty-box">
+                    <button class="mini-qty-btn" onclick="changeQtyFromSummary('${item.key}', -1)">−</button>
+                    <span style="font-weight:800; min-width:20px; text-align:center;">${item.qty}</span>
+                    <button class="mini-qty-btn" onclick="changeQtyFromSummary('${item.key}', 1)">+</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function changeQtyFromSummary(groupKey, delta) {
+        const sample = cart.find(c => `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}` === groupKey);
+        if (sample) {
+            updateCart(sample.id, delta, {
+                vN: sample.vN, vM: sample.vM, vR: sample.vR, vS: sample.vS, ex: sample.ex
+            });
+        }
     }
 
     async function submitOrder() {
@@ -446,10 +477,8 @@
         const pesananTeks = Object.entries(summary).map(([n, q]) => `${q}x ${n}`).join(', ');
         const finalPrice = document.getElementById('miniPrice').innerText.replace(/\./g, '');
 
-        // 1. SIMPAN KE SPREADSHEET
         fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice}`, { mode: 'no-cors' });
 
-        // 2. KIRIM WA
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         const pRowsWA = Object.entries(summary).map(([n, q]) => `• *${q}x* ${n}`);
         let msg = `*PESANAN BARU - ${currentMode}*\n\n👤 Nama: ${nI.value}\n`;
@@ -464,87 +493,8 @@
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     }
 
-    // --- FUNGSI UI LAINNYA ---
-    function updateOrderSummary() {
-    const container = document.getElementById('summaryItems');
-
-    if (cart.length === 0) {
-        container.innerHTML = `<div style="text-align:center;font-size:12px;color:#999;padding:30px;">
-            Keranjang masih kosong
-        </div>`;
-        toggleSummary(false);
-        return;
-    }
-
-    const groups = {};
-    cart.forEach(c => {
-        const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
-        if (!groups[key]) groups[key] = { ...c, qty: 0 };
-        groups[key].qty++;
-    });
-
-    container.innerHTML = Object.entries(groups).map(([key, item]) => `
-        <div class="summary-item"
-            <div class="item-detail-name">
-    <b>${item.nama}</b>
-    <span>${[item.vN, item.vM, item.vR, item.vS].filter(Boolean).join(', ') || 'Original'}</span>
-    <div style="font-size:11px;font-weight:800;color:var(--primary);margin-top:3px;">
-        Rp ${(item.qty * (item.harga + (item.ex || 0))).toLocaleString('id-ID')}
-    </div>
-</div>
-            <div class="mini-qty-box">
-                <button class="mini-qty-btn"
-                    onclick="changeCartFromSummary('${item.id}', -1, '${key}')">−</button>
-                <span style="font-weight:800;">${item.qty}</span>
-                <button class="mini-qty-btn"
-                    onclick="changeCartFromSummary('${item.id}', 1, '${key}')">+</button>
-            </div>
-        </div>
-    `).join('');
-}
-function changeCartFromSummary(id, delta, groupKey) {
-    const parts = groupKey.split('-');
-    const vN = parts[1] || null;
-    const vM = parts[2] || null;
-    const vR = parts[3] || null;
-    const vS = parts[4] || null;
-
-    if (delta > 0) {
-        updateCart(id, 1, { vN, vM, vR, vS, ex: 0 });
-        return;
-    }
-
-    // HITUNG QTY GROUP SAAT INI
-    const groupQty = cart.filter(c =>
-        c.id === id &&
-        c.vN === vN &&
-        c.vM === vM &&
-        c.vR === vR &&
-        c.vS === vS
-    ).length;
-
-    if (groupQty <= 1) {
-        // HAPUS SEMUA ITEM GROUP → BENAR-BENAR HILANG
-        cart = cart.filter(c =>
-            !(
-                c.id === id &&
-                c.vN === vN &&
-                c.vM === vM &&
-                c.vR === vR &&
-                c.vS === vS
-            )
-        );
-        refreshUI();
-        return;
-    }
-
-    // NORMAL: KURANGI 1
-    updateCart(id, -1, { vN, vM, vR, vS });
-}
-
-
     function toggleSummary(open) {
-        if (cart.length === 0) return;
+        if (cart.length === 0 && open) return;
         document.getElementById('orderSummaryPanel').classList.toggle('active', open);
         document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
     }
@@ -572,6 +522,21 @@ function changeCartFromSummary(id, delta, groupKey) {
         setInterval(() => { bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; track.style.transform = `translateX(-${bannerIdx * 100}%)`; }, 5000);
     }
 
+    function filterMenu() {
+        const q = document.getElementById('searchMenu').value.toLowerCase();
+        const items = document.querySelectorAll('.menu-item');
+        items.forEach(it => {
+            const name = it.querySelector('h4').dataset.name.toLowerCase();
+            it.style.display = name.includes(q) ? 'flex' : 'none';
+        });
+    }
+
+    function filterByTab(cat, el) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        renderMenu(cat);
+    }
+
     async function syncQueue() {
         try {
             const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
@@ -581,18 +546,13 @@ function changeCartFromSummary(id, delta, groupKey) {
         setTimeout(syncQueue, 20000);
     }
 
-    function filterByTab(cat, el) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        el.classList.add('active');
-        renderMenu(cat);
-    }
-
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-    function showOutOfRangeAlert() { alert("Maaf, lokasi kamu terlalu jauh untuk Dine-In. Pakai Take Away atau Delivery ya!"); }
+    function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
 </script>
+
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
         <div style="font-size:48px;margin-bottom:10px;">🚧</div>
