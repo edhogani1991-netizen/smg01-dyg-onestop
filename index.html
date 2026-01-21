@@ -57,7 +57,6 @@
         .qty-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
 
-        /* MODIFIKASI BOTTOM SHEET */
         .order-summary-mini {
             position: fixed; bottom: -100%; left: 0; right: 0; 
             background: white; border-radius: 30px 30px 0 0; 
@@ -74,17 +73,10 @@
 
         .summary-scroll { flex: 1; overflow-y: auto; padding: 10px 20px 140px; }
         
-        .summary-item-wrapper { position: relative; margin-bottom: 10px; overflow: hidden; border-radius: 15px; background: var(--danger); }
-        .delete-action { 
-            position: absolute; right: 0; top: 0; bottom: 0; width: 80px; 
-            background: var(--danger); color: white; display: flex; align-items: center; 
-            justify-content: center; font-weight: 800; font-size: 12px;
-            z-index: 1;
-        }
         .summary-item { 
-            position: relative; background: white; padding: 15px; 
+            background: white; padding: 15px 0; 
             display: flex; justify-content: space-between; align-items: center; 
-            z-index: 2; transition: transform 0.2s ease-out;
+            border-bottom: 1px solid #F5F5F5;
         }
 
         .item-detail-name { flex: 1; margin-right: 10px; }
@@ -111,7 +103,7 @@
 
         .price-total { font-size: 20px; font-weight: 900; color: var(--primary); }
         .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
-        .order-btn { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 15px; font-weight: 800; transition: opacity 0.3s; }
+        .order-btn { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 15px; font-weight: 800; }
         .order-btn:disabled { opacity: 0.5; }
         
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -175,7 +167,7 @@
     <div class="sheet-header" onclick="toggleSummary(false)">
         <div class="sheet-handle"></div>
         <div class="sheet-title">RINCIAN PESANAN</div>
-        <div style="font-size: 10px; color: var(--muted); margin-top: 5px;">Swipe kiri untuk menghapus</div>
+        <div style="font-size: 10px; color: var(--muted); margin-top: 5px;">Tekan − sampai 0 untuk menghapus item</div>
     </div>
     <div class="summary-scroll" id="summaryItems"></div>
 </div>
@@ -259,8 +251,7 @@
         const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
         
         document.getElementById('menu-container').innerHTML = items.map(m => {
-            const nl = m.nama.toLowerCase();
-            const kl = m.kat.toLowerCase();
+            const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
             const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
             const isMieG = nl.includes("mie") && nl.includes("goreng") && !nl.includes("lik");
             const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah")) && !nl.includes("lik");
@@ -287,15 +278,14 @@
         }).join('');
     }
 
-    // Logic Fix: updateCart dengan Varian
-    function updateCart(id, change, customVariant = null) {
+    function updateCart(id, change, forceVariant = null) {
         const item = menuData.find(m => m.id === id);
         if (!item) return;
 
         if (change > 0) {
             let vData;
-            if (customVariant) {
-                vData = customVariant;
+            if (forceVariant) {
+                vData = forceVariant;
             } else {
                 const sN = document.getElementById(`n-${id}`)?.value || null;
                 const sM = document.getElementById(`m-${id}`)?.value || null;
@@ -307,24 +297,17 @@
             cart.push({ ...item, ...vData });
         } else {
             let idx = -1;
-            if (customVariant) {
+            if (forceVariant) {
                 idx = cart.findLastIndex(c => 
-                    c.id === id && c.vN === customVariant.vN && 
-                    c.vM === customVariant.vM && c.vR === customVariant.vR && 
-                    c.vS === customVariant.vS
+                    c.id === id && c.vN === forceVariant.vN && 
+                    c.vM === forceVariant.vM && c.vR === forceVariant.vR && 
+                    c.vS === forceVariant.vS
                 );
             } else {
                 idx = cart.findLastIndex(c => c.id === id);
             }
             if (idx !== -1) cart.splice(idx, 1);
         }
-        refreshUI();
-    }
-
-    // Logic Fix: Hapus Full
-    function removeFullGroup(id, vStr) {
-        const v = JSON.parse(decodeURIComponent(vStr));
-        cart = cart.filter(c => !(c.id === id && c.vN === v.vN && c.vM === v.vM && c.vR === v.vR && c.vS === v.vS));
         refreshUI();
     }
 
@@ -336,7 +319,6 @@
             counts[c.id] = (counts[c.id] || 0) + 1; 
         });
         
-        // Update angka di list menu
         menuData.forEach(m => {
             const el = document.getElementById(`qty-${m.id}`);
             if(el) {
@@ -346,23 +328,20 @@
             }
         });
 
-        let total = 0;
-        const bTrigger = document.getElementById('bottomBarTrigger');
         const sInd = document.getElementById('swipeInd');
-
         if (sub > 0) {
             let ong = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
-            total = sub + ong;
             sInd.style.display = 'block';
+            document.getElementById('miniPrice').innerText = (sub + ong).toLocaleString();
             document.getElementById('ongkir-label').style.display = (currentMode === 'DELIVERY') ? 'block' : 'none';
             document.getElementById('ongkir-label').innerText = `+ Ongkir Rp ${ong.toLocaleString()}`;
         } else {
             sInd.style.display = 'none';
+            document.getElementById('miniPrice').innerText = "0";
             document.getElementById('ongkir-label').style.display = 'none';
-            toggleSummary(false); // Tutup otomatis jika kosong
+            toggleSummary(false);
         }
 
-        document.getElementById('miniPrice').innerText = total.toLocaleString();
         document.getElementById('btnOrder').disabled = sub === 0;
         document.getElementById('btnOrder').innerText = sub > 0 ? 'PESAN SEKARANG' : 'PILIH MENU';
         updateOrderSummary();
@@ -371,8 +350,7 @@
     function toggleSummary(open) {
         const panel = document.getElementById('orderSummaryPanel');
         const overlay = document.getElementById('summaryOverlay');
-        if (cart.length === 0 && open) return;
-
+        if (cart.length === 0) { panel.classList.remove('active'); overlay.style.display = 'none'; return; }
         if (open) { panel.classList.add('active'); overlay.style.display = 'block'; }
         else { panel.classList.remove('active'); overlay.style.display = 'none'; }
     }
@@ -391,45 +369,23 @@
         container.innerHTML = Object.values(groups).map(item => {
             const tags = [item.vN, item.vM, item.vR, item.vS].filter(x => x).join(', ');
             const vObj = { vN: item.vN, vM: item.vM, vR: item.vR, vS: item.vS, ex: item.ex };
-            const vEnc = encodeURIComponent(JSON.stringify(vObj));
             
             return `
-            <div class="summary-item-wrapper">
-                <div class="delete-action" onclick="removeFullGroup('${item.id}', '${vEnc}')">HAPUS</div>
-                <div class="summary-item" ontouchstart="hS(this, event)" ontouchmove="hM(this, event)" ontouchend="hE(this)">
-                    <div class="item-detail-name">
-                        <b>${item.nama}</b>
-                        <span>${tags || 'Original'}</span>
-                        <div style="font-weight:800; color:var(--primary); margin-top:4px;">Rp ${((item.harga + (item.ex || 0)) * item.qty).toLocaleString()}</div>
-                    </div>
-                    <div class="mini-qty-box">
-                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${JSON.stringify(vObj)})">−</button>
-                        <span style="font-weight:900; font-size:14px; min-width:15px; text-align:center;">${item.qty}</span>
-                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${JSON.stringify(vObj)})">+</button>
-                    </div>
+            <div class="summary-item">
+                <div class="item-detail-name">
+                    <b>${item.nama}</b>
+                    <span>${tags || 'Original'}</span>
+                    <div style="font-weight:800; color:var(--primary); margin-top:4px;">Rp ${((item.harga + (item.ex || 0)) * item.qty).toLocaleString()}</div>
+                </div>
+                <div class="mini-qty-box">
+                    <button class="mini-qty-btn" onclick='updateCart("${item.id}", -1, ${JSON.stringify(vObj)})'>−</button>
+                    <span style="font-weight:900; font-size:14px; min-width:15px; text-align:center;">${item.qty}</span>
+                    <button class="mini-qty-btn" onclick='updateCart("${item.id}", 1, ${JSON.stringify(vObj)})'>+</button>
                 </div>
             </div>`;
         }).join('');
     }
 
-    // SWIPE LOGIC FIX
-    let startX = 0;
-    function hS(el, e) { 
-        startX = e.touches[0].clientX; 
-        el.style.transition = 'none'; 
-    }
-    function hM(el, e) {
-        let diff = startX - e.touches[0].clientX;
-        if (diff > 0 && diff < 100) el.style.transform = `translateX(-${diff}px)`;
-    }
-    function hE(el) {
-        el.style.transition = 'transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28)';
-        const currentTransform = new WebKitCSSMatrix(getComputedStyle(el).transform).m41;
-        if (currentTransform < -50) el.style.transform = 'translateX(-80px)';
-        else el.style.transform = 'translateX(0)';
-    }
-
-    // Nav & Utils
     function filterByTab(cat, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
