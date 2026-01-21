@@ -504,25 +504,44 @@
 }
 function changeCartFromSummary(id, delta, groupKey) {
     const parts = groupKey.split('-');
-
     const vN = parts[1] || null;
     const vM = parts[2] || null;
     const vR = parts[3] || null;
     const vS = parts[4] || null;
 
     if (delta > 0) {
-        // tambah item dengan varian yang sama
         updateCart(id, 1, { vN, vM, vR, vS, ex: 0 });
-    } else {
-        // kurangi item spesifik (berdasarkan varian)
-        updateCart(id, -1, { vN, vM, vR, vS });
+        return;
     }
 
-    // kalau cart kosong → tutup keranjang & kembali ke menu
-    if (cart.length === 0) {
-        toggleSummary(false);
+    // HITUNG QTY GROUP SAAT INI
+    const groupQty = cart.filter(c =>
+        c.id === id &&
+        c.vN === vN &&
+        c.vM === vM &&
+        c.vR === vR &&
+        c.vS === vS
+    ).length;
+
+    if (groupQty <= 1) {
+        // HAPUS SEMUA ITEM GROUP → BENAR-BENAR HILANG
+        cart = cart.filter(c =>
+            !(
+                c.id === id &&
+                c.vN === vN &&
+                c.vM === vM &&
+                c.vR === vR &&
+                c.vS === vS
+            )
+        );
+        refreshUI();
+        return;
     }
+
+    // NORMAL: KURANGI 1
+    updateCart(id, -1, { vN, vM, vR, vS });
 }
+
 
     function toggleSummary(open) {
         if (cart.length === 0) return;
