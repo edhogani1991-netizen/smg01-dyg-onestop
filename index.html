@@ -6,14 +6,6 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-@keyframes waving {
-    0% { transform: rotate(0deg); }
-    20% { transform: rotate(-15deg); }
-    40% { transform: rotate(10deg); }
-    60% { transform: rotate(-10deg); }
-    80% { transform: rotate(5deg); }
-    100% { transform: rotate(0deg); }
-}
         :root { 
             --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
             --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
@@ -164,27 +156,8 @@
         .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
         .order-btn:disabled { opacity: 0.5; }
         
-/* Gaya Modal Simpel & Stabil */
-.modal-overlay { 
-    position: fixed; inset: 0; 
-    background: rgba(0,0,0,0.7); 
-    z-index: 10001; 
-    display: none; align-items: center; justify-content: center; padding: 20px;
-}
-
-.modal-card { 
-    background: white; width: 90%; max-width: 320px; 
-    padding: 25px 20px; border-radius: 20px; text-align: center; 
-    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-    border: 1px solid rgba(0,0,0,0.05);
-}
-
-/* Animasi lambaian cowok */
-@keyframes waving {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(15deg); }
-}
-/* Efek hapus item dari keranjang */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
 .summary-item.removing {
     opacity: 0;
     transform: translateX(-20px);
@@ -209,14 +182,6 @@ mark {
 /* Tambahan agar transisi kembali ke ukuran normal tidak kaku */
 .order-btn {
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-@keyframes pulse-border {
-    0% { box-shadow: 0 0 0 0 rgba(27, 67, 50, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(27, 67, 50, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(27, 67, 50, 0); }
-}
-.mode-item:not(.active):not(.disabled) {
-    animation: pulse-border 2s infinite;
 }
     </style>
 </head>
@@ -244,7 +209,7 @@ mark {
 
 <!-- BARIS 1 : MODE ORDER -->
 <div class="mode-container" style="margin-top: -10px;">
-    <div id="mDine" class="mode-item" onclick="changeMode('DINE IN', this)">🍽️ Dine In</div>
+    <div id="mDine" class="mode-item active" onclick="changeMode('DINE IN', this)">🍽️ Dine In</div>
     <div id="mTake" class="mode-item" onclick="changeMode('TAKE AWAY', this)">🛍️ Take Away</div>
     <div id="mDeliv" class="mode-item" onclick="changeMode('DELIVERY', this)">🛵 Delivery</div>
 </div>
@@ -311,24 +276,6 @@ mark {
     </div>
 </div>
 
-<div id="modalMode" class="modal-overlay">
-    <div class="modal-card">
-        <div style="text-align: right;">
-            <button onclick="closeModeSelection()" style="background:none; border:none; font-size:20px; color:#999; cursor:pointer;">&times;</button>
-        </div>
-        
-        <div style="font-size: 50px; animation: waving 1s infinite; display: inline-block;">🙋‍♂️</div>
-        
-        <h3 style="margin: 10px 0 5px; font-size: 16px;">Halo, Broh! 👋</h3>
-        <p style="font-size: 13px; color: #666; line-height: 1.4; margin-bottom: 15px;">
-            Jangan lupa pilih dulu mode layananmu ya (Dine In / Take Away / Delivery), baru lanjut pilih menu. Selamat berbelanja!
-        </p>
-        
-        <button onclick="closeModeSelection()" style="width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:10px; font-weight:700;">Siap, Paham!</button>
-    </div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
@@ -346,240 +293,396 @@ mark {
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
-    window.userLat = 0;
-    window.userLng = 0;
+    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0;
 
-    // FUNGSI UTAMA START
     async function startApp() {
-        const btn = document.querySelector("#welcome-overlay button");
-        btn.innerText = "Mencari Lokasi...";
-        btn.disabled = true;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        
+        // --- BAGIAN INI YANG PENTING ---
+        // Kita simpan ke "window" agar bisa dibaca oleh fungsi submitOrder()
+        window.userLat = latitude;
+        window.userLng = longitude;
+        // -------------------------------
 
-        if (!navigator.geolocation) {
-            alert("Browser Anda tidak mendukung lokasi.");
-            return;
-        }
+        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+        userDist = straightLineDist * 1.45; 
 
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            window.userLat = pos.coords.latitude;
-            window.userLng = pos.coords.longitude;
-
-            const straightLineDist = L.latLng(window.userLat, window.userLng).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-            userDist = straightLineDist * 1.45; 
-
-            document.getElementById('welcome-overlay').style.display = 'none';
-            
-            initMap(window.userLat, window.userLng);
-            initBanner();
-            setTimeout(openModeSelection, 500);
-            
-            await loadMenu();
-            syncQueue();
-
-            // Cek Radius Dine In
+        if (userDist > CONFIG.RADIUS_DINE_IN) {
             const dineBtn = document.getElementById('mDine');
-            if (userDist > CONFIG.RADIUS_DINE_IN) {
+            if(dineBtn) {
                 dineBtn.classList.add('disabled');
-                dineBtn.onclick = () => alert("Maaf, lokasi Anda terlalu jauh untuk Dine-In (Makan di tempat).");
+                dineBtn.onclick = () => showOutOfRangeAlert();
             }
-        }, (err) => {
-            alert("Gagal akses lokasi. Harap aktifkan GPS Anda.");
-            btn.innerText = "IZINKAN AKSES";
-            btn.disabled = false;
-        }, { enableHighAccuracy: true, timeout: 10000 });
-    }
+            changeMode('DELIVERY', document.getElementById('mDeliv'));
+        }
+        
+        initMap(latitude, longitude);
+        initBanner();
+        document.getElementById('welcome-overlay').style.display = 'none';
+        await loadMenu();
+        syncQueue();
+    }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
+}
 
-    function initMap(lat, lng) {
-        const map = L.map('map', { zoomControl: false }).setView([lat, lng], 16);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker([lat, lng]).addTo(map).bindPopup("Lokasi Anda").openPopup();
-        L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Cloud Kitchen");
+    function calculateOngkir(distMeter) {
+        const km = distMeter / 1000;
+        if (km <= 1.5) return 3000;
+        if (km <= 3) return 5000;
+        if (km <= 5) return 8000;
+        return 8000 + (Math.ceil(km - 5) * 2000);
     }
 
     async function loadMenu() {
         try {
             const resp = await fetch(CONFIG.MENU_CSV_URL);
             const csv = await resp.text();
-            const rows = csv.split('\n').slice(1);
-            menuData = rows.filter(r => r.trim()).map(r => {
-                const col = r.split(',');
-                return { id: col[0], cat: col[1], name: col[2], price: parseInt(col[3]), img: col[4], varian: col[5] };
-            });
+            menuData = csv.split('\n').slice(1).map((row, i) => {
+                const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
+                return { id: 'm'+i, kat: cols[0] || '', nama: cols[1] || '', harga: parseInt(cols[2]) || 0 };
+            }).filter(m => m.nama);
             renderTabs();
             renderMenu();
-        } catch (e) { alert("Gagal memuat menu."); }
+        } catch (e) { console.error("Menu error:", e); }
     }
 
-    function renderMenu(filter = '') {
-        const container = document.getElementById('menu-container');
-        container.innerHTML = '';
-        const filtered = menuData.filter(m => m.name.toLowerCase().includes(filter.toLowerCase()));
-        
-        filtered.forEach(m => {
-            const div = document.createElement('div');
-            div.className = 'menu-item';
-            
-            let varianHTML = '';
-            if(m.varian === 'NASI') varianHTML = createSelect(m.id, VARIAN_NASI);
-            else if(m.varian === 'MIE_GORENG') varianHTML = createSelect(m.id, VARIAN_MIE_GORENG);
-            else if(m.varian === 'MIE_REBUS') varianHTML = createSelect(m.id, VARIAN_MIE_REBUS);
-            else if(m.varian === 'SUHU') varianHTML = createSelect(m.id, VARIAN_SUHU);
+    function renderTabs() {
+        const cats = [...new Set(menuData.map(m => m.kat))];
+        document.getElementById('cat-tabs').innerHTML = `<div class="tab active" onclick="filterByTab('ALL', this)">Semua</div>` + 
+            cats.map(c => `<div class="tab" onclick="filterByTab('${c}', this)">${c}</div>`).join('');
+    }
 
-            div.innerHTML = `
+    function renderMenu(filterKat = 'ALL') {
+        const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
+        const counts = {}; 
+        cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+
+        document.getElementById('menu-container').innerHTML = items.map(m => {
+            const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
+            const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
+            const isMieG = nl.includes("mie") && nl.includes("goreng");
+            const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
+            const isPaket = kl.includes("paket");
+
+            return `
+            <div class="menu-item">
                 <div class="menu-info">
-                    <h4>${m.name}</h4>
-                    <div class="price">Rp ${m.price.toLocaleString()}</div>
-                    ${varianHTML}
+                    <h4 data-name="${m.nama}">${m.nama}</h4>
+                    <div class="price">Rp ${m.harga.toLocaleString()}</div>
+                    <div class="variant-area">
+                        ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
+                        ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                    </div>
                 </div>
                 <div class="qty-box">
-                    <button class="qty-btn" onclick="updateQty('${m.id}', -1)">-</button>
-                    <span id="qty-${m.id}" style="font-weight:800">0</span>
-                    <button class="qty-btn" onclick="updateQty('${m.id}', 1)">+</button>
+                    <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
+                    <span id="qty-${m.id}">${counts[m.id] || 0}</span>
+                    <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
                 </div>
-            `;
-            container.appendChild(div);
-        });
+            </div>`;
+        }).join('');
     }
 
-    function createSelect(id, options) {
-        let h = `<select id="var-${id}" class="variant-select">`;
-        options.forEach(o => h += `<option value="${o.n}|${o.e}">${o.n} ${o.e>0 ? '(+'+o.e+')' : ''}</option>`);
-        return h + `</select>`;
-    }
-
-    function updateQty(id, delta) {
-        if (!currentMode) { openModeSelection(); return; }
+    function updateCart(id, change, forceVariant = null) {
         const item = menuData.find(m => m.id === id);
-        const varEl = document.getElementById(`var-${id}`);
-        const varVal = varEl ? varEl.value.split('|') : ['Normal', 0];
-        
-        const cartKey = id + '-' + varVal[0];
-        let ex = cart.find(c => c.key === cartKey);
+        if (!item) return;
 
-        if (ex) {
-            ex.q += delta;
-            if (ex.q <= 0) cart = cart.filter(c => c.key !== cartKey);
-        } else if (delta > 0) {
-            cart.push({ key: cartKey, id: id, name: item.name, var: varVal[0], price: item.price + parseInt(varVal[1]), q: 1 });
+        if (change > 0) {
+            let vData = forceVariant ? {...forceVariant} : {
+                vN: document.getElementById(`n-${id}`)?.value || null,
+                vM: document.getElementById(`m-${id}`)?.value || null,
+                vR: document.getElementById(`r-${id}`)?.value || null,
+                vS: document.getElementById(`s-${id}`)?.value || null,
+                ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
+            };
+            cart.push({ ...item, ...vData });
+        } else {
+            let idx = cart.findLastIndex(c => 
+                c.id === id && 
+                c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
+                c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
+                c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
+                c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
+            );
+            if (idx !== -1) cart.splice(idx, 1);
         }
-        
-        updateUI();
+        refreshUI();
     }
 
-    function updateUI() {
-        let total = 0;
-        cart.forEach(c => total += (c.price * c.q));
-        
-        // Reset semua angka qty di grid menu
-        document.querySelectorAll('[id^="qty-"]').forEach(el => el.innerText = '0');
-        // Isi kembali berdasarkan cart
-        cart.forEach(c => {
-            const el = document.getElementById(`qty-${c.id}`);
-            if(el) el.innerText = c.q;
+    function refreshUI() {
+        let subtotal = 0; 
+        const counts = {};
+        cart.forEach(c => { 
+            subtotal += (c.harga + (c.ex || 0)); 
+            counts[c.id] = (counts[c.id] || 0) + 1; 
         });
 
-        document.getElementById('miniPrice').innerText = total.toLocaleString();
-        document.getElementById('btnOrder').disabled = cart.length === 0;
-        document.getElementById('btnOrder').innerText = cart.length === 0 ? "PILIH MENU" : `PESAN (${cart.length})`;
-        renderSummary();
+        menuData.forEach(m => {
+            const el = document.getElementById(`qty-${m.id}`);
+            if(el) {
+                const val = counts[m.id] || 0;
+                el.innerText = val;
+                el.previousElementSibling.disabled = val === 0;
+            }
+        });
+
+        const sInd = document.getElementById('swipeInd');
+        const distEl = document.getElementById('dist-info');
+        const ongEl = document.getElementById('ongkir-label');
+        const priceEl = document.getElementById('miniPrice');
+
+        if (subtotal > 0) {
+            sInd.style.display = 'block';
+            if (currentMode === 'DELIVERY') {
+                let ongkir = calculateOngkir(userDist);
+                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+                distEl.style.display = 'block';
+                distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+                ongEl.style.display = 'block';
+                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+            } else {
+                priceEl.innerText = subtotal.toLocaleString('id-ID');
+                distEl.style.display = 'none';
+                ongEl.style.display = 'none';
+            }
+            document.getElementById('btnOrder').disabled = false;
+            document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
+        } else {
+            sInd.style.display = 'none';
+            distEl.style.display = 'none';
+            ongEl.style.display = 'none';
+            priceEl.innerText = "0";
+            document.getElementById('btnOrder').disabled = true;
+            document.getElementById('btnOrder').innerText = 'PILIH MENU';
+            toggleSummary(false); // Tutup rincian jika item habis
+        }
+        updateOrderSummary();
     }
 
-    function changeMode(mode, el) {
-        if (el.classList.contains('disabled')) return;
-        currentMode = mode;
-        document.querySelectorAll('.mode-item').forEach(m => m.classList.remove('active'));
+    function updateOrderSummary() {
+        const container = document.getElementById('summaryItems');
+        if (cart.length === 0) {
+            container.innerHTML = `<div style="text-align:center;padding:40px;color:#999;font-size:12px;">Keranjang kosong</div>`;
+            return;
+        }
+
+        const groups = {};
+        cart.forEach(c => {
+            const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
+            if (!groups[key]) groups[key] = { ...c, qty: 0, key: key };
+            groups[key].qty++;
+        });
+
+        container.innerHTML = Object.values(groups).map(item => `
+            <div class="summary-item">
+                <div class="item-detail-name">
+                    <b>${item.nama}</b>
+                    <span>${[item.vN, item.vM, item.vR, item.vS].filter(Boolean).join(', ') || 'Original'}</span>
+                    <div style="font-size:11px;font-weight:800;color:var(--primary);margin-top:3px;">
+                        Rp ${(item.qty * (item.harga + (item.ex || 0))).toLocaleString('id-ID')}
+                    </div>
+                </div>
+                <div class="mini-qty-box">
+                    <button class="mini-qty-btn" onclick="changeQtyFromSummary('${item.key}', -1)">−</button>
+                    <span style="font-weight:800; min-width:20px; text-align:center;">${item.qty}</span>
+                    <button class="mini-qty-btn" onclick="changeQtyFromSummary('${item.key}', 1)">+</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function changeQtyFromSummary(groupKey, delta) {
+        const sample = cart.find(c => `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}` === groupKey);
+        if (sample) {
+            updateCart(sample.id, delta, {
+                vN: sample.vN, vM: sample.vM, vR: sample.vR, vS: sample.vS, ex: sample.ex
+            });
+        }
+    }
+
+    async function submitOrder() {
+if (navigator.vibrate) navigator.vibrate(50); // Getar halus 50ms (seperti sentuhan sistem)
+    const nI = document.getElementById('custName');
+    const tI = document.getElementById('tableNo');
+    const aI = document.getElementById('addressDetail');
+    const noAntrean = document.getElementById('noAntrean').innerText;
+
+    // --- 1. Validasi Input (Friendly UI) ---
+    const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
+    cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
+
+    let targetEl = null;
+    if (!nI.value.trim()) targetEl = nI;
+    else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
+    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+
+    if (targetEl) {
+        const targetCard = targetEl.closest('.input-card');
+        closeModal();
+        targetCard.classList.add('error-field');
+        void targetCard.offsetWidth; 
+        targetCard.classList.add('shake-ani');
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.focus();
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        setTimeout(() => targetCard.classList.remove('shake-ani'), 500);
+        return; 
+    }
+
+    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
+    const summary = {};
+    cart.forEach(c => {
+        let label = c.nama;
+        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+        if(tags) label += ` [${tags}]`;
+        const itemKey = label;
+        const itemPrice = c.harga + (c.ex || 0);
+        
+        if (!summary[itemKey]) {
+            summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
+        }
+        summary[itemKey].qty++;
+    });
+
+    const pRowsWA = Object.entries(summary).map(([name, data]) => 
+        `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
+    );
+
+    // --- 3. Hitung Data & Link Lokasi ---
+    const distKM = (userDist/1000).toFixed(1);
+    const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
+    const finalPrice = document.getElementById('miniPrice').innerText;
+    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
+
+    // --- 4. Susun Format Pesan WhatsApp ---
+    let msg = `Halo cloudkitchen.dyg++!\n\n`;
+    msg += `🛵 *${currentMode}*\n`;
+    msg += `👤 *Nama:* ${nI.value}\n`;
+    msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
+    msg += `━━━━━━━━━━━━━━\n`;
+
+    if (currentMode === 'DINE IN') {
+        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
+    } else {
+        msg += `🏠 *Alamat:* ${aI.value}\n`;
+        msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
+        msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
+    }
+
+    msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
+    
+    const catatan = document.getElementById('orderNote').value || '-';
+    msg += `\n*CATATAN:* ${catatan}\n`;
+    msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
+    
+    msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
+    msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
+    msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
+    msg += `Terimakasih!`;
+
+    // --- 5. Animasi Feedback Tombol & Pengiriman ---
+    // Memicu getar halus saat klik
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    // Mengubah tombol menjadi loading
+    const btnKirim = document.querySelector('#modalConfirm button:last-child');
+    if (btnKirim) {
+        btnKirim.innerHTML = "⌛ Menghubungkan...";
+        btnKirim.style.opacity = "0.7";
+        btnKirim.style.pointerEvents = "none";
+    }
+
+    // Kirim data ke database di latar belakang
+    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
+
+    // Tunggu animasi sebentar baru pindah ke WA
+    setTimeout(() => {
+        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+    }, 600); 
+}
+
+
+    function toggleSummary(open) {
+        if (cart.length === 0 && open) return;
+        document.getElementById('orderSummaryPanel').classList.toggle('active', open);
+        document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
+    }
+
+    function changeMode(m, el) {
+        if (el.classList.contains('disabled')) return showOutOfRangeAlert();
+        currentMode = m;
+        document.querySelectorAll('.mode-item').forEach(o => o.classList.remove('active'));
         el.classList.add('active');
-        document.getElementById('boxMeja').style.display = mode === 'DINE IN' ? 'block' : 'none';
-        document.getElementById('boxAlamat').style.display = mode === 'DELIVERY' ? 'block' : 'none';
+        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
+        document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+        refreshUI();
     }
 
-    function openModeSelection() { document.getElementById('modalMode').style.display = 'flex'; }
-    function closeModeSelection() { document.getElementById('modalMode').style.display = 'none'; }
-    function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
-    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-
-    function submitOrder() {
-        const name = document.getElementById('custName').value;
-        if (!name) { alert("Nama harus diisi"); return; }
-        
-        let msg = `*PESANAN BARU - ${currentMode}*\n`;
-        msg += `Nama: ${name}\n`;
-        if(currentMode === 'DINE IN') msg += `Meja: ${document.getElementById('tableNo').value}\n`;
-        if(currentMode === 'DELIVERY') msg += `Alamat: ${document.getElementById('addressDetail').value}\n`;
-        
-        msg += `\n*Daftar Pesanan:*\n`;
-        let total = 0;
-        cart.forEach(c => {
-            msg += `- ${c.name} (${c.var}) x${c.q} = Rp ${(c.price*c.q).toLocaleString()}\n`;
-            total += (c.price*c.q);
-        });
-        
-        const locUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
-        msg += `\n*Total: Rp ${total.toLocaleString()}*`;
-        msg += `\n\nLokasi Pembeli:\n${locUrl}`;
-
-        const phone = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    function initMap(lat, lng) {
+        const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Warung").openPopup();
+        L.marker([lat, lng]).addTo(map).bindPopup("Lokasi Kamu");
     }
 
     function initBanner() {
         const track = document.getElementById('banner-track');
-        MY_BANNERS.forEach(url => track.innerHTML += `<img src="${url}">`);
-        setInterval(() => {
-            bannerIdx = (bannerIdx + 1) % MY_BANNERS.length;
-            track.style.transform = `translateX(-${bannerIdx * 100}%)`;
-        }, 3000);
+        track.innerHTML = MY_BANNERS.map(img => `<img src="${img}">`).join('');
+        setInterval(() => { bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; track.style.transform = `translateX(-${bannerIdx * 100}%)`; }, 5000);
     }
 
-    function renderTabs() {
-        const cats = ['Semua', ...new Set(menuData.map(m => m.cat))];
-        const container = document.getElementById('cat-tabs');
-        cats.forEach(c => {
-            const btn = document.createElement('div');
-            btn.className = 'tab' + (c === 'Semua' ? ' active' : '');
-            btn.innerText = c;
-            btn.onclick = () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                btn.classList.add('active');
-                renderMenu(c === 'Semua' ? '' : c);
-            };
-            container.appendChild(btn);
-        });
+    function filterMenu() {
+    const q = document.getElementById('searchMenu').value.toLowerCase();
+    const items = document.querySelectorAll('.menu-item');
+
+    items.forEach(it => {
+        const titleEl = it.querySelector('h4');
+        const originalName = titleEl.dataset.name; // Mengambil nama asli dari atribut data-name
+
+        if (q === "") {
+            // Jika pencarian kosong, kembalikan ke nama asli tanpa highlight
+            titleEl.innerHTML = originalName;
+            it.style.display = 'flex';
+        } else if (originalName.toLowerCase().includes(q)) {
+            // Jika cocok, buat efek highlight menggunakan tag <mark>
+            const regex = new RegExp(`(${q})`, 'gi');
+            const highlightedName = originalName.replace(regex, '<mark>$1</mark>');
+            
+            titleEl.innerHTML = highlightedName;
+            it.style.display = 'flex';
+        } else {
+            // Jika tidak cocok, sembunyikan menu
+            it.style.display = 'none';
+        }
+    });
+}
+
+    function filterByTab(cat, el) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        renderMenu(cat);
     }
 
-    function toggleSummary(show) {
-        document.getElementById('orderSummaryPanel').classList.toggle('active', show);
-        document.getElementById('summaryOverlay').style.display = show ? 'block' : 'none';
-    }
-
-    function renderSummary() {
-        const container = document.getElementById('summaryItems');
-        container.innerHTML = '';
-        cart.forEach(c => {
-            container.innerHTML += `
-                <div class="summary-item">
-                    <div class="item-detail-name">
-                        <b>${c.name}</b>
-                        <span>${c.var} | Rp ${c.price.toLocaleString()}</span>
-                    </div>
-                    <div class="mini-qty-box">
-                        <button class="mini-qty-btn" onclick="updateQty('${c.id}', -1)">-</button>
-                        <span style="font-weight:800">${c.q}</span>
-                        <button class="mini-qty-btn" onclick="updateQty('${c.id}', 1)">+</button>
-                    </div>
-                </div>`;
-        });
-    }
-    
     async function syncQueue() {
         try {
-            const r = await fetch(CONFIG.WEB_APP_URL + '?action=getQueue');
-            const d = await r.json();
-            document.getElementById('noAntrean').innerText = '#' + d.queue;
+            const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
+            const num = await resp.text();
+            if (num) document.getElementById('noAntrean').innerText = "#" + num;
         } catch(e) {}
+        setTimeout(syncQueue, 20000);
     }
+
+    function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
+    function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
+    function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
+    function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
 </script>
+
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
         <div style="font-size:48px;margin-bottom:10px;">🚧</div>
