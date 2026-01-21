@@ -29,6 +29,22 @@
         .banner-container { margin: -18px 18px 15px; position: relative; overflow: hidden; border-radius: 18px; height: 145px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); background: #eee; }
         #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
         #banner-track img { min-width: 100%; object-fit: cover; }
+.mode-item.disabled {
+    background: #F1F1F1;
+    color: #AAA;
+    border-color: #DDD;
+    pointer-events: auto;
+    position: relative;
+}
+.mode-item.disabled::after {
+    content: "Di luar jangkauan";
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: #999;
+}
 
         .mode-container { display: flex; gap: 8px; overflow-x: auto; padding: 0 18px 12px; scrollbar-width: none; }
         .mode-item { white-space: nowrap; padding: 10px 16px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1.2px solid #EFEFEF; cursor: pointer; }
@@ -222,10 +238,16 @@
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
-        if (userDist > CONFIG.RADIUS_DINE_IN) {
-            document.getElementById('mDine').style.display = 'none';
-            changeMode('DELIVERY', document.getElementById('mDeliv'));
-        }
+if (userDist > CONFIG.RADIUS_DINE_IN) {
+    const dineBtn = document.getElementById('mDine');
+    dineBtn.classList.add('disabled');
+
+    dineBtn.onclick = () => {
+        showOutOfRangeAlert();
+    };
+
+    changeMode('DELIVERY', document.getElementById('mDeliv'));
+}
         
         initMap(latitude, longitude);
         initBanner();
@@ -421,16 +443,25 @@ function refreshUI() {
     }
 
     function changeMode(m, el) {
-        currentMode = m;
-        document.querySelectorAll('.mode-item').forEach(o => o.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
-        document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
-        
-        // Reset error fields saat ganti mode
-        document.querySelectorAll('.input-card').forEach(c => c.classList.remove('error-field', 'shake-ani'));
-        refreshUI();
+    if (el.classList.contains('disabled')) {
+        showOutOfRangeAlert();
+        return;
     }
+
+    currentMode = m;
+    document.querySelectorAll('.mode-item').forEach(o => o.classList.remove('active'));
+    el.classList.add('active');
+
+    document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
+    document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+
+    document.querySelectorAll('.input-card').forEach(c =>
+        c.classList.remove('error-field', 'shake-ani')
+    );
+
+    refreshUI();
+}
+
 
     function calculateOngkir(m) {
         const km = m / 1000;
@@ -519,6 +550,13 @@ function refreshUI() {
         msg += `\n*TOTAL: Rp ${total}*`;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
     }
+function showOutOfRangeAlert() {
+    document.getElementById('modalConfirm').style.display = 'flex';
+    document.querySelector('#modalConfirm h3').innerText = 'Di Luar Jangkauan';
+    document.querySelector('#modalConfirm p').innerText =
+        'Kamu sedang berada di luar jangkauan warung untuk layanan Dine In.\nSilakan pilih Take Away atau Delivery.';
+}
+
 </script>
 </body>
 </html>
