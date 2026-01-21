@@ -57,18 +57,26 @@
         .qty-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
 
+        /* FIXED: RINGKASAN BOTTOM SHEET */
         .order-summary-mini {
-            position: fixed; bottom: 95px; left: 20px; right: 20px; background: white;
-            border-radius: 15px; box-shadow: 0 -5px 25px rgba(0,0,0,0.1); padding: 12px 15px;
-            display: none; z-index: 999; max-height: 180px; overflow-y: auto; border: 1px solid #eee;
+            position: fixed; bottom: -400px; left: 0; right: 0; 
+            background: white; border-radius: 25px 25px 0 0; 
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.15); padding: 15px 20px 110px; 
+            z-index: 999; max-height: 70vh; overflow-y: auto; border-top: 1px solid #eee;
+            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
         }
-        .summary-item { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed #f0f0f0; }
+        .order-summary-mini.active { bottom: 0; }
+        .sheet-handle { width: 40px; height: 5px; background: #ccc; border-radius: 10px; margin: 0 auto 15px; cursor: pointer; }
+        .summary-item { display: flex; justify-content: space-between; font-size: 13px; padding: 10px 0; border-bottom: 1px dashed #f0f0f0; }
+
+        #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; }
 
         .bottom-bar { 
             position: fixed; bottom: 0; left: 0; right: 0; background: white; 
             padding: 20px 25px; border-radius: 25px 25px 0 0; 
             box-shadow: 0 -10px 30px rgba(0,0,0,0.08); z-index: 1000; 
             display: flex; justify-content: space-between; align-items: center; 
+            cursor: pointer;
         }
         .price-total { font-size: 22px; font-weight: 900; color: var(--primary); }
         .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
@@ -130,20 +138,19 @@
     <div class="input-card"><textarea id="orderNote" placeholder="Contoh: Pedas sedang, tanpa timun..." rows="2"></textarea></div>
 </div>
 
+<div id="summaryOverlay" onclick="toggleSummary(false)"></div>
 <div id="orderSummaryPanel" class="order-summary-mini">
-    <div style="font-weight: 800; font-size: 11px; color: var(--primary); margin-bottom: 10px; display: flex; justify-content: space-between;">
-        <span>RINGKASAN PESANAN</span>
-        <span onclick="this.parentElement.parentElement.style.display='none'" style="cursor:pointer">✕</span>
-    </div>
+    <div class="sheet-handle" onclick="toggleSummary(false)"></div>
+    <div style="font-weight: 800; font-size: 12px; color: var(--primary); margin-bottom: 15px; text-align: center;">DETAIL PESANAN</div>
     <div id="summaryItems"></div>
 </div>
 
-<div class="bottom-bar">
+<div class="bottom-bar" id="bottomBarTrigger">
     <div>
         <div id="ongkir-label" class="ongkir-tag"></div>
         <div class="price-total">Rp <span id="miniPrice">0</span></div>
     </div>
-    <button id="btnOrder" class="order-btn" onclick="openModal()" disabled>PILIH MENU</button>
+    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
@@ -173,7 +180,7 @@
     const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0;
+    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0, startY = 0;
 
     async function startApp() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -217,10 +224,7 @@
         document.getElementById('menu-container').innerHTML = items.map(m => {
             const nameLower = m.nama.toLowerCase();
             const catLower = m.kat.toLowerCase();
-            
-            // VARIAN NASI
             const isNasi = catLower.includes("hemat") || (catLower.includes("wardoy") && nameLower.includes("nasi"));
-            // VARIAN MIE
             const isMieGoreng = nameLower.includes("mie") && nameLower.includes("goreng") && !nameLower.includes("lik");
             const isMieRebus = nameLower.includes("mie") && (nameLower.includes("rebus") || nameLower.includes("kuah")) && !nameLower.includes("lik");
 
@@ -295,11 +299,35 @@
         updateOrderSummary();
     }
 
-    function updateOrderSummary() {
+    // LOGIKA BOTTOM SHEET
+    function toggleSummary(forceState) {
         const panel = document.getElementById('orderSummaryPanel');
+        const overlay = document.getElementById('summaryOverlay');
+        if (cart.length === 0) return;
+
+        const isOpen = forceState !== undefined ? forceState : !panel.classList.contains('active');
+        if (isOpen) {
+            panel.classList.add('active');
+            overlay.style.display = 'block';
+        } else {
+            panel.classList.remove('active');
+            overlay.style.display = 'none';
+        }
+    }
+
+    document.getElementById('bottomBarTrigger').addEventListener('click', () => toggleSummary(true));
+
+    document.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive: true});
+    document.addEventListener('touchend', e => {
+        const endY = e.changedTouches[0].clientY;
+        const diff = startY - endY;
+        if (diff > 50 && startY > window.innerHeight - 100) toggleSummary(true); // Swipe Up
+        if (diff < -50) toggleSummary(false); // Swipe Down
+    }, {passive: true});
+
+    function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
-        if (cart.length === 0) { panel.style.display = 'none'; return; }
-        panel.style.display = 'block';
+        if (cart.length === 0) { toggleSummary(false); return; }
         
         const summary = {};
         cart.forEach(c => {
@@ -318,8 +346,8 @@
             });
             return `
                 <div class="summary-item">
-                    <span>${qty}x ${name}</span>
-                    <span style="font-weight:700;">Rp ${((baseItem.harga + (baseItem.ex || 0)) * qty).toLocaleString()}</span>
+                    <span><b>${qty}x</b> ${name}</span>
+                    <span>Rp ${((baseItem.harga + (baseItem.ex || 0)) * qty).toLocaleString()}</span>
                 </div>
             `;
         }).join('');
