@@ -57,28 +57,62 @@
         .qty-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
 
-        /* FIXED: RINGKASAN BOTTOM SHEET */
+        /* BOTTOM SHEET REFINED */
         .order-summary-mini {
-            position: fixed; bottom: -400px; left: 0; right: 0; 
-            background: white; border-radius: 25px 25px 0 0; 
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.15); padding: 15px 20px 110px; 
-            z-index: 999; max-height: 70vh; overflow-y: auto; border-top: 1px solid #eee;
-            transition: bottom 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            position: fixed; bottom: -100%; left: 0; right: 0; 
+            background: white; border-radius: 30px 30px 0 0; 
+            box-shadow: 0 -15px 40px rgba(0,0,0,0.15); 
+            z-index: 999; max-height: 85vh; border-top: 1px solid #eee;
+            transition: bottom 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column;
         }
         .order-summary-mini.active { bottom: 0; }
-        .sheet-handle { width: 40px; height: 5px; background: #ccc; border-radius: 10px; margin: 0 auto 15px; cursor: pointer; }
-        .summary-item { display: flex; justify-content: space-between; font-size: 13px; padding: 10px 0; border-bottom: 1px dashed #f0f0f0; }
+        
+        .sheet-header { padding: 15px 20px; text-align: center; background: white; border-radius: 30px 30px 0 0; }
+        .sheet-handle { width: 50px; height: 5px; background: #E0E0E0; border-radius: 10px; margin: 0 auto 10px; }
+        .sheet-title { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: 1px; }
 
-        #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; }
+        .summary-scroll { flex: 1; overflow-y: auto; padding: 0 20px 140px; }
+        
+        /* SWIPE ITEM ACTION */
+        .summary-item-wrapper { position: relative; margin-bottom: 5px; overflow: hidden; border-radius: 15px; }
+        .delete-action { 
+            position: absolute; right: 0; top: 0; bottom: 0; width: 80px; 
+            background: var(--danger); color: white; display: flex; align-items: center; 
+            justify-content: center; font-weight: 800; font-size: 12px; border-radius: 0 15px 15px 0;
+        }
+        .summary-item { 
+            position: relative; background: white; padding: 15px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            z-index: 2; transition: transform 0.3s ease; border-bottom: 1px solid #F5F5F5;
+        }
 
+        .item-detail-name { flex: 1; margin-right: 10px; }
+        .item-detail-name b { display: block; font-size: 14px; }
+        .item-detail-name span { font-size: 11px; color: var(--muted); }
+
+        .mini-qty-box { display: flex; align-items: center; gap: 10px; background: #f8f8f8; padding: 5px; border-radius: 10px; }
+        .mini-qty-btn { width: 28px; height: 28px; border-radius: 6px; border: none; background: white; color: var(--primary); font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+        #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 998; backdrop-filter: blur(2px); }
+
+        /* BOTTOM BAR FIXED */
         .bottom-bar { 
             position: fixed; bottom: 0; left: 0; right: 0; background: white; 
-            padding: 20px 25px; border-radius: 25px 25px 0 0; 
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.08); z-index: 1000; 
+            padding: 15px 25px 25px; border-radius: 30px 30px 0 0; 
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.1); z-index: 1000; 
             display: flex; justify-content: space-between; align-items: center; 
-            cursor: pointer;
         }
-        .price-total { font-size: 22px; font-weight: 900; color: var(--primary); }
+        
+        /* TOMBOL KECIL DI ATAS BAR UNTUK INDIKATOR */
+        .swipe-indicator {
+            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; padding: 5px 15px; border-radius: 20px;
+            font-size: 10px; font-weight: 800; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: none; align-items: center; gap: 5px;
+        }
+
+        .price-total { font-size: 20px; font-weight: 900; color: var(--primary); }
         .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
         .order-btn { background: var(--primary); color: white; border: none; padding: 15px 25px; border-radius: 15px; font-weight: 800; }
         
@@ -140,12 +174,16 @@
 
 <div id="summaryOverlay" onclick="toggleSummary(false)"></div>
 <div id="orderSummaryPanel" class="order-summary-mini">
-    <div class="sheet-handle" onclick="toggleSummary(false)"></div>
-    <div style="font-weight: 800; font-size: 12px; color: var(--primary); margin-bottom: 15px; text-align: center;">DETAIL PESANAN</div>
-    <div id="summaryItems"></div>
+    <div class="sheet-header" onclick="toggleSummary(false)">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">RINCIAN PESANAN</div>
+        <div style="font-size: 10px; color: var(--muted); margin-top: 5px;">Swipe kiri pada item untuk menghapus</div>
+    </div>
+    <div class="summary-scroll" id="summaryItems"></div>
 </div>
 
-<div class="bottom-bar" id="bottomBarTrigger">
+<div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
+    <div class="swipe-indicator" id="swipeInd">▲ LIHAT DETAIL</div>
     <div>
         <div id="ongkir-label" class="ongkir-tag"></div>
         <div class="price-total">Rp <span id="miniPrice">0</span></div>
@@ -180,7 +218,7 @@
     const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0, startY = 0;
+    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, bannerIdx = 0, startX = 0, startY = 0;
 
     async function startApp() {
         navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -248,18 +286,33 @@
         }).join('');
     }
 
-    function updateCart(id, change) {
+    function updateCart(id, change, customVariant = null) {
         const item = menuData.find(m => m.id === id);
         if (change > 0) {
-            const selN = document.getElementById(`n-${id}`)?.value || null;
-            const selM = document.getElementById(`m-${id}`)?.value || null;
-            const selR = document.getElementById(`r-${id}`)?.value || null;
-            const extra = selN ? (VARIAN_NASI.find(v => v.n === selN)?.e || 0) : 0;
-            cart.push({ ...item, vN: selN, vM: selM, vR: selR, ex: extra });
+            let v = customVariant;
+            if(!v) {
+                const selN = document.getElementById(`n-${id}`)?.value || null;
+                const selM = document.getElementById(`m-${id}`)?.value || null;
+                const selR = document.getElementById(`r-${id}`)?.value || null;
+                const extra = selN ? (VARIAN_NASI.find(v => v.n === selN)?.e || 0) : 0;
+                v = { vN: selN, vM: selM, vR: selR, ex: extra };
+            }
+            cart.push({ ...item, ...v });
         } else {
-            const idx = cart.map(c => c.id).lastIndexOf(id);
+            // Jika hapus dari ringkasan, harus cari yang variannya sama persis
+            let idx = -1;
+            if(customVariant) {
+                idx = cart.findLastIndex(c => c.id === id && c.vN === customVariant.vN && c.vM === customVariant.vM && c.vR === customVariant.vR);
+            } else {
+                idx = cart.map(c => c.id).lastIndexOf(id);
+            }
             if (idx !== -1) cart.splice(idx, 1);
         }
+        refreshUI();
+    }
+
+    function removeAllOfThis(id, variant) {
+        cart = cart.filter(c => !(c.id === id && c.vN === variant.vN && c.vM === variant.vM && c.vR === variant.vR));
         refreshUI();
     }
 
@@ -283,6 +336,7 @@
         if (sub > 0) {
             let ong = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
             total = sub + ong;
+            document.getElementById('swipeInd').style.display = 'flex';
             if(currentMode === 'DELIVERY') {
                 document.getElementById('ongkir-label').style.display = 'block';
                 document.getElementById('ongkir-label').innerText = `+ Ongkir Rp ${ong.toLocaleString()}`;
@@ -290,6 +344,7 @@
                 document.getElementById('ongkir-label').style.display = 'none';
             }
         } else {
+            document.getElementById('swipeInd').style.display = 'none';
             document.getElementById('ongkir-label').style.display = 'none';
         }
 
@@ -299,60 +354,94 @@
         updateOrderSummary();
     }
 
-    // LOGIKA BOTTOM SHEET
+    // LOGIKA SWIPE & BOTTOM SHEET
     function toggleSummary(forceState) {
         const panel = document.getElementById('orderSummaryPanel');
         const overlay = document.getElementById('summaryOverlay');
+        const ind = document.getElementById('swipeInd');
         if (cart.length === 0) return;
 
         const isOpen = forceState !== undefined ? forceState : !panel.classList.contains('active');
         if (isOpen) {
             panel.classList.add('active');
             overlay.style.display = 'block';
+            ind.innerHTML = "▼ TUTUP DETAIL";
         } else {
             panel.classList.remove('active');
             overlay.style.display = 'none';
+            ind.innerHTML = "▲ LIHAT DETAIL";
         }
     }
 
-    document.getElementById('bottomBarTrigger').addEventListener('click', () => toggleSummary(true));
+    // TOUCH EVENTS UNTUK SWIPE UP/DOWN
+    document.addEventListener('touchstart', e => { 
+        startY = e.touches[0].clientY; 
+        startX = e.touches[0].clientX;
+    }, {passive: true});
 
-    document.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, {passive: true});
     document.addEventListener('touchend', e => {
         const endY = e.changedTouches[0].clientY;
-        const diff = startY - endY;
-        if (diff > 50 && startY > window.innerHeight - 100) toggleSummary(true); // Swipe Up
-        if (diff < -50) toggleSummary(false); // Swipe Down
+        const diffY = startY - endY;
+        if (diffY > 70 && startY > window.innerHeight - 150) toggleSummary(true); 
+        if (diffY < -70 && panelIsActive()) toggleSummary(false);
     }, {passive: true});
+
+    function panelIsActive() { return document.getElementById('orderSummaryPanel').classList.contains('active'); }
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
         if (cart.length === 0) { toggleSummary(false); return; }
         
-        const summary = {};
+        // Grouping berdasarkan ID + Varian
+        const groups = {};
         cart.forEach(c => {
-            let name = c.nama;
-            let tags = [c.vN, c.vM, c.vR].filter(x => x).join(', ');
-            if(tags) name += ` (${tags})`;
-            summary[name] = (summary[name] || 0) + 1;
+            const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}`;
+            if(!groups[key]) groups[key] = { ...c, qty: 0 };
+            groups[key].qty++;
         });
 
-        container.innerHTML = Object.entries(summary).map(([name, qty]) => {
-            const baseItem = cart.find(c => {
-                let check = c.nama;
-                let tags = [c.vN, c.vM, c.vR].filter(x => x).join(', ');
-                if(tags) check += ` (${tags})`;
-                return check === name;
-            });
+        container.innerHTML = Object.values(groups).map(item => {
+            const variantText = [item.vN, item.vM, item.vR].filter(x => x).join(', ');
+            const varObj = { vN: item.vN, vM: item.vM, vR: item.vR, ex: item.ex };
+            
             return `
-                <div class="summary-item">
-                    <span><b>${qty}x</b> ${name}</span>
-                    <span>Rp ${((baseItem.harga + (baseItem.ex || 0)) * qty).toLocaleString()}</span>
+            <div class="summary-item-wrapper">
+                <div class="delete-action" onclick="removeAllOfThis('${item.id}', ${JSON.stringify(varObj)})">HAPUS</div>
+                <div class="summary-item" ontouchstart="handleItemTouchStart(this, event)" ontouchmove="handleItemTouchMove(this, event)" ontouchend="handleItemTouchEnd(this)">
+                    <div class="item-detail-name">
+                        <b>${item.nama}</b>
+                        <span>${variantText || 'Tanpa Varian'}</span>
+                        <div style="font-weight:700; color:var(--primary); margin-top:3px;">Rp ${((item.harga + (item.ex || 0)) * item.qty).toLocaleString()}</div>
+                    </div>
+                    <div class="mini-qty-box">
+                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${JSON.stringify(varObj)})">−</button>
+                        <span style="font-weight:900; font-size:14px; min-width:20px; text-align:center;">${item.qty}</span>
+                        <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${JSON.stringify(varObj)})">+</button>
+                    </div>
                 </div>
-            `;
+            </div>`;
         }).join('');
     }
 
+    // SWIPE TO DELETE LOGIC PER ITEM
+    let itemStartX = 0;
+    function handleItemTouchStart(el, e) { itemStartX = e.touches[0].clientX; }
+    function handleItemTouchMove(el, e) {
+        let diffX = itemStartX - e.touches[0].clientX;
+        if (diffX > 0 && diffX < 100) {
+            el.style.transform = `translateX(-${diffX}px)`;
+        }
+    }
+    function handleItemTouchEnd(el) {
+        let currentTranslate = parseInt(el.style.transform.replace(/[^\d.-]/g, '')) || 0;
+        if (currentTranslate < -50) {
+            el.style.transform = `translateX(-80px)`;
+        } else {
+            el.style.transform = `translateX(0px)`;
+        }
+    }
+
+    // OTHER APP LOGIC
     function filterByTab(cat, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         el.classList.add('active');
