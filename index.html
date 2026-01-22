@@ -400,20 +400,23 @@ mark {
     box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
 }
 /* Badge Diluar Jangkauan */
+/* Badge rapi & presisi */
 .badge-status {
     position: absolute;
-    top: -8px;
+    top: -5px; /* Sedikit di atas lingkaran tombol */
+    left: 50%;
+    transform: translateX(-50%); /* Teknik agar tepat di tengah */
     background: var(--danger);
     color: white;
-    font-size: 8px;
+    font-size: 7px; /* Ukuran font diperkecil agar pas */
     font-weight: 800;
-    padding: 2px 6px;
-    border-radius: 6px;
+    padding: 2px 8px;
+    border-radius: 20px; /* Lebih lonjong agar rapi */
     white-space: nowrap;
-    box-shadow: 0 2px 5px rgba(214, 48, 49, 0.3);
-    z-index: 2;
-    display: none; /* Sembunyi secara default */
-    animation: fadeIn 0.3s ease;
+    box-shadow: 0 2px 5px rgba(214, 48, 49, 0.4);
+    z-index: 5;
+    display: none;
+    pointer-events: none; /* Supaya tidak mengganggu klik tombol */
 }
 
 @keyframes fadeIn {
@@ -456,8 +459,8 @@ mark {
 </div>
 
 <!-- BARIS 1 : MODE ORDER -->
-<div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-    <div id="badgeDine" class="badge-status">DILUAR JANGKAUAN</div>
+<div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)" style="position: relative;">
+    <div id="badgeDine" class="badge-status">DI LUAR JANGKAUAN</div>
     <div class="icon">🍽️</div>
     <span>Dine In</span>
 </div>
@@ -572,36 +575,42 @@ async function startApp() {
         window.userLat = latitude;
         window.userLng = longitude;
 
+        // Hitung jarak
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
         const dineBtn = document.getElementById('mDine');
         const dineBadge = document.getElementById('badgeDine');
 
-        // LOGIKA BADGE OTOMATIS
+        // LOGIKA BADGE & JARAK (Update Otomatis)
         if (userDist > CONFIG.RADIUS_DINE_IN) {
-            // Jika di luar radius
+            // JIKA DI LUAR JANGKAUAN
             if(dineBtn) {
                 dineBtn.classList.add('disabled');
                 dineBtn.onclick = () => showOutOfRangeAlert();
             }
-            if(dineBadge) dineBadge.style.display = 'block'; // Tampilkan badge
+            if(dineBadge) dineBadge.style.display = 'block'; 
         } else {
-            // Jika masuk dalam radius
+            // JIKA MASUK JANGKAUAN
             if(dineBtn) {
                 dineBtn.classList.remove('disabled');
-                // Kembalikan fungsi klik aslinya
                 dineBtn.onclick = function() { changeMode('DINE IN', this); };
             }
-            if(dineBadge) dineBadge.style.display = 'none'; // Sembunyikan badge
+            if(dineBadge) dineBadge.style.display = 'none'; 
         }
-        
+
+        // AGAR TIDAK ADA TOMBOL AKTIF DI AWAL
+        currentMode = null; 
+        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
+
+        // Jalankan fungsi inisialisasi lainnya
         initMap(latitude, longitude);
         initBanner();
         document.getElementById('welcome-overlay').style.display = 'none';
         await loadMenu();
         syncQueue();
-        refreshUI(); 
+        refreshUI(); // Pastikan UI diupdate berdasarkan cart kosong dan mode null
+        
     }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
 }
 
