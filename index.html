@@ -10,7 +10,6 @@
             --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
             --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
             --soft: #F0F0F0; --danger: #D63031; --success: #00B894;
-            --gojek-green: #00AA13;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
@@ -20,113 +19,123 @@
             overflow-x: hidden;
         }
 
-        /* --- Header Area --- */
-        .header-top { 
-            background: var(--primary); 
-            padding: 5px 15px 18px; 
-            color: white; 
-            border-radius: 0 0 20px 20px; 
-        }
+        /* --- Perubahan Area Hijau (Header) --- */
+        /* TIMPA KODE LAMA ANDA DENGAN INI */
+.header-top { 
+    background: var(--primary); 
+    padding: 5px 15px 18px; /* Padding dikurangi agar lebih tipis */
+    color: white; 
+    border-radius: 0 0 20px 20px; 
+}
 
-        .nav-row { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 5px;
-        }
+.nav-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 5px; /* Jarak dikurangi */
+}
         .brand-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; letter-spacing: -0.3px; }
         .brand-icon { width: 26px; height: 26px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 10px; font-weight: 800; }
         .queue-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
 
-        /* --- Banner --- */
-        .banner-container { 
-            margin: -10px 15px 15px; 
-            position: relative; 
-            overflow: hidden; 
-            border-radius: 15px; 
-            height: 180px; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
-            background: #eee; 
-        }
+        /* TIMPA KODE LAMA ANDA DENGAN INI */
+.banner-container { 
+    margin: -10px 15px 15px; /* Margin atas dikurangi supaya naik */
+    position: relative; 
+    overflow: hidden; 
+    border-radius: 15px; 
+    height: 180px; /* Ditambah dari 145px ke 180px agar gambar lebih besar */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+    background: #eee; 
+}
         #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
         #banner-track img { min-width: 100%; object-fit: cover; }
+.mode-item.disabled {
+    background: #F1F1F1;
+    color: #AAA;
+    border-color: #DDD;
+    pointer-events: auto;
+    position: relative;
+}
+/* TAMBAHKAN KODE INI */
+.mode-selection { /* Pastikan nama class pembungkus tombol Anda benar */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Membagi 3 kolom sama rata */
+    gap: 8px;
+    padding: 0 18px;
+}
 
-        /* --- UI TOMBOL MODEL GOJEK (MODIFIKASI UTAMA) --- */
-        .mode-container { 
-            display: grid; 
-            grid-template-columns: repeat(3, 1fr); 
-            gap: 12px; 
-            padding: 0 18px 12px; 
-            margin-top: -5px;
-        }
+.mode-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 45px; /* Tinggi seragam agar presisi */
+    font-size: 11px;
+    border-radius: 8px;
+    padding: 5px;
+}
+.mode-item.disabled::after {
+    content: "Di luar jangkauan";
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: #999;
+}
+.mode-container.secondary {
+    padding-top: 0;
+    margin-top: -6px;
+}
 
-        .mode-item { 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 12px 8px; 
-            border-radius: 16px; /* Super rounded ala Gojek */
-            background: white; 
-            font-size: 11px; 
-            font-weight: 800; 
-            border: 1px solid #F0F0F0; 
-            cursor: pointer; 
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efek membal */
-        }
+.mode-item.alt {
+    background: #F6F6F6;
+    border: 1px dashed #DDD;
+    color: var(--muted);
+    font-weight: 800;
+}
+.mode-item.alt:active {
+    transform: scale(0.97);
+}
 
-        /* Animasi saat tombol ditekan */
-        .mode-item:active {
-            transform: scale(0.92); /* Mengecil saat diklik */
-            background-color: #F5F5F5;
-        }
+        .mode-container { display: flex; gap: 8px; overflow-x: auto; padding: 0 18px 12px; scrollbar-width: none; }
+        .mode-item { white-space: nowrap; padding: 10px 16px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1.2px solid #EFEFEF; cursor: pointer; }
+        .mode-item.active { background: #E8F5E9; border-color: var(--success); color: var(--primary); }
 
-        /* Status Aktif (Terpilih) */
-        .mode-item.active { 
-            background: #EFFFF1; 
-            border-color: var(--gojek-green); 
-            color: var(--gojek-green); 
-            box-shadow: 0 4px 12px rgba(0, 170, 19, 0.15);
-        }
-
-        /* Mode Disabled (Di luar jangkauan) */
-        .mode-item.disabled {
-            background: #F1F1F1;
-            color: #AAA;
-            border-color: #DDD;
-            opacity: 0.7;
-            filter: grayscale(1);
-        }
-
-        /* Tombol Sekunder (Katering, Mitra, dll) */
-        .mode-item.alt {
-            background: #FFFFFF;
-            border: 1.5px dashed #E0E0E0;
-            color: var(--muted);
-        }
-
-        .mode-container.secondary {
-            margin-top: -5px;
-            gap: 10px;
-        }
-
-        /* --- Map & Form --- */
         #map { height: 130px; border-radius: 18px; margin: 0 18px 20px; border: 1px solid #EFEFEF; }
+
+        /* --- Perubahan Area Merah (Input Form) --- */
         .main-content { padding: 0 18px 180px; }
         .input-card { background: white; border-radius: 14px; padding: 10px 14px; margin-bottom: 10px; border: 1.2px solid #F0F0F0; transition: all 0.3s ease; }
         .input-card label { display: block; font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; }
         .input-card input, .input-card textarea { width: 100%; border: none; font-size: 13px; font-weight: 600; outline: none; background: transparent; color: var(--text); }
+        .input-card input::placeholder, .input-card textarea::placeholder { font-weight: 400; color: #BBB; }
 
-        /* Error & Shake Animation */
-        .error-field { border: 2px solid var(--danger) !important; background-color: #FFF5F5 !important; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-6px); } }
-        .shake-ani { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+        /* Validasi Efek */
+        /* Sinyal merah tegas pada input yang kosong */
+.error-field { 
+    border: 2px solid var(--danger) !important; 
+    background-color: #FFF5F5 !important; 
+    box-shadow: 0 0 12px rgba(214, 48, 49, 0.2); 
+}
 
-        /* --- Menu & Tabs --- */
+/* Animasi Getar (Shake) */
+@keyframes shake { 
+    0%, 100% { transform: translateX(0); } 
+    25% { transform: translateX(-6px); } 
+    50% { transform: translateX(6px); } 
+    75% { transform: translateX(-6px); } 
+}
+
+.shake-ani { 
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; 
+}
+        .shake-ani { animation: shake 0.4s ease-in-out; }
+
         .search-wrapper { margin: 12px 0; background: white; border-radius: 12px; border: 1.2px solid var(--soft); padding: 0 12px; display: flex; align-items: center; }
         #searchMenu { width: 100%; padding: 10px 0; border: none; font-size: 13px; background: transparent; }
+
         .category-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 15px; }
         .tab { padding: 8px 15px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1px solid #F0F0F0; white-space: nowrap; }
         .tab.active { background: var(--primary); color: white; }
@@ -135,12 +144,12 @@
         .menu-item { background: white; border-radius: 16px; padding: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between; }
         .menu-info h4 { margin: 0 0 4px; font-size: 12px; font-weight: 800; min-height: 32px; line-height: 1.3; }
         .menu-info .price { font-size: 13px; font-weight: 900; color: var(--primary); margin-bottom: 8px; }
+        .variant-select { width: 100%; padding: 7px; border-radius: 7px; border: 1px solid #F0F0F0; font-size: 10px; background: #FAFAFA; margin-bottom: 5px; font-weight: 600; }
         
         .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: 8px; }
         .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
 
-        /* --- Bottom Sheet --- */
         .order-summary-mini {
             position: fixed; bottom: -100%; left: 0; right: 0; 
             background: white; border-radius: 25px 25px 0 0; 
@@ -150,10 +159,22 @@
             display: flex; flex-direction: column;
         }
         .order-summary-mini.active { bottom: 0; }
+        
         .sheet-header { padding: 12px 18px; text-align: center; background: white; border-radius: 25px 25px 0 0; border-bottom: 1px solid #F5F5F5; }
         .sheet-handle { width: 40px; height: 4px; background: #E0E0E0; border-radius: 10px; margin: 0 auto 8px; }
+        .sheet-title { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: 0.8px; }
+
         .summary-scroll { flex: 1; overflow-y: auto; padding: 8px 18px 140px; }
         .summary-item { background: white; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F5F5F5; }
+
+        .item-detail-name { flex: 1; margin-right: 8px; }
+        .item-detail-name b { display: block; font-size: 13px; margin-bottom: 2px; }
+        .item-detail-name span { font-size: 10px; color: var(--muted); }
+
+        .mini-qty-box { display: flex; align-items: center; gap: 10px; background: #F8F9FA; padding: 5px 8px; border-radius: 10px; }
+        .mini-qty-btn { width: 26px; height: 26px; border-radius: 7px; border: none; background: white; color: var(--primary); font-weight: 800; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+
+        #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
         .bottom-bar { 
             position: fixed; bottom: 0; left: 0; right: 0; background: white; 
@@ -161,32 +182,154 @@
             box-shadow: 0 -8px 25px rgba(0,0,0,0.08); z-index: 1000; 
             display: flex; justify-content: space-between; align-items: center; 
         }
-        .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
-        .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; transition: all 0.2s; }
-        .order-btn:active { transform: scale(0.95); }
+        
+        .swipe-hint {
+            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; padding: 3px 10px; border-radius: 15px;
+            font-size: 9px; font-weight: 700; display: none;
+        }
 
+        .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
+        .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
+        .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
+        .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
+        .order-btn:disabled { opacity: 0.5; }
+        
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
+.summary-item.removing {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.25s ease;
+}
 
-        mark { background-color: #FFEB3B; color: black; padding: 0 2px; border-radius: 2px; font-weight: 800; }
+/* Efek stabilo kuning untuk teks yang cocok dengan pencarian */
+mark {
+    background-color: #FFEB3B; /* Warna kuning stabilo */
+    color: black;
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: 800;
+}
+/* Animasi tombol saat ditekan (Touch Effect) */
+.order-btn:active, .modal-card button:active {
+    transform: scale(0.92); /* Mengecil sedikit */
+    filter: brightness(1.2); /* Menjadi lebih terang */
+    transition: transform 0.1s ease;
+}
 
-        @keyframes pulse-yellow {
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4); }
-            70% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
-        }
-        .pulse-attention { animation: pulse-yellow 1s infinite; border: 1.5px solid var(--accent) !important; background: #FFFDE7 !important; }
+/* Tambahan agar transisi kembali ke ukuran normal tidak kaku */
+.order-btn {
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Animasi Berdetak (Pulse) */
+@keyframes pulse-yellow {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
+}
+
+.pulse-attention {
+    animation: pulse-yellow 1s infinite;
+    border: 2px solid var(--accent) !important;
+    background: #FFFDE7 !important;
+}
+
+/* === GOJEK STYLE SERVICE BUTTON === */
+.service-mode {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 18px 14px;
+}
+
+.service-btn {
+    width: 82px;
+    height: 82px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+}
+
+.service-btn span {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+/* ICON */
+.service-btn .icon {
+    font-size: 26px;
+    animation: floatIcon 2.8s ease-in-out infinite;
+}
+
+/* AKTIF */
+.service-btn.active {
+    background: linear-gradient(145deg, #1B4332, #2D6A4F);
+    color: white;
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0 14px 30px rgba(27,67,50,0.45);
+}
+
+.service-btn.active span {
+    color: white;
+}
+
+/* RING */
+.service-btn.active::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid rgba(27,67,50,0.5);
+    animation: pulseRing 1.4s infinite;
+}
+
+/* DISABLED */
+.service-btn.disabled {
+    opacity: 0.4;
+    filter: grayscale(1);
+}
+
+/* ANIMASI ICON */
+@keyframes floatIcon {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+/* RING PULSE */
+@keyframes pulseRing {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    100% { transform: scale(1.2); opacity: 0; }
+}
+
 
     </style>
 </head>
 <body>
 
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
-    <div style="text-align: center; width: 100%; display: flex; flex-direction: column; justify-content: center;">
-        <div style="font-size: 60px; margin-bottom: 15px;">📍</div>
-        <h2 style="font-weight: 900; font-size: 20px;">Cek Jarak Lokasi</h2>
-        <p style="color: var(--muted); font-size: 13px; margin-bottom: 25px;">Mohon izinkan akses lokasi untuk menghitung ongkir otomatis.</p>
-        <button onclick="startApp()" class="order-btn" style="width: 100%;">IZINKAN AKSES</button>
+    <div style="text-align: center; width: 100%; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+        
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div style="font-size: 60px; margin-bottom: 15px;">📍</div>
+            <h2 style="font-weight: 900; font-size: 20px;">Cek Jarak Lokasi</h2>
+            <p style="color: var(--muted); font-size: 13px; margin-bottom: 25px;">Mohon izinkan akses lokasi untuk menghitung ongkir otomatis.</p>
+            <button onclick="startApp()" class="order-btn" style="width: 100%;">IZINKAN AKSES</button>
+        </div>
+
+        <div style="font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 20px;">
+            powered by <b>cloudkitchen.dyg++</b>
+        </div>
+        
     </div>
 </div>
 
@@ -201,34 +344,30 @@
     <div id="banner-track"></div>
 </div>
 
-<div class="mode-container">
-    <div id="mDine" class="mode-item" onclick="changeMode('DINE IN', this)">
-        <span style="font-size: 20px; margin-bottom: 4px;">🍽️</span>
+<!-- BARIS 1 : MODE ORDER -->
+<div class="service-mode">
+    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
+        <div class="icon">🍽️</div>
         <span>Dine In</span>
     </div>
-    <div id="mTake" class="mode-item" onclick="changeMode('TAKE AWAY', this)">
-        <span style="font-size: 20px; margin-bottom: 4px;">🛍️</span>
+
+    <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
+        <div class="icon">🛍️</div>
         <span>Take Away</span>
     </div>
-    <div id="mDeliv" class="mode-item" onclick="changeMode('DELIVERY', this)">
-        <span style="font-size: 20px; margin-bottom: 4px;">🛵</span>
+
+    <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
+        <div class="icon">🛵</div>
         <span>Delivery</span>
     </div>
 </div>
 
+
+<!-- BARIS 2 : MENU TAMBAHAN -->
 <div class="mode-container secondary">
-    <div class="mode-item alt" onclick="openComingSoon()">
-        <span style="font-size: 18px; margin-bottom: 2px;">🍱</span>
-        <span>Katering</span>
-    </div>
-    <div class="mode-item alt" onclick="openComingSoon()">
-        <span style="font-size: 18px; margin-bottom: 2px;">🤝</span>
-        <span>Jadi Mitra</span>
-    </div>
-    <div class="mode-item alt" onclick="openComingSoon()">
-        <span style="font-size: 18px; margin-bottom: 2px;">📢</span>
-        <span>NgIKLAN</span>
-    </div>
+    <div class="mode-item alt" onclick="openComingSoon()">🍱 Katering</div>
+    <div class="mode-item alt" onclick="openComingSoon()">🤝 Jadi Mitra</div>
+    <div class="mode-item alt" onclick="openComingSoon()">📢 NgIKLAN</div>
 </div>
 
 <div id="map"></div>
@@ -260,14 +399,16 @@
     <div class="sheet-header" onclick="toggleSummary(false)">
         <div class="sheet-handle"></div>
         <div class="sheet-title">RINCIAN PESANAN</div>
+        <div style="font-size: 9px; color: var(--muted); margin-top: 4px;">Klik tanda − sampai 0 untuk hapus</div>
     </div>
     <div class="summary-scroll" id="summaryItems"></div>
 </div>
 
 <div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
+    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
     <div>
-        <div id="dist-info" style="font-size: 8px; color: var(--muted); font-weight: 700; display: none;"></div>
-        <div id="ongkir-label" style="font-size: 10px; color: var(--success); font-weight: 800; display: none;"></div>
+        <div id="dist-info" class="dist-info"></div>
+        <div id="ongkir-label" class="ongkir-tag"></div>
         <div class="price-total">Rp <span id="miniPrice">0</span></div>
     </div>
     <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
@@ -278,24 +419,14 @@
         <h3 style="font-weight: 900; margin-bottom: 8px; font-size: 18px;">Kirim Pesanan?</h3>
         <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">Data akan dikirim ke WhatsApp resmi cloudkitchen.dyg++</p>
         <div style="display: flex; gap: 8px;">
-            <button onclick="closeModal()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700;">Batal</button>
-            <button onclick="submitOrder()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700;">Kirim WA</button>
+            <button onclick="closeModal()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700; font-size:13px;">Batal</button>
+            <button onclick="submitOrder()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700; font-size:13px;">Kirim WA</button>
         </div>
-    </div>
-</div>
-
-<div id="modalComingSoon" class="modal-overlay">
-    <div class="modal-card">
-        <div style="font-size:48px;margin-bottom:10px;">🚧</div>
-        <h3 style="font-weight:900;">Coming Soon</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Fitur ini sedang disiapkan.</p>
-        <button onclick="closeComingSoon()" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--primary);color:white;font-weight:800;">Tutup</button>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    /* JAVASCRIPT TETAP SAMA SESUAI LOGIKA ASLI ANDA */
     const CONFIG = {
         WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyPKJ8Q9u-upqGFQDFxSC7kHGpPe4EECUKDBlU704DyLMfyXUwUJhHSVeYa1FbNockFyA/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
@@ -306,28 +437,50 @@
     };
 
     const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
+    const VARIAN_MIE_GORENG = [{n:'Original',e:0},{n:'Rendang',e:0},{n:'Salero Padang',e:0}];
+    const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
+    const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
+    // Ubah 'DINE IN' menjadi null agar tidak ada mode yang terpilih di awal
+let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
     async function startApp() {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            window.userLat = latitude; window.userLng = longitude;
-            const dist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-            userDist = dist * 1.45; 
-            if (userDist > CONFIG.RADIUS_DINE_IN) {
-                const btn = document.getElementById('mDine');
-                btn.classList.add('disabled');
-                btn.onclick = () => alert("Lokasi terlalu jauh untuk Dine-In.");
-                changeMode('DELIVERY', document.getElementById('mDeliv'));
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        
+        // --- BAGIAN INI YANG PENTING ---
+        // Kita simpan ke "window" agar bisa dibaca oleh fungsi submitOrder()
+        window.userLat = latitude;
+        window.userLng = longitude;
+        // -------------------------------
+
+        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+        userDist = straightLineDist * 1.45; 
+
+        if (userDist > CONFIG.RADIUS_DINE_IN) {
+            const dineBtn = document.getElementById('mDine');
+            if(dineBtn) {
+                dineBtn.classList.add('disabled');
+                dineBtn.onclick = () => showOutOfRangeAlert();
             }
-            initMap(latitude, longitude);
-            initBanner();
-            document.getElementById('welcome-overlay').style.display = 'none';
-            await loadMenu();
-            syncQueue();
-        }, () => alert("Harap aktifkan GPS."), { enableHighAccuracy: true });
+            changeMode('DELIVERY', document.getElementById('mDeliv'));
+        }
+        
+        initMap(latitude, longitude);
+        initBanner();
+        document.getElementById('welcome-overlay').style.display = 'none';
+        await loadMenu();
+        syncQueue();
+    }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
+}
+
+    function calculateOngkir(distMeter) {
+        const km = distMeter / 1000;
+        if (km <= 1.5) return 3000;
+        if (km <= 3) return 5000;
+        if (km <= 5) return 8000;
+        return 8000 + (Math.ceil(km - 5) * 2000);
     }
 
     async function loadMenu() {
@@ -338,8 +491,9 @@
                 const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
                 return { id: 'm'+i, kat: cols[0] || '', nama: cols[1] || '', harga: parseInt(cols[2]) || 0 };
             }).filter(m => m.nama);
-            renderTabs(); renderMenu();
-        } catch (e) {}
+            renderTabs();
+            renderMenu();
+        } catch (e) { console.error("Menu error:", e); }
     }
 
     function renderTabs() {
@@ -350,82 +504,270 @@
 
     function renderMenu(filterKat = 'ALL') {
         const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
-        const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
-        document.getElementById('menu-container').innerHTML = items.map(m => `
+        const counts = {}; 
+        cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+
+        document.getElementById('menu-container').innerHTML = items.map(m => {
+            const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
+            const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
+            const isMieG = nl.includes("mie") && nl.includes("goreng");
+            const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
+            const isPaket = kl.includes("paket");
+
+            return `
             <div class="menu-item">
                 <div class="menu-info">
                     <h4 data-name="${m.nama}">${m.nama}</h4>
                     <div class="price">Rp ${m.harga.toLocaleString()}</div>
+                    <div class="variant-area">
+                        ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
+                        ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                    </div>
                 </div>
                 <div class="qty-box">
                     <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
                     <span id="qty-${m.id}">${counts[m.id] || 0}</span>
                     <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
                 </div>
-            </div>`).join('');
+            </div>`;
+        }).join('');
     }
 
-    function updateCart(id, change) {
+    function updateCart(id, change, forceVariant = null) {
         const item = menuData.find(m => m.id === id);
-        if (change > 0) cart.push({...item});
-        else { let idx = cart.findLastIndex(c => c.id === id); if (idx !== -1) cart.splice(idx, 1); }
+        if (!item) return;
+
+        if (change > 0) {
+            let vData = forceVariant ? {...forceVariant} : {
+                vN: document.getElementById(`n-${id}`)?.value || null,
+                vM: document.getElementById(`m-${id}`)?.value || null,
+                vR: document.getElementById(`r-${id}`)?.value || null,
+                vS: document.getElementById(`s-${id}`)?.value || null,
+                ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
+            };
+            cart.push({ ...item, ...vData });
+        } else {
+            let idx = cart.findLastIndex(c => 
+                c.id === id && 
+                c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
+                c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
+                c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
+                c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
+            );
+            if (idx !== -1) cart.splice(idx, 1);
+        }
         refreshUI();
     }
 
     function refreshUI() {
-        let subtotal = 0; const counts = {};
-        cart.forEach(c => { subtotal += c.harga; counts[c.id] = (counts[c.id] || 0) + 1; });
+        let subtotal = 0; 
+        const counts = {};
+        cart.forEach(c => { 
+            subtotal += (c.harga + (c.ex || 0)); 
+            counts[c.id] = (counts[c.id] || 0) + 1; 
+        });
+
         menuData.forEach(m => {
             const el = document.getElementById(`qty-${m.id}`);
-            if(el) { el.innerText = counts[m.id] || 0; el.previousElementSibling.disabled = (counts[m.id] || 0) === 0; }
+            if(el) {
+                const val = counts[m.id] || 0;
+                el.innerText = val;
+                el.previousElementSibling.disabled = val === 0;
+            }
         });
-        const pEl = document.getElementById('miniPrice');
+
+        const sInd = document.getElementById('swipeInd');
+        const distEl = document.getElementById('dist-info');
+        const ongEl = document.getElementById('ongkir-label');
+        const priceEl = document.getElementById('miniPrice');
+
         if (subtotal > 0) {
-            pEl.innerText = subtotal.toLocaleString('id-ID');
+            sInd.style.display = 'block';
+            if (currentMode === 'DELIVERY') {
+                let ongkir = calculateOngkir(userDist);
+                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+                distEl.style.display = 'block';
+                distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+                ongEl.style.display = 'block';
+                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+            } else {
+                priceEl.innerText = subtotal.toLocaleString('id-ID');
+                distEl.style.display = 'none';
+                ongEl.style.display = 'none';
+            }
             document.getElementById('btnOrder').disabled = false;
             document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
         } else {
-            pEl.innerText = "0";
+            sInd.style.display = 'none';
+            distEl.style.display = 'none';
+            ongEl.style.display = 'none';
+            priceEl.innerText = "0";
             document.getElementById('btnOrder').disabled = true;
             document.getElementById('btnOrder').innerText = 'PILIH MENU';
+            toggleSummary(false); // Tutup rincian jika item habis
         }
         updateOrderSummary();
     }
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
-        if (cart.length === 0) { container.innerHTML = `<div style="text-align:center;padding:40px;color:#999;font-size:12px;">Kosong</div>`; return; }
+        if (cart.length === 0) {
+            container.innerHTML = `<div style="text-align:center;padding:40px;color:#999;font-size:12px;">Keranjang kosong</div>`;
+            return;
+        }
+
         const groups = {};
-        cart.forEach(c => { if(!groups[c.id]) groups[c.id] = {...c, qty:0}; groups[c.id].qty++; });
+        cart.forEach(c => {
+            const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
+            if (!groups[key]) groups[key] = { ...c, qty: 0, key: key };
+            groups[key].qty++;
+        });
+
         container.innerHTML = Object.values(groups).map(item => `
             <div class="summary-item">
-                <div style="flex:1"><b>${item.nama}</b><br><small>Rp ${item.harga.toLocaleString()}</small></div>
-                <div style="font-weight:800">${item.qty}x</div>
-            </div>`).join('');
+                <div class="item-detail-name">
+                    <b>${item.nama}</b>
+                    <span>${[item.vN, item.vM, item.vR, item.vS].filter(Boolean).join(', ') || 'Original'}</span>
+                    <div style="font-size:11px;font-weight:800;color:var(--primary);margin-top:3px;">
+                        Rp ${(item.qty * (item.harga + (item.ex || 0))).toLocaleString('id-ID')}
+                    </div>
+                </div>
+                <div class="mini-qty-box">
+                    <button class="mini-qty-btn" onclick="changeQtyFromSummary('${item.key}', -1)">−</button>
+                    <span style="font-weight:800; min-width:20px; text-align:center;">${item.qty}</span>
+                    <button class="mini-qty-btn" onclick="changeQtyFromSummary('${item.key}', 1)">+</button>
+                </div>
+            </div>
+        `).join('');
     }
 
-    function changeMode(m, el) {
-        if (el.classList.contains('disabled')) return;
-        currentMode = m;
-        document.querySelectorAll('.mode-item').forEach(o => o.classList.remove('active', 'pulse-attention'));
-        el.classList.add('active');
-        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
-        document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+    function changeQtyFromSummary(groupKey, delta) {
+        const sample = cart.find(c => `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}` === groupKey);
+        if (sample) {
+            updateCart(sample.id, delta, {
+                vN: sample.vN, vM: sample.vM, vR: sample.vR, vS: sample.vS, ex: sample.ex
+            });
+        }
     }
 
     async function submitOrder() {
-        if (!currentMode) {
-            closeModal(); alert("Pilih layanan dulu!");
-            document.querySelectorAll('.mode-item:not(.disabled)').forEach(el => el.classList.add('pulse-attention'));
-            return;
-        }
-        const nI = document.getElementById('custName');
-        if (!nI.value.trim()) { closeModal(); nI.closest('.input-card').classList.add('error-field', 'shake-ani'); return; }
+    // 1. CEK APAKAH SUDAH PILIH MODE?
+    if (!currentMode) {
+        closeModal(); // Tutup modal jika terlanjur terbuka
+        alert("Pilih dulu layanan Anda: Dine In, Take Away, atau Delivery!");
         
-        let msg = `Halo cloudkitchen.dyg++!\nMode: ${currentMode}\nNama: ${nI.value}\nTotal: Rp ${document.getElementById('miniPrice').innerText}`;
+        // Gulir layar otomatis ke arah tombol mode
+        const modeArea = document.querySelector('.mode-container');
+        modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Buat semua tombol mode berdetak (pulse) agar pelanggan sadar harus pilih salah satu
+        document.querySelectorAll('.mode-item:not(.disabled)').forEach(el => {
+            el.classList.add('pulse-attention');
+        });
+        return; // Berhenti di sini, jangan lanjut kirim WA
+    }
+
+    // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
+    if (navigator.vibrate) navigator.vibrate(50);
+    const nI = document.getElementById('custName');
+    const tI = document.getElementById('tableNo');
+    const aI = document.getElementById('addressDetail');
+    const noAntrean = document.getElementById('noAntrean').innerText;
+
+    // Validasi input kosong (Nama, Meja, atau Alamat)
+    const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
+    cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
+
+    let targetEl = null;
+    if (!nI.value.trim()) targetEl = nI;
+    else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
+    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+
+    if (targetEl) {
+        const targetCard = targetEl.closest('.input-card');
+        closeModal();
+        targetCard.classList.add('error-field', 'shake-ani');
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.focus();
+        return; 
+    }
+
+    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
+    const summary = {};
+    cart.forEach(c => {
+        let label = c.nama;
+        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+        if(tags) label += ` [${tags}]`;
+        const itemKey = label;
+        const itemPrice = c.harga + (c.ex || 0);
+        
+        if (!summary[itemKey]) {
+            summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
+        }
+        summary[itemKey].qty++;
+    });
+
+    const pRowsWA = Object.entries(summary).map(([name, data]) => 
+        `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
+    );
+
+    // --- 3. Hitung Data & Link Lokasi ---
+    const distKM = (userDist/1000).toFixed(1);
+    const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
+    const finalPrice = document.getElementById('miniPrice').innerText;
+    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
+
+    // --- 4. Susun Format Pesan WhatsApp ---
+    let msg = `Halo cloudkitchen.dyg++!\n\n`;
+    msg += `🛵 *${currentMode}*\n`;
+    msg += `👤 *Nama:* ${nI.value}\n`;
+    msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
+    msg += `━━━━━━━━━━━━━━\n`;
+
+    if (currentMode === 'DINE IN') {
+        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
+    } else {
+        msg += `🏠 *Alamat:* ${aI.value}\n`;
+        msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
+        msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
+    }
+
+    msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
+    
+    const catatan = document.getElementById('orderNote').value || '-';
+    msg += `\n*CATATAN:* ${catatan}\n`;
+    msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
+    
+    msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
+    msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
+    msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
+    msg += `Terimakasih!`;
+
+    // --- 5. Animasi Feedback Tombol & Pengiriman ---
+    // Memicu getar halus saat klik
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    // Mengubah tombol menjadi loading
+    const btnKirim = document.querySelector('#modalConfirm button:last-child');
+    if (btnKirim) {
+        btnKirim.innerHTML = "⌛ Menghubungkan...";
+        btnKirim.style.opacity = "0.7";
+        btnKirim.style.pointerEvents = "none";
+    }
+
+    // Kirim data ke database di latar belakang
+    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
+
+    // Tunggu animasi sebentar baru pindah ke WA
+    setTimeout(() => {
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    }
+    }, 600); 
+}
+
 
     function toggleSummary(open) {
         if (cart.length === 0 && open) return;
@@ -433,10 +775,29 @@
         document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
     }
 
+    function changeMode(m, el) {
+    if (el.classList.contains('disabled')) return showOutOfRangeAlert();
+
+    currentMode = m;
+
+    document.querySelectorAll('.service-btn').forEach(o => {
+        o.classList.remove('active', 'pulse-attention');
+    });
+
+    el.classList.add('active');
+
+    document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
+    document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+
+    refreshUI();
+}
+
+
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Warung").openPopup();
+        L.marker([lat, lng]).addTo(map).bindPopup("Lokasi Kamu");
     }
 
     function initBanner() {
@@ -446,16 +807,35 @@
     }
 
     function filterMenu() {
-        const q = document.getElementById('searchMenu').value.toLowerCase();
-        document.querySelectorAll('.menu-item').forEach(it => {
-            const name = it.querySelector('h4').dataset.name.toLowerCase();
-            it.style.display = name.includes(q) ? 'flex' : 'none';
-        });
-    }
+    const q = document.getElementById('searchMenu').value.toLowerCase();
+    const items = document.querySelectorAll('.menu-item');
+
+    items.forEach(it => {
+        const titleEl = it.querySelector('h4');
+        const originalName = titleEl.dataset.name; // Mengambil nama asli dari atribut data-name
+
+        if (q === "") {
+            // Jika pencarian kosong, kembalikan ke nama asli tanpa highlight
+            titleEl.innerHTML = originalName;
+            it.style.display = 'flex';
+        } else if (originalName.toLowerCase().includes(q)) {
+            // Jika cocok, buat efek highlight menggunakan tag <mark>
+            const regex = new RegExp(`(${q})`, 'gi');
+            const highlightedName = originalName.replace(regex, '<mark>$1</mark>');
+            
+            titleEl.innerHTML = highlightedName;
+            it.style.display = 'flex';
+        } else {
+            // Jika tidak cocok, sembunyikan menu
+            it.style.display = 'none';
+        }
+    });
+}
 
     function filterByTab(cat, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        el.classList.add('active'); renderMenu(cat);
+        el.classList.add('active');
+        renderMenu(cat);
     }
 
     async function syncQueue() {
@@ -469,9 +849,26 @@
 
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
+    function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
 </script>
+
+<div id="modalComingSoon" class="modal-overlay">
+    <div class="modal-card">
+        <div style="font-size:48px;margin-bottom:10px;">🚧</div>
+        <h3 style="font-weight:900;margin-bottom:6px;">Sedang Dalam Pengembangan</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
+            Fitur ini belum tersedia.<br>
+            Kembali lagi besok ya 🙏
+        </p>
+        <button onclick="closeComingSoon()"
+            style="width:100%;padding:12px;border-radius:12px;border:none;
+                   background:var(--primary);color:white;font-weight:800;">
+            Kembali
+        </button>
+    </div>
+</div>
 
 </body>
 </html>
