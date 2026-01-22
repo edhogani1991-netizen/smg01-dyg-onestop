@@ -682,7 +682,7 @@ function updateDineInStatus() {
         // Gunakan event listener agar tidak bentrok
         dineBtn.onclick = function(e) { 
             e.stopPropagation();
-            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In."); rendermen
+            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In."); rendermenu
         };
         if(dineBadge) dineBadge.style.display = 'block';
     } else {
