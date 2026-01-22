@@ -682,7 +682,7 @@ function updateDineInStatus() {
         // Gunakan event listener agar tidak bentrok
         dineBtn.onclick = function(e) { 
             e.stopPropagation();
-            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In."); 
+            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In."); rendermen
         };
         if(dineBadge) dineBadge.style.display = 'block';
     } else {
@@ -754,37 +754,54 @@ async function startApp() {
     }
 
     function renderMenu(filterKat = 'ALL') {
-        const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
-        const counts = {}; 
-        cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+    const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
+    const counts = {}; 
+    cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
-        document.getElementById('menu-container').innerHTML = items.map(m => {
-            const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
-            const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
-            const isMieG = nl.includes("mie") && nl.includes("goreng");
-            const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
-            const isPaket = kl.includes("paket");
+    document.getElementById('menu-container').innerHTML = items.map(m => {
+        // Pembersihan string (Trim, Tanpa Spasi, Lowercase)
+        const cleanName = m.nama.toLowerCase().replace(/\s+/g, '').trim();
+        const cleanKat = m.kat.toLowerCase().replace(/\s+/g, '').trim();
 
-            return `
-            <div class="menu-item">
-                <div class="menu-info">
-                    <h4 data-name="${m.nama}">${m.nama}</h4>
-                    <div class="price">Rp ${m.harga.toLocaleString()}</div>
-                    <div class="variant-area">
-                        ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
-                        ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                    </div>
+        // Logika Deteksi Kategori Paket Hemat
+        const isPaketHemat = cleanKat.includes("pakethemat") || cleanKat.includes("[ph]");
+
+        // Daftar Drink yang wajib ada Suhu (Panas/Es)
+        const drinkList = [
+            'kopisusu', 'susuteman', 'coklat', 'gooddaycapucino', 'gooddayfrez',
+            'coffemix', 'bengbeng', 'milo', 'dancowputih', 'susuputih',
+            'susucoklat', 'jeruk', 'teh', 'nescafeblue', 'kopikapalapi'
+        ];
+        
+        // Cek apakah nama menu mengandung salah satu dari daftar di atas
+        const isWajibSuhu = drinkList.some(drink => cleanName.includes(drink));
+
+        // Deteksi Nasi/Mie untuk varian rasa/tipe nasi
+        const isNasi = cleanName.includes("nasi");
+        const isMieG = cleanName.includes("miegoreng") || (cleanName.includes("mie") && cleanName.includes("goreng"));
+        const isMieR = cleanName.includes("mie") && (cleanName.includes("rebus") || cleanName.includes("kuah") || cleanName.includes("nyemek"));
+
+        return `
+        <div class="menu-item">
+            <div class="menu-info">
+                <h4 data-name="${m.nama}">${m.nama}</h4>
+                <div class="price">Rp ${m.harga.toLocaleString()}</div>
+                <div class="variant-area">
+                    ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
+                    ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                    ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                    
+                    ${(isPaketHemat || isWajibSuhu) ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                 </div>
-                <div class="qty-box">
-                    <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
-                    <span id="qty-${m.id}">${counts[m.id] || 0}</span>
-                    <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
-                </div>
-            </div>`;
-        }).join('');
-    }
+            </div>
+            <div class="qty-box">
+                <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
+                <span id="qty-${m.id}">${counts[m.id] || 0}</span>
+                <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
+            </div>
+        </div>`;
+    }).join('');
+}
 
     function updateCart(id, change, forceVariant = null) {
         const item = menuData.find(m => m.id === id);
