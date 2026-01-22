@@ -400,6 +400,11 @@ mark {
     box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
 }
 
+.service-btn.disabled .badge-out-of-range {
+    opacity: 1 !important;          /* hilangkan efek transparan */
+    filter: none !important;        /* hilangkan grayscale */
+}
+
 
     </style>
 </head>
@@ -437,15 +442,14 @@ mark {
 
 <!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
-    <div id="mDine" class="service-btn">
-    <div class="icon">🍽️</div>
-    <span>Dine In</span>
-    <span class="badge-out-of-range" style="display:none; 
-          position:absolute; top:4px; right:4px; 
-          background:#D63031; color:white; 
-          font-size:8px; font-weight:700; 
-          padding:2px 4px; border-radius:4px;">Di luar jangkauan</span>
+    <div id="mDine-wrapper" style="position: relative;">
+    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
+        <div class="icon">🍽️</div>
+        <span>Dine In</span>
+    </div>
+    <span class="badge-out-of-range" style="display:none; position:absolute; top:4px; right:4px; background:#D63031; color:white; font-size:8px; font-weight:700; padding:2px 4px; border-radius:4px;">Di luar jangkauan</span>
 </div>
+
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
         <div class="icon">🛍️</div>
