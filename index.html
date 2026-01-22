@@ -708,7 +708,7 @@ async function startApp() {
         window.userLat = pos.coords.latitude;
         window.userLng = pos.coords.longitude;
 
-        // Inisialisasi peta & banner duluan agar data siap
+        // Inisialisasi peta & banner
         initMap(window.userLat, window.userLng);
         initBanner();
         
@@ -716,11 +716,31 @@ async function startApp() {
         await loadMenu();
         syncQueue();
 
-        // Cek status radius
-        updateDineInStatus();
+        // Hitung jarak ke warung
+        updateDineInStatus(); // Ini sudah simpan userDist dan disable mode jika perlu
 
         // Tutup overlay
         overlay.style.display = 'none';
+
+        // --- CEK MODE TERPILIH ---
+        if (!currentMode) {
+            // Scroll otomatis ke tombol mode
+            const modeArea = document.querySelector('.service-mode');
+            if (modeArea) modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            // Tambah efek pulse pada semua tombol mode yang aktif
+            document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
+                el.classList.add('pulse-attention');
+            });
+
+            // Tampilkan toast supaya user tahu harus pilih mode dulu
+            showToast("Pilih dulu jenis layanan ya 😊", "warning", "⚠️");
+
+            return; // Stop proses lanjut kirim WA atau order
+        }
+
+        // Jika mode sudah dipilih, proses UI normal bisa lanjut
+        refreshUI(); // Hitung subtotal, ongkir, dll
     }, (error) => {
         startBtn.disabled = false;
         startBtn.innerText = "MULAI SEKARANG";
@@ -730,6 +750,7 @@ async function startApp() {
         timeout: 10000 
     });
 }
+
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
         if (km <= 1.5) return 3000;
