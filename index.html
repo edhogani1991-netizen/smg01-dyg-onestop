@@ -930,54 +930,58 @@ async function submitOrder() {
 
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
-    const aI = document.getElementById('addressDetail');
     const noAntrean = document.getElementById('noAntrean').innerText;
+    const nVal = nI.value.trim();
 
-    if (!nI.value.trim()) { closeModal(); nI.closest('.input-card').classList.add('error-field', 'shake-ani'); return; }
+    if (!nVal) { closeModal(); nI.closest('.input-card').classList.add('error-field', 'shake-ani'); return; }
 
-    // --- LOGIKA STRUK DAPUR ---
     const now = new Date();
-    const jam = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    const waktu = now.toLocaleDateString('id-ID') + " " + now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
     
-    let struk = `*ORDER - ${noAntrean}*\n`;
-    struk += `Tanggal: ${now.toLocaleDateString('id-ID')} | ${jam}\n`;
-    struk += `Pelanggan: ${nI.value.toUpperCase()}\n`;
-    struk += `Metode: ${currentMode}\n`;
-    if (currentMode === 'DINE IN') struk += `Meja: ${tI.value}\n`;
-    struk += `--------------------------------\n\n`;
+    // --- FORMAT STRUK UNTUK PRINTER THERMAL ---
+    let struk = `      CLOUDKITCHEN DYG++\n`;
+    struk += `================================\n`;
+    struk += `No. Antrean: ${noAntrean}\n`;
+    struk += `Waktu  : ${waktu}\n`;
+    struk += `Cust   : ${nVal.toUpperCase()}\n`;
+    struk += `Metode : ${currentMode}\n`;
+    if (currentMode === 'DINE IN') struk += `Meja   : ${tI.value}\n`;
+    struk += `--------------------------------\n`;
 
     const summary = {};
     cart.forEach(c => {
-        let label = c.nama;
-        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-        if(tags) label += `\n   (${tags})`;
-        const itemPrice = c.harga + (c.ex || 0);
-        
-        if (!summary[label]) summary[label] = { qty: 0, price: itemPrice };
+        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(',');
+        let label = c.nama + (tags ? ` (${tags})` : "");
+        if (!summary[label]) summary[label] = { qty: 0 };
         summary[label].qty++;
     });
 
     Object.entries(summary).forEach(([name, data]) => {
-        struk += `${data.qty}x ${name}\n`;
+        struk += `${data.qty}x ${name.substring(0,25)}\n`;
     });
 
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const catatan = document.getElementById('orderNote').value || '-';
-
-    struk += `\n--------------------------------\n`;
-    struk += `Catatan: ${catatan}\n`;
-    struk += `TOTAL: Rp ${finalPrice}\n`;
     struk += `--------------------------------\n`;
-    struk += `*Mohon segera diproses!*`;
+    struk += `TOTAL  : Rp ${finalPrice}\n`;
+    struk += `================================\n\n\n`;
 
-    // Kirim data ke Google Sheets (Database)
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(struk)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
+    // 1. KIRIM DATA KE DATABASE
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nVal)}&pesanan=${encodeURIComponent(struk)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
 
-    // Link WhatsApp
+    // 2. TRIGGER PRINT KE RAWBT (HP ANDROID)
+    // Ini akan memicu aplikasi RawBT di Android untuk langsung mencetak
+    const rawBTUrl = "intent:#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;S.text=" + encodeURIComponent(struk) + ";end;";
+    
+    // 3. JALANKAN WHATSAPP & PRINT BERURUTAN
     const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-    window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(struk)}`;
-}
+    const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(struk)}`;
 
+    // Eksekusi Print dulu, lalu arahkan ke WA
+    window.location.href = rawBTUrl;
+    setTimeout(() => {
+        window.location.href = waUrl;
+    }, 1500); 
+}
 
     function toggleSummary(open) {
         if (cart.length === 0 && open) return;
