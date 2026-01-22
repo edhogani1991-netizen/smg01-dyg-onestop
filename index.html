@@ -921,121 +921,61 @@ async function startApp() {
         }
     }
 
-    async function submitOrder() {
-    // 1. CEK APAKAH SUDAH PILIH MODE?
+async function submitOrder() {
     if (!currentMode) {
-        closeModal(); // Tutup modal jika terlanjur terbuka
-        showToast("Lengkapi kolom ini dulu! ✍️", "warning", "✍️");
-        
-        // Gulir layar otomatis ke arah tombol mode
-        const modeArea = document.querySelector('.mode-container');
-        modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Buat semua tombol mode berdetak (pulse) agar pelanggan sadar harus pilih salah satu
-        document.querySelectorAll('.mode-item:not(.disabled)').forEach(el => {
-            el.classList.add('pulse-attention');
-        });
-        return; // Berhenti di sini, jangan lanjut kirim WA
+        closeModal();
+        showToast("Pilih metode (Dine In/Delivery) dulu! ✍️", "warning", "✍️");
+        return;
     }
 
-    // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
-    if (navigator.vibrate) navigator.vibrate(50);
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
     const noAntrean = document.getElementById('noAntrean').innerText;
 
-    // Validasi input kosong (Nama, Meja, atau Alamat)
-    const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
-    cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
+    if (!nI.value.trim()) { closeModal(); nI.closest('.input-card').classList.add('error-field', 'shake-ani'); return; }
 
-    let targetEl = null;
-    if (!nI.value.trim()) targetEl = nI;
-    else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
-    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+    // --- LOGIKA STRUK DAPUR ---
+    const now = new Date();
+    const jam = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    
+    let struk = `*ORDER - ${noAntrean}*\n`;
+    struk += `Tanggal: ${now.toLocaleDateString('id-ID')} | ${jam}\n`;
+    struk += `Pelanggan: ${nI.value.toUpperCase()}\n`;
+    struk += `Metode: ${currentMode}\n`;
+    if (currentMode === 'DINE IN') struk += `Meja: ${tI.value}\n`;
+    struk += `--------------------------------\n\n`;
 
-    if (targetEl) {
-        const targetCard = targetEl.closest('.input-card');
-        closeModal();
-        targetCard.classList.add('error-field', 'shake-ani');
-        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        targetEl.focus();
-        return; 
-    }
-
-    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
     const summary = {};
     cart.forEach(c => {
         let label = c.nama;
         let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-        if(tags) label += ` [${tags}]`;
-        const itemKey = label;
+        if(tags) label += `\n   (${tags})`;
         const itemPrice = c.harga + (c.ex || 0);
         
-        if (!summary[itemKey]) {
-            summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
-        }
-        summary[itemKey].qty++;
+        if (!summary[label]) summary[label] = { qty: 0, price: itemPrice };
+        summary[label].qty++;
     });
 
-    const pRowsWA = Object.entries(summary).map(([name, data]) => 
-        `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
-    );
+    Object.entries(summary).forEach(([name, data]) => {
+        struk += `${data.qty}x ${name}\n`;
+    });
 
-    // --- 3. Hitung Data & Link Lokasi ---
-    const distKM = (userDist/1000).toFixed(1);
-    const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    // Cari baris ini dan ganti:
-const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
-
-    // --- 4. Susun Format Pesan WhatsApp ---
-    let msg = `Halo cloudkitchen.dyg++!\n\n`;
-    msg += `🛵 *${currentMode}*\n`;
-    msg += `👤 *Nama:* ${nI.value}\n`;
-    msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
-    msg += `━━━━━━━━━━━━━━\n`;
-
-    if (currentMode === 'DINE IN') {
-        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
-    } else {
-        msg += `🏠 *Alamat:* ${aI.value}\n`;
-        msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
-        msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
-    }
-
-    msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
-    
     const catatan = document.getElementById('orderNote').value || '-';
-    msg += `\n*CATATAN:* ${catatan}\n`;
-    msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
-    
-    msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
-    msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
-    msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
-    msg += `Terimakasih!`;
 
-    // --- 5. Animasi Feedback Tombol & Pengiriman ---
-    // Memicu getar halus saat klik
-    if (navigator.vibrate) navigator.vibrate(50);
+    struk += `\n--------------------------------\n`;
+    struk += `Catatan: ${catatan}\n`;
+    struk += `TOTAL: Rp ${finalPrice}\n`;
+    struk += `--------------------------------\n`;
+    struk += `*Mohon segera diproses!*`;
 
-    // Mengubah tombol menjadi loading
-    const btnKirim = document.querySelector('#modalConfirm button:last-child');
-    if (btnKirim) {
-        btnKirim.innerHTML = "⌛ Menghubungkan...";
-        btnKirim.style.opacity = "0.7";
-        btnKirim.style.pointerEvents = "none";
-    }
+    // Kirim data ke Google Sheets (Database)
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(struk)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
 
-    // Kirim data ke database di latar belakang
-    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
-
-    // Tunggu animasi sebentar baru pindah ke WA
-    setTimeout(() => {
-        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    }, 600); 
+    // Link WhatsApp
+    const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+    window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(struk)}`;
 }
 
 
