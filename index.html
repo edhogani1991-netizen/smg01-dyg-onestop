@@ -919,7 +919,7 @@ async function startApp() {
     // 1. CEK APAKAH SUDAH PILIH MODE?
     if (!currentMode) {
         closeModal(); // Tutup modal jika terlanjur terbuka
-        showToast("Lengkapi kolom ini dulu! ✍️", "warning", "✍️");
+        alert("Pilih dulu layanan Anda: Dine In, Take Away, atau Delivery!");
         
         // Gulir layar otomatis ke arah tombol mode
         const modeArea = document.querySelector('.mode-container');
@@ -1137,7 +1137,7 @@ async function startApp() {
 <div id="toast-container" style="
     position: fixed;
     bottom: 20px;
-    left: 50%;Updat
+    left: 50%;
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
