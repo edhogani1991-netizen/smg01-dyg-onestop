@@ -804,30 +804,31 @@ async function startApp() {
 }
 
     function updateCart(id, change, forceVariant = null) {
-        const item = menuData.find(m => m.id === id);
-        if (!item) return;
+    const item = menuData.find(m => m.id === id);
+    if (!item) return;
 
-        if (change > 0) {
-            let vData = forceVariant ? {...forceVariant} : {
-                vN: document.getElementById(`n-${id}`)?.value || null,
-                vM: document.getElementById(`m-${id}`)?.value || null,
-                vR: document.getElementById(`r-${id}`)?.value || null,
-                vS: document.getElementById(`s-${id}`)?.value || null,
-                ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
-            };
-            cart.push({ ...item, ...vData });
-        } else {
-            let idx = cart.findLastIndex(c => 
-                c.id === id && 
-                c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
-                c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
-                c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
-                c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
-            );
-            if (idx !== -1) cart.splice(idx, 1);
-        }
-        refreshUI();
+    if (change > 0) {
+        let vData = forceVariant ? {...forceVariant} : {
+            vN: document.getElementById(`n-${id}`)?.value || null,
+            vM: document.getElementById(`m-${id}`)?.value || null,
+            vR: document.getElementById(`r-${id}`)?.value || null,
+            vS: document.getElementById(`s-${id}`)?.value || null, // Menangkap pilihan suhu
+            ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
+        };
+        cart.push({ ...item, ...vData });
+    } else {
+        // Logika hapus item yang spesifik sesuai variannya
+        let idx = cart.findLastIndex(c => 
+            c.id === id && 
+            c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
+            c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
+            c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
+            c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
+        );
+        if (idx !== -1) cart.splice(idx, 1);
     }
+    refreshUI();
+}
 
     function refreshUI() {
         let subtotal = 0; 
