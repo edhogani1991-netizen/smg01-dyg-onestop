@@ -21,67 +21,84 @@
 
         /* --- Perubahan Area Hijau (Header) --- */
         /* TIMPA KODE LAMA ANDA DENGAN INI */
-/* --- Header Ramping --- */
 .header-top { 
     background: var(--primary); 
-    padding: 8px 18px 12px; /* Lebih tipis */
+    padding: 5px 15px 18px; /* Padding dikurangi agar lebih tipis */
     color: white; 
     border-radius: 0 0 20px 20px; 
 }
 
-/* --- Banner Lebih Luas --- */
+.nav-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 5px; /* Jarak dikurangi */
+}
+        .brand-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; letter-spacing: -0.3px; }
+        .brand-icon { width: 26px; height: 26px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 10px; font-weight: 800; }
+        .queue-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+
+        /* TIMPA KODE LAMA ANDA DENGAN INI */
 .banner-container { 
-    margin: -10px 15px 15px; 
+    margin: -10px 15px 15px; /* Margin atas dikurangi supaya naik */
     position: relative; 
     overflow: hidden; 
     border-radius: 15px; 
-    height: 180px; /* Ditambah agar gambar lebih jelas */
+    height: 180px; /* Ditambah dari 145px ke 180px agar gambar lebih besar */
     box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+    background: #eee; 
 }
-
-/* --- Tombol Mode Layanan Ala Gojek --- */
-.mode-selection {
+        #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
+        #banner-track img { min-width: 100%; object-fit: cover; }
+.mode-item.disabled {
+    background: #F1F1F1;
+    color: #AAA;
+    border-color: #DDD;
+    pointer-events: auto;
+    position: relative;
+}
+/* TAMBAHKAN KODE INI */
+.mode-selection { /* Pastikan nama class pembungkus tombol Anda benar */
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 Kolom sejajar presisi */
-    gap: 15px;
-    padding: 10px 25px;
-    background: transparent;
+    grid-template-columns: repeat(3, 1fr); /* Membagi 3 kolom sama rata */
+    gap: 8px;
+    padding: 0 18px;
 }
 
 .mode-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: transparent !important; /* Hilangkan kotak */
-    border: none !important;           /* Hilangkan border */
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.icon-wrapper {
-    width: 60px;
-    height: 60px;
-    background: #FFFFFF;
-    border-radius: 18px; /* Bentuk squircle */
-    display: flex;
-    align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    margin-bottom: 8px;
-}
-
-.mode-item span {
+    height: 45px; /* Tinggi seragam agar presisi */
     font-size: 11px;
-    font-weight: 700;
-    color: #333;
+    border-radius: 8px;
+    padding: 5px;
+}
+.mode-item.disabled::after {
+    content: "Di luar jangkauan";
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: #999;
+}
+.mode-container.secondary {
+    padding-top: 0;
+    margin-top: -6px;
 }
 
-/* Animasi Bounce Gojek saat diklik */
-.mode-item:active {
-    transform: scale(0.85);
+.mode-item.alt {
+    background: #F6F6F6;
+    border: 1px dashed #DDD;
+    color: var(--muted);
+    font-weight: 800;
 }
-.mode-item:active .icon-wrapper {
-    background-color: #e8e8e8; /* Sedikit lebih gelap saat ditekan */
+.mode-item.alt:active {
+    transform: scale(0.97);
 }
+
         .mode-container { display: flex; gap: 8px; overflow-x: auto; padding: 0 18px 12px; scrollbar-width: none; }
         .mode-item { white-space: nowrap; padding: 10px 16px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1.2px solid #EFEFEF; cursor: pointer; }
         .mode-item.active { background: #E8F5E9; border-color: var(--success); color: var(--primary); }
@@ -248,33 +265,16 @@ mark {
 </div>
 
 <div class="banner-container">
-    <div id="banner-track">
-        <img src="gambar-banner-anda.jpg">
-    </div>
+    <div id="banner-track"></div>
 </div>
 
-<div class="mode-selection">
-    <div class="mode-item" onclick="changeMode('DINE IN', this)">
-        <div class="icon-wrapper">
-            <img src="https://cdn-icons-png.flaticon.com/512/2082/2082184.png" style="width: 35px;">
-        </div>
-        <span>Dine In</span>
-    </div>
-
-    <div class="mode-item" onclick="changeMode('TAKE AWAY', this)">
-        <div class="icon-wrapper">
-            <img src="https://cdn-icons-png.flaticon.com/512/3081/3081913.png" style="width: 35px;">
-        </div>
-        <span>Take Away</span>
-    </div>
-
-    <div class="mode-item" onclick="changeMode('DELIVERY', this)">
-        <div class="icon-wrapper">
-            <img src="https://cdn-icons-png.flaticon.com/512/706/706164.png" style="width: 35px;">
-        </div>
-        <span>Delivery</span>
-    </div>
+<!-- BARIS 1 : MODE ORDER -->
+<div class="mode-container" style="margin-top: -10px;">
+    <div id="mDine" class="mode-item" onclick="changeMode('DINE IN', this)">🍽️ Dine In</div>
+    <div id="mTake" class="mode-item" onclick="changeMode('TAKE AWAY', this)">🛍️ Take Away</div>
+    <div id="mDeliv" class="mode-item" onclick="changeMode('DELIVERY', this)">🛵 Delivery</div>
 </div>
+
 <!-- BARIS 2 : MENU TAMBAHAN -->
 <div class="mode-container secondary">
     <div class="mode-item alt" onclick="openComingSoon()">🍱 Katering</div>
@@ -629,7 +629,7 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
+    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
 
     // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
