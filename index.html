@@ -804,31 +804,30 @@ async function startApp() {
 }
 
     function updateCart(id, change, forceVariant = null) {
-    const item = menuData.find(m => m.id === id);
-    if (!item) return;
+        const item = menuData.find(m => m.id === id);
+        if (!item) return;
 
-    if (change > 0) {
-        let vData = forceVariant ? {...forceVariant} : {
-            vN: document.getElementById(`n-${id}`)?.value || null,
-            vM: document.getElementById(`m-${id}`)?.value || null,
-            vR: document.getElementById(`r-${id}`)?.value || null,
-            vS: document.getElementById(`s-${id}`)?.value || null, // Menangkap pilihan suhu
-            ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
-        };
-        cart.push({ ...item, ...vData });
-    } else {
-        // Logika hapus item yang spesifik sesuai variannya
-        let idx = cart.findLastIndex(c => 
-            c.id === id && 
-            c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
-            c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
-            c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
-            c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
-        );
-        if (idx !== -1) cart.splice(idx, 1);
+        if (change > 0) {
+            let vData = forceVariant ? {...forceVariant} : {
+                vN: document.getElementById(`n-${id}`)?.value || null,
+                vM: document.getElementById(`m-${id}`)?.value || null,
+                vR: document.getElementById(`r-${id}`)?.value || null,
+                vS: document.getElementById(`s-${id}`)?.value || null,
+                ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
+            };
+            cart.push({ ...item, ...vData });
+        } else {
+            let idx = cart.findLastIndex(c => 
+                c.id === id && 
+                c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
+                c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
+                c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
+                c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
+            );
+            if (idx !== -1) cart.splice(idx, 1);
+        }
+        refreshUI();
     }
-    refreshUI();
-}
 
     function refreshUI() {
         let subtotal = 0; 
@@ -925,14 +924,11 @@ async function startApp() {
     // 1. CEK APAKAH SUDAH PILIH MODE?
     if (!currentMode) {
         closeModal(); // Tutup modal jika terlanjur terbuka
-        showToast("Pilih Dulu Mau Layanan Apa Nih! ✍️", "warning", "✍️");
+        showToast("Lengkapi kolom ini dulu! ✍️", "warning", "✍️");
         
         // Gulir layar otomatis ke arah tombol mode
-        const modeArea = document.querySelector('.service-mode');
-if (modeArea) {
-    modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
+        const modeArea = document.querySelector('.mode-container');
+        modeArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
         // Buat semua tombol mode berdetak (pulse) agar pelanggan sadar harus pilih salah satu
         document.querySelectorAll('.mode-item:not(.disabled)').forEach(el => {
