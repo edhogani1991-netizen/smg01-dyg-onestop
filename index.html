@@ -21,73 +21,64 @@
 
         /* --- Perubahan Area Hijau (Header) --- */
         /* TIMPA KODE LAMA ANDA DENGAN INI */
+/* --- Header Ramping --- */
 .header-top { 
     background: var(--primary); 
-    padding: 5px 15px 18px; /* Padding dikurangi agar lebih tipis */
+    padding: 8px 18px 12px; /* Lebih tipis */
     color: white; 
     border-radius: 0 0 20px 20px; 
 }
 
-.nav-row { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 5px; /* Jarak dikurangi */
-}
-        .brand-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; letter-spacing: -0.3px; }
-        .brand-icon { width: 26px; height: 26px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 10px; font-weight: 800; }
-        .queue-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
-
-        /* TIMPA KODE LAMA ANDA DENGAN INI */
+/* --- Banner Lebih Luas --- */
 .banner-container { 
-    margin: -10px 15px 15px; /* Margin atas dikurangi supaya naik */
+    margin: -10px 15px 15px; 
     position: relative; 
     overflow: hidden; 
     border-radius: 15px; 
-    height: 180px; /* Ditambah dari 145px ke 180px agar gambar lebih besar */
+    height: 180px; /* Ditambah agar gambar lebih jelas */
     box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
-    background: #eee; 
 }
-        #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
-        #banner-track img { min-width: 100%; object-fit: cover; }
+
+/* --- Tombol Mode Layanan Ala Gojek --- */
+.mode-selection {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 Kolom sejajar presisi */
+    gap: 15px;
+    padding: 10px 25px;
+    background: transparent;
+}
+
 .mode-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    background: transparent; /* Hilangkan kotak putih */
-    border: none;            /* Hilangkan garis pinggir */
-    padding: 10px 5px;
-    cursor: pointer;
+    background: transparent !important; /* Hilangkan kotak */
+    border: none !important;           /* Hilangkan border */
     transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    -webkit-tap-highlight-color: transparent;
 }
 
-/* Lingkaran di belakang ikon (Opsional, agar mirip Gojek baru) */
-.mode-item .icon-wrapper {
-    width: 55px;
-    height: 55px;
-    background-color: #f2f2f2; /* Warna abu muda halus */
-    border-radius: 18px;       /* Sudut membulat khas Gojek */
+.icon-wrapper {
+    width: 60px;
+    height: 60px;
+    background: #FFFFFF;
+    border-radius: 18px; /* Bentuk squircle */
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     margin-bottom: 8px;
-    transition: all 0.2s ease;
 }
 
-/* Nama Layanan di bawah ikon */
 .mode-item span {
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 700;
     color: #333;
 }
 
-/* Efek Animasi Bounce saat ditekan */
+/* Animasi Bounce Gojek saat diklik */
 .mode-item:active {
-    transform: scale(0.9); /* Mengecil saat ditekan */
+    transform: scale(0.85);
 }
-
 .mode-item:active .icon-wrapper {
     background-color: #e8e8e8; /* Sedikit lebih gelap saat ditekan */
 }
@@ -263,23 +254,23 @@ mark {
 </div>
 
 <div class="mode-selection">
-    <div class="mode-item" onclick="pilihMode('dine-in')">
+    <div class="mode-item" onclick="changeMode('DINE IN', this)">
         <div class="icon-wrapper">
-            <img src="https://cdn-icons-png.flaticon.com/512/2082/2082184.png" style="width: 30px;">
+            <img src="https://cdn-icons-png.flaticon.com/512/2082/2082184.png" style="width: 35px;">
         </div>
         <span>Dine In</span>
     </div>
 
-    <div class="mode-item" onclick="pilihMode('take-away')">
+    <div class="mode-item" onclick="changeMode('TAKE AWAY', this)">
         <div class="icon-wrapper">
-            <img src="https://cdn-icons-png.flaticon.com/512/3081/3081913.png" style="width: 30px;">
+            <img src="https://cdn-icons-png.flaticon.com/512/3081/3081913.png" style="width: 35px;">
         </div>
         <span>Take Away</span>
     </div>
 
-    <div class="mode-item" onclick="pilihMode('delivery')">
+    <div class="mode-item" onclick="changeMode('DELIVERY', this)">
         <div class="icon-wrapper">
-            <img src="https://cdn-icons-png.flaticon.com/512/706/706164.png" style="width: 30px;">
+            <img src="https://cdn-icons-png.flaticon.com/512/706/706164.png" style="width: 35px;">
         </div>
         <span>Delivery</span>
     </div>
@@ -638,7 +629,7 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
+    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
     // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
