@@ -665,24 +665,25 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
 // === FUNGSI CEK DAN UPDATE STATUS DINE IN ===
 // --- PERBAIKAN: Gunakan satu fungsi update status yang solid ---
-
 function updateDineInStatus() {
     const dineBtn = document.getElementById('mDine');
     const dineBadge = dineBtn ? dineBtn.querySelector('.badge-out-of-range') : null;
 
     if (!window.userLat || !window.userLng || !dineBtn) return;
 
+    // Hitung jarak dari user ke warung (dalam meter)
     const dist = L.latLng(window.userLat, window.userLng)
                   .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
     
-    userDist = dist; 
+    userDist = dist; // Simpan jarak asli
 
     if (userDist > CONFIG.RADIUS_DINE_IN) {
         dineBtn.classList.add('disabled');
+        // Gunakan event listener agar tidak bentrok
         dineBtn.onclick = function(e) { 
             e.stopPropagation();
-            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In.");
-        }; // Tutup fungsi onclick
+            alert("Lokasi Anda terlalu jauh (" + Math.round(userDist) + "m) untuk akses menu Dine-In."); rendermen
+        };
         if(dineBadge) dineBadge.style.display = 'block';
     } else {
         dineBtn.classList.remove('disabled');
@@ -691,7 +692,7 @@ function updateDineInStatus() {
     }
 }
 
-// --- PERBAIKAN: Fungsi Start App ---
+// --- PERBAIKAN: Fungsi Start App agar tidak macet ---
 async function startApp() {
     const overlay = document.getElementById('welcome-overlay');
     const startBtn = overlay.querySelector('button');
@@ -703,14 +704,19 @@ async function startApp() {
         window.userLat = pos.coords.latitude;
         window.userLng = pos.coords.longitude;
 
+        // Inisialisasi peta & banner duluan agar data siap
         initMap(window.userLat, window.userLng);
         initBanner();
         
+        // Load menu & antrean
         await loadMenu();
         syncQueue();
+
+        // Cek status radius
         updateDineInStatus();
 
-        overlay.style.display = 'none'; // Menutup welcome screen
+        // Tutup overlay
+        overlay.style.display = 'none';
     }, (error) => {
         startBtn.disabled = false;
         startBtn.innerText = "MULAI SEKARANG";
@@ -720,7 +726,6 @@ async function startApp() {
         timeout: 10000 
     });
 }
-
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
         if (km <= 1.5) return 3000;
@@ -989,7 +994,7 @@ async function submitOrder() {
     executeFinalSubmit(nI, tI, aI, noAntrean); 
 }
 
-    //4. Rangkai Rincian Pesanan (Item + Harga)
+    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
     const summary = {};
     cart.forEach(c => {
         let label = c.nama;
@@ -1008,14 +1013,14 @@ async function submitOrder() {
         `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
     );
 
-    //5. Hitung Data & Link Lokasi
+    // --- 3. Hitung Data & Link Lokasi ---
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
     // Cari baris ini dan ganti:
 const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
-    //6. Susun Format Pesan WhatsApp
+    // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
@@ -1041,7 +1046,7 @@ const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${windo
     msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
     msg += `Terimakasih!`;
 
-    //7. Animasi Feedback Tombol & Pengiriman
+    // --- 5. Animasi Feedback Tombol & Pengiriman ---
     // Memicu getar halus saat klik
     if (navigator.vibrate) navigator.vibrate(50);
 
@@ -1092,10 +1097,7 @@ const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${windo
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker(CONFIG.WARUNG_LOCATION)
-  .addTo(map)
-  .bindPopup("Warung cloudkitchen.dyg++");
-
+        L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Warung").openPopup();
         L.marker([lat, lng]).addTo(map).bindPopup("Lokasi Kamu");
     }
 
@@ -1181,10 +1183,6 @@ const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${windo
     z-index: 11000;
     pointer-events: none;
 "></div>
-<div id="toast-container"
-     style="position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
-            z-index:20000; display:flex; flex-direction:column; gap:10px;">
-</div>
 
 
 </body>
