@@ -268,12 +268,13 @@ mark {
 /* ICON */
 /* Pastikan kontainer icon memiliki ukuran tetap */
 .service-btn .icon {
-    width: 40px; 
-    height: 40px;
+    width: 70px; 
+    height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 4px;
+animation: floatIcon 2.8s ease-in-out infinite;
 }
 
 /* AKTIF */
@@ -330,8 +331,8 @@ mark {
 
 /* Penyesuaian khusus untuk tombol sekunder agar lebih kecil */
 .service-btn.secondary .icon {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
 }
 
 .service-btn.secondary span {
@@ -408,8 +409,8 @@ mark {
 
 /* Atur gambar agar pas di dalam kontainer tanpa merusak layout */
 .service-icon-img {
-    width: 100%;
-    height: 100%;
+    width: 110%;
+    height: 110%;
     object-fit: contain; /* Gambar akan mengecil secara proporsional */
 
 /* Tambahan agar gambar tidak berubah warna jadi putih saat aktif (jika menggunakan PNG transparan) */
