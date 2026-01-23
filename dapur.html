@@ -31,9 +31,10 @@
             box-shadow:0 4px 6px rgba(0,0,0,0.1); border-top:8px solid var(--primary);
             display:flex; flex-direction:column; position:relative;
             touch-action: pan-y; overflow: hidden;
-            transition: transform 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* Overlay Konfirmasi (Tetap dipertahankan jika ingin swipe manual) */
         .confirm-overlay {
             position: absolute; top:0; left:0; width:100%; height:100%;
             background: rgba(214, 48, 49, 0.96); color:white;
@@ -68,13 +69,14 @@
         }
 
         .btn-print { 
-            width: 100%; padding:16px; border:none; border-radius:8px; 
+            width: 100%; padding:18px; border:none; border-radius:8px; 
             cursor:pointer; font-weight:bold; font-size:16px;
             background:var(--primary); color:white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .swipe-hint { text-align:center; font-size:11px; color:#aaa; margin-top:10px; }
-        .removed { transform: translateX(-150%); opacity: 0; }
+        .removed { transform: scale(0.5) translateX(-150%); opacity: 0; }
     </style>
 </head>
 <body>
@@ -92,7 +94,8 @@
 <script>
 // --- FITUR PIN DAPUR ---
 const PIN_DAPUR = "1212";
-if(prompt("Masukkan PIN Dapur:") !== PIN_DAPUR){
+const userPin = prompt("Masukkan PIN Dapur:");
+if(userPin !== PIN_DAPUR){
     alert("Akses ditolak!");
     document.body.innerHTML="<h1 style='text-align:center;margin-top:50px;'>Akses Dilarang</h1>"; 
     throw new Error("Invalid PIN");
@@ -136,11 +139,11 @@ function renderOrders(orders){
     }
 
     container.innerHTML = filtered.map(ord => {
-        // PERBAIKAN: Membaca kolom 'antrean' sesuai screenshot Anda
         const no = ord.antrean || ord.no_antrean || "!!";
         const row = ord.row_index;
         const pesanan = ord.pesanan || "";
         const mode = ord.mode_pesanan || ord["mode pesanan"] || "DINE IN";
+        const total = ord.total_bayar || ord["total bayar"] || "0";
 
         return `
         <div class="order-card" id="card-${row}" data-row="${row}">
@@ -166,15 +169,15 @@ function renderOrders(orders){
                 ${pesanan.split(',').map(item => `• ${item.trim()}`).join('<br>')}
             </div>
 
-            <button class="btn-print" onclick="printRawBT('${no}', '${ord.nama}', '${pesanan}', '${mode}', '${ord.total_bayar}')">
-                🖨️ CETAK STRUK
+            <button class="btn-print" onclick="printAndClose('${row}', '${no}', '${ord.nama}', '${pesanan.replace(/'/g, "\\'")}', '${mode}', '${total}')">
+                🖨️ CETAK & SELESAI
             </button>
-            <div class="swipe-hint">← Geser ke kiri untuk menyelesaikan</div>
+            <div class="swipe-hint">← Geser untuk selesaikan tanpa cetak</div>
         </div>
         `;
     }).join('');
 
-    // --- INISIALISASI SWIPE (Hammer.js) ---
+    // Re-inisialisasi Hammer.js untuk swipe manual
     document.querySelectorAll('.order-card').forEach(card => {
         const mc = new Hammer(card);
         mc.on("swipeleft", () => {
@@ -188,26 +191,9 @@ function cancelDelete(row) {
     document.getElementById(`overlay-${row}`).classList.remove('active');
 }
 
-async function confirmDelete(row) {
-    const card = document.getElementById(`card-${row}`);
-    card.classList.add('removed');
-    isRemoving.push(row.toString());
-    
-    try {
-        await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}`);
-        setTimeout(() => {
-            card.remove();
-            if(document.querySelectorAll('.order-card').length === 0) fetchOrders();
-        }, 300);
-    } catch(e) {
-        alert("Gagal koneksi ke server.");
-        isRemoving = isRemoving.filter(id => id !== row.toString());
-        card.classList.remove('removed');
-        document.getElementById(`overlay-${row}`).classList.remove('active');
-    }
-}
-
-function printRawBT(no, nama, menu, mode, total) {
+// Fungsi Cetak sekaligus Menutup Pesanan
+async function printAndClose(row, no, nama, menu, mode, total) {
+    // 1. Jalankan Perintah Cetak ke RawBT
     const struk = `
 {center}{h}KITCHEN BILL{/h}
 --------------------------------
@@ -221,8 +207,43 @@ ${menu.split(',').map(m => `[ ] ${m.trim()}`).join('\n')}
 {center}--- ${new Date().toLocaleTimeString('id-ID')} ---
 {cut}`;
 
-    // Menggunakan skema Intent untuk RawBT Android
+    // Kirim ke Intent RawBT
     window.location.href = `intent:${encodeURIComponent(struk)}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
+
+    // 2. Langsung hapus dari layar (UI)
+    const card = document.getElementById(`card-${row}`);
+    if(card) card.classList.add('removed');
+    isRemoving.push(row.toString());
+
+    // 3. Update status ke Google Sheets (SELESAI)
+    try {
+        await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}`);
+    } catch(e) {
+        console.error("Gagal update status di server");
+        // Jika gagal, data akan muncul kembali saat refresh agar koki tahu belum ter-update di server
+        isRemoving = isRemoving.filter(id => id !== row.toString());
+        if(card) card.classList.remove('removed');
+    }
+}
+
+// Fungsi Hapus Manual (via Swipe)
+async function confirmDelete(row) {
+    const card = document.getElementById(`card-${row}`);
+    card.classList.add('removed');
+    isRemoving.push(row.toString());
+    
+    try {
+        await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}`);
+        setTimeout(() => {
+            if(card.parentNode) card.remove();
+            if(document.querySelectorAll('.order-card').length === 0) fetchOrders();
+        }, 400);
+    } catch(e) {
+        alert("Gagal koneksi ke server.");
+        isRemoving = isRemoving.filter(id => id !== row.toString());
+        card.classList.remove('removed');
+        document.getElementById(`overlay-${row}`).classList.remove('active');
+    }
 }
 
 setInterval(fetchOrders, CONFIG.REFRESH_RATE);
