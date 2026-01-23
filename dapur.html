@@ -2,8 +2,9 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KITCHEN DASHBOARD | Cloud Kitchen</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <style>
         :root {
             --primary: #1B4332;
@@ -15,21 +16,16 @@
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             background: var(--bg); 
-            margin: 0; 
-            padding: 20px; 
+            margin: 0; padding: 20px; 
+            overflow-x: hidden;
         }
 
         .container { max-width: 1000px; margin: auto; }
         
         .header-page {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            background: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; background: white; padding: 15px 20px;
+            border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         .order-grid {
@@ -39,65 +35,59 @@
         }
 
         .order-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
+            background: white; border-radius: 12px; padding: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-top: 8px solid var(--primary);
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.2s;
+            display: flex; flex-direction: column;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            position: relative;
+            touch-action: pan-y; /* Memungkinkan scroll vertikal */
+        }
+
+        /* Animasi Terlempar ke Kiri */
+        .swiped-left {
+            transform: translateX(-150%) rotate(-15deg) !important;
+            opacity: 0 !important;
         }
 
         .order-header {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+            display: flex; justify-content: space-between;
+            border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;
         }
 
         .order-no { font-size: 24px; font-weight: 900; color: var(--primary); }
-        .order-time { font-size: 12px; color: #888; text-align: right; }
+        .order-time { font-size: 12px; color: #888; }
 
         .customer-info { margin-bottom: 15px; }
         .customer-name { font-weight: bold; font-size: 18px; display: block; }
         .order-mode { font-size: 12px; background: #eee; padding: 2px 8px; border-radius: 10px; }
 
         .item-list {
-            background: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
-            flex-grow: 1;
-            margin-bottom: 15px;
-            font-family: 'Courier New', Courier, monospace;
+            background: #f9f9f9; padding: 15px; border-radius: 8px;
+            flex-grow: 1; margin-bottom: 15px;
+            font-family: 'Courier New', Courier, monospace; font-size: 16px;
         }
 
         .btn-group { display: flex; gap: 10px; }
         
         button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: opacity 0.2s;
+            flex: 1; padding: 12px; border: none; border-radius: 8px;
+            cursor: pointer; font-weight: bold;
         }
 
         .btn-print { background: var(--primary); color: white; }
         .btn-done { background: var(--success); color: white; }
-        button:hover { opacity: 0.8; }
+
+        .swipe-hint {
+            text-align: center; font-size: 10px; color: #bbb; margin-top: 10px;
+        }
 
         @media print {
             body * { visibility: hidden; }
             #printSection, #printSection * { visibility: visible; }
             #printSection {
-                position: absolute;
-                left: 0; top: 0;
-                width: 80mm;
-                font-family: monospace;
-                padding: 5px;
+                position: absolute; left: 0; top: 0; width: 80mm;
+                font-family: monospace; padding: 5px;
             }
         }
     </style>
@@ -116,48 +106,42 @@
     <div id="printSection" style="display:none;"></div>
 
     <script>
-        // 1. PIN & SECURITY
+        // 1. KEAMANAN PIN
         const PIN_DAPUR = "1212"; 
         let akses = prompt("Masukkan PIN Dapur:");
-        
         if (akses !== PIN_DAPUR) {
             alert("Akses ditolak!");
             document.body.innerHTML = "<h1 style='text-align:center;margin-top:50px;'>Akses Dilarang</h1>";
             throw new Error("Invalid PIN");
         }
 
-        // 2. CONFIGURATION
+        // 2. KONFIGURASI
         const CONFIG = {
             API_URL: "https://script.google.com/macros/s/AKfycbyHXKH97V_JUlyWcl0y51q3B9t7gKTUXqZo1RZbhClE9xhwmQN7AaIxTAR27tmFw9b2LA/exec",
             TOKEN: "dyg-access-v2",
-            REFRESH_RATE: 15000 
+            REFRESH_RATE: 10000 // Cek setiap 10 detik
         };
 
         let lastOrderCount = 0;
 
-        // 3. FUNCTIONS
+        // 3. AMBIL DATA
         async function fetchOrders() {
             try {
                 const response = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true`);
                 const data = await response.json();
+                document.getElementById('status-conn').innerText = "● Terhubung (Otomatis)";
                 
-                document.getElementById('status-conn').innerText = "● Terhubung (Auto-refresh Aktif)";
-                renderOrders(data);
-                
-                if (data.length > lastOrderCount) {
-                    if (lastOrderCount !== 0) {
-                        document.getElementById('notifSound').play();
-                    }
-                    lastOrderCount = data.length;
-                } else {
-                    lastOrderCount = data.length;
+                if (data.length > lastOrderCount && lastOrderCount !== 0) {
+                    document.getElementById('notifSound').play().catch(e => console.log("Sound blocked"));
                 }
+                lastOrderCount = data.length;
+                renderOrders(data);
             } catch (err) {
-                document.getElementById('status-conn').innerText = "○ Terputus, mencoba lagi...";
-                console.error("Fetch error:", err);
+                document.getElementById('status-conn').innerText = "○ Terputus...";
             }
         }
 
+        // 4. TAMPILKAN DATA & LOGIC SWIPE
         function renderOrders(orders) {
             const container = document.getElementById('orderList');
             if (!orders || orders.length === 0) {
@@ -166,7 +150,7 @@
             }
 
             container.innerHTML = orders.map(ord => `
-                <div class="order-card" id="card-${ord.row_index}">
+                <div class="order-card" id="card-${ord.row_index}" data-row="${ord.row_index}">
                     <div class="order-header">
                         <span class="order-no">#${ord.no_antrean}</span>
                         <div class="order-time">${new Date(ord.timestamp).toLocaleTimeString('id-ID')}</div>
@@ -182,43 +166,57 @@
                         <button class="btn-print" onclick="preparePrint('${ord.no_antrean}', '${ord.nama}', '${ord.pesanan}', '${ord.mode_pesanan}', '${ord.total_bayar}')">CETAK</button>
                         <button class="btn-done" onclick="markDone(${ord.row_index})">SELESAI</button>
                     </div>
+                    <div class="swipe-hint">← Geser kiri jika sudah selesai</div>
                 </div>
             `).join('');
+
+            // Pasang deteksi Swipe ke setiap kartu
+            document.querySelectorAll('.order-card').forEach(card => {
+                const mc = new Hammer(card);
+                mc.on("swipeleft", function() {
+                    const rowIndex = card.getAttribute('data-row');
+                    card.classList.add('swiped-left'); // Animasi keluar
+                    setTimeout(() => executeDone(rowIndex), 400); // Eksekusi ke sistem
+                });
+            });
         }
 
+        // 5. EKSEKUSI SELESAI
         async function markDone(rowIndex) {
-            if (!confirm("Pesanan selesai dan siap disajikan?")) return;
-            const card = document.getElementById(`card-${rowIndex}`);
-            card.style.opacity = "0.3";
-            card.style.pointerEvents = "none";
-
-            try {
-                await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${rowIndex}`);
-                fetchOrders();
-            } catch (err) {
-                alert("Gagal update status. Coba lagi.");
-                card.style.opacity = "1";
-                card.style.pointerEvents = "auto";
+            if (confirm("Selesaikan pesanan?")) {
+                const card = document.getElementById(`card-${rowIndex}`);
+                card.classList.add('swiped-left');
+                setTimeout(() => executeDone(rowIndex), 400);
             }
         }
 
+        async function executeDone(rowIndex) {
+            try {
+                await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${rowIndex}`);
+                fetchOrders();
+            } catch (e) {
+                alert("Gagal koneksi");
+                fetchOrders();
+            }
+        }
+
+        // 6. FUNGSI CETAK
         function preparePrint(no, nama, menu, mode, total) {
             const printArea = document.getElementById('printSection');
             printArea.style.display = 'block';
             printArea.innerHTML = `
                 <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:10px;">
-                    <b style="font-size:16px;">CLOUD KITCHEN DYG</b><br>STRUK DAPUR / KITCHEN BILL
+                    <b style="font-size:16px;">CLOUD KITCHEN DYG</b><br>KITCHEN BILL
                 </div>
                 <div style="padding: 10px 0; border-bottom:1px dashed #000; font-size:14px;">
-                    <b>NO ANTREAN : #${no}</b><br>Nama : ${nama}<br>Mode : ${mode}<br>Jam : ${new Date().toLocaleTimeString('id-ID')}
+                    <b>ANTREAN : #${no}</b><br>Nama : ${nama}<br>Mode : ${mode}
                 </div>
-                <div style="padding: 10px 0; min-height: 100px; font-size:15px;">
+                <div style="padding: 10px 0; min-height: 80px; font-size:16px;">
                     ${menu.split(',').map(m => `[ ] ${m.trim()}`).join('<br>')}
                 </div>
-                <div style="border-top:1px dashed #000; padding-top:10px; text-align:right;">
+                <div style="border-top:1px dashed #000; padding-top:10px; text-align:right; font-weight:bold;">
                     TOTAL: Rp ${total}
                 </div>
-                <div style="text-align:center; margin-top:20px; font-size:10px;">--- ${mode.toUpperCase()} ---</div>
             `;
             window.print();
             printArea.style.display = 'none';
