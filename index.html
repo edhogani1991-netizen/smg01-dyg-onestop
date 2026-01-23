@@ -236,70 +236,42 @@ mark {
     background: #FFFDE7 !important;
 }
 
-/* --- CONTAINER AREA LAYANAN (2 BARIS) --- */
-.service-area {
-    display: flex;
-    flex-direction: column;
-    gap: 18px; /* Jarak antar baris */
-    padding: 15px 10px;
-    max-width: 450px;
-    margin: 0 auto;
-}
+<div class="service-area">
+  <div class="service-row">
+    <div class="service-btn disabled">
+      <div class="badge-top">TERLALU JAUH</div>
+      <img src="dine-in.png" />
+      <span>Dine In</span>
+    </div>
 
-.service-mode {
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    width: 100%;
-}
+    <div class="service-btn active">
+      <img src="take-away.png" />
+      <span>Take Away</span>
+    </div>
 
-/* --- TOMBOL STYLE GOJEK --- */
-.service-btn {
-    width: 82px;
-    height: 82px;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.25s cubic-bezier(.4,0,.2,1);
-}
+    <div class="service-btn">
+      <img src="delivery.png" />
+      <span>Delivery</span>
+    </div>
+  </div>
 
-/* GAMBAR IKON */
-.service-icon-img {
-    width: 42px;
-    height: 42px;
-    object-fit: contain;
-}
+  <div class="service-row">
+    <div class="service-btn soon">
+      <img src="katering.png" />
+      <span>Katering</span>
+    </div>
 
-/* TULISAN DI BAWAH */
-.service-btn span {
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--text);
-}
+    <div class="service-btn soon">
+      <img src="jadi mitra.png" />
+      <span>Mitra</span>
+    </div>
 
-/* --- LOGIKA BADGE (Dine In & Soon) --- */
-.badge-status {
-    position: absolute;
-    top: -10px; /* Muncul di atas lingkaran */
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--danger);
-    color: white;
-    font-size: 8px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: 900;
-    z-index: 10;
-    white-space: nowrap;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
+    <div class="service-btn soon">
+      <img src="ngiklan.png" />
+      <span>NgIKLAN</span>
+    </div>
+  </div>
+</div>
 
 /* Khusus Badge SOON di baris kedua */
 .service-btn.secondary::before {
@@ -441,38 +413,40 @@ mark {
 </div>
 
 <div class="service-area">
-    <div class="service-mode">
-        <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-            <div id="badgeDine" class="badge-status" style="display:none;">TERLALU JAUH</div>
-            <img src="dine-in.png" class="service-icon-img">
-            <span>Dine In</span>
-        </div>
-
-        <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
-            <img src="take-away.png" class="service-icon-img">
-            <span>Take Away</span>
-        </div>
-
-        <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
-            <img src="delivery.png" class="service-icon-img">
-            <span>Delivery</span>
-        </div>
+  <div class="service-row">
+    <div class="service-btn disabled">
+      <div class="badge-top">TERLALU JAUH</div>
+      <img src="dine-in.png" />
+      <span>Dine In</span>
     </div>
 
-    <div class="service-mode secondary-mode">
-        <div class="service-btn secondary" onclick="openComingSoon()">
-            <img src="katering.png" class="service-icon-img">
-            <span>Katering</span>
-        </div>
-        <div class="service-btn secondary" onclick="openComingSoon()">
-            <img src="jadi mitra.png" class="service-icon-img">
-            <span>Mitra</span>
-        </div>
-        <div class="service-btn secondary" onclick="openComingSoon()">
-            <img src="ngiklan.png" class="service-icon-img">
-            <span>NgIKLAN</span>
-        </div>
+    <div class="service-btn active">
+      <img src="take-away.png" />
+      <span>Take Away</span>
     </div>
+
+    <div class="service-btn">
+      <img src="delivery.png" />
+      <span>Delivery</span>
+    </div>
+  </div>
+
+  <div class="service-row">
+    <div class="service-btn soon">
+      <img src="katering.png" />
+      <span>Katering</span>
+    </div>
+
+    <div class="service-btn soon">
+      <img src="jadi-mitra.png" />
+      <span>Mitra</span>
+    </div>
+
+    <div class="service-btn soon">
+      <img src="ngiklan.png" />
+      <span>NgIKLAN</span>
+    </div>
+  </div>
 </div>
 
 <div id="map"></div>
