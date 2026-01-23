@@ -368,39 +368,17 @@ animation: floatIcon 2.8s ease-in-out infinite;
     background: #EFEFEF;
 }
 
-.service-btn {
-    position: relative;
-}
-
-/* BADGE UNIVERSAL */
-.service-btn[data-badge]::before {
-    content: attr(data-badge);
+.service-btn.secondary::before {
+    content: "SOON";
     position: absolute;
     top: -6px;
     right: -6px;
-    font-size: 8px;
-    font-weight: 900;
-    padding: 2px 6px;
-    border-radius: 10px;
-    color: white;
-    z-index: 10;
-    white-space: nowrap;
-    box-shadow: 0 4px 8px rgba(0,0,0,.25);
-    animation: shake 2s infinite;
-}
-
-/* WARNA */
-.service-btn[data-type="accent"]::before {
     background: var(--accent);
-}
-
-.service-btn[data-type="danger"]::before {
-    background: var(--danger);
-}
-
-/* KOSONG = HILANG */
-.service-btn[data-badge=""]::before {
-    display: none;
+    color: white;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 2px 5px;
+    border-radius: 10px;
 }
 
 /* === FORM EXTRA RINGKAS === */
@@ -462,78 +440,29 @@ animation: floatIcon 2.8s ease-in-out infinite;
     opacity: 0.5;
 }
 
-<button id="btn-dine" class="service-btn secondary" data-badge="">
-    DINE IN
-</button>
-
-
-<style>
-    /* ... kode style lainnya ... */
-
-    /* 1. Definisi gerakan getarnya */
-    @keyframes shake {
-        0% { transform: rotate(0deg); }
-        10% { transform: rotate(-5deg); }
-        20% { transform: rotate(5deg); }
-        30% { transform: rotate(-5deg); }
-        40% { transform: rotate(5deg); }
-        50% { transform: rotate(0deg); }
-        100% { transform: rotate(0deg); }
-    }
-
-    /* 2. Terpakan pada badge SABAR */
-    .service-btn.secondary::before {
-        content: "SABAR"; 
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        background: var(--accent);
-        color: white;
-        font-size: 8px;
-        font-weight: 900;
-        padding: 2px 6px;
-        border-radius: 10px;
-        z-index: 10;
-        /* Tambahkan baris ini */
-        animation: shake 2s infinite; 
-    }
-.service-btn {
+/* Style untuk Badge "Jauhhh Gais" */
+.service-wrapper {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* BADGE UNIVERSAL */
-.service-btn[data-badge]::before {
-    content: attr(data-badge);
+.dist-badge {
     position: absolute;
-    top: -6px;
-    right: -6px;
+    top: -10px;
+    background: var(--danger);
+    color: white;
     font-size: 8px;
     font-weight: 900;
-    padding: 2px 6px;
+    padding: 3px 8px;
     border-radius: 10px;
-    color: white;
     z-index: 10;
     white-space: nowrap;
-    box-shadow: 0 4px 8px rgba(0,0,0,.25);
-    animation: shake 2s infinite;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    display: none; /* Default sembunyi */
+    animation: shake 0.5s infinite; /* Efek getar agar menarik perhatian */
 }
-
-/* WARNA */
-.service-btn[data-type="accent"]::before {
-    background: var(--accent);
-}
-
-.service-btn[data-type="danger"]::before {
-    background: var(--danger);
-}
-
-/* JIKA KOSONG → HILANG */
-.service-btn[data-badge=""]::before {
-    display: none;
-}
-
-
-</style>
 
     </style>
 </head>
@@ -568,29 +497,22 @@ animation: floatIcon 2.8s ease-in-out infinite;
 </div>
 
 <!-- BARIS 1 : MODE ORDER -->
-<!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
     <div class="service-wrapper">
-        
-        <div id="mDine" class="service-btn secondary"
-             onclick="changeMode('DINE IN', this)"
-             data-badge=""
-             data-type="">
-            <div class="icon">
-                <img src="dine-in2.png" class="service-icon-img">
-            </div>
+        <div id="dist-badge-dine" class="dist-badge">JAUHHH GAIS</div>
+        <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
+            <div class="icon"><img src="dine-in.png" class="service-icon-img"></div>
             <span>Dine In</span>
         </div>
-
     </div>
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
-        <div class="icon"><img src="take-away2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="take-away.png" class="service-icon-img"></div>
         <span>Take Away</span>
     </div>
 
     <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
-        <div class="icon"><img src="delivery2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="delivery.png" class="service-icon-img"></div>
         <span>Delivery</span>
     </div>
 </div>
@@ -598,17 +520,17 @@ animation: floatIcon 2.8s ease-in-out infinite;
 
 <div class="service-mode secondary-mode">
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="katering2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="katering.png" class="service-icon-img"></div>
         <span>Katering</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="jadi-mitra2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="jadi-mitra.png" class="service-icon-img"></div>
         <span>Jadi Mitra</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="ngiklan2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="ngiklan.png" class="service-icon-img"></div>
         <span>NgIKLAN</span>
     </div>
 </div>
@@ -697,24 +619,14 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
-        const dineBtn = document.getElementById("mDine");
-
-        const dineBtn = document.getElementById("mDine");
-
-if (userDist > CONFIG.RADIUS_DINE_IN) {
-    // TERLALU JAUH
-    dineBtn.dataset.badge = "TERLALU JAUH";
-    dineBtn.dataset.type = "danger";
-    dineBtn.classList.add('disabled');
-    dineBtn.onclick = () => showOutOfRangeAlert();
-} else {
-    // DALAM RADIUS → SABAR
-    dineBtn.dataset.badge = "SABAR";
-    dineBtn.dataset.type = "accent";
-    dineBtn.classList.remove('disabled');
-    dineBtn.onclick = () => changeMode('DINE IN', dineBtn);
-}
-
+        // Cek jangkauan Dine In saja, tapi jangan otomatis klik Delivery
+        if (userDist > CONFIG.RADIUS_DINE_IN) {
+            const dineBtn = document.getElementById('mDine');
+            if(dineBtn) {
+                dineBtn.classList.add('disabled');
+                dineBtn.onclick = () => showOutOfRangeAlert();
+            }
+        }
         
         initMap(latitude, longitude);
         initBanner();
@@ -723,7 +635,6 @@ if (userDist > CONFIG.RADIUS_DINE_IN) {
         syncQueue();
     }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
 }
-
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
