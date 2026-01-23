@@ -11,128 +11,421 @@
             --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
             --soft: #F0F0F0; --danger: #D63031; --success: #00B894;
         }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { 
             margin: 0; padding: 0; background: var(--bg); 
             font-family: 'Inter', system-ui, -apple-system, sans-serif; color: var(--text); 
-            overflow-x: hidden; width: 100%;
+            overflow-x: hidden;
         }
 
-        /* HEADER AREA */
-        .header-top {
-            background: var(--primary);
-            padding: 10px 15px 25px;
-            color: white;
-            border-radius: 0 0 20px 20px;
-        }
-        .nav-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .brand-logo { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
-        .brand-icon { width: 28px; height: 28px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 11px; font-weight: 800; }
+        /* --- Perubahan Area Hijau (Header) --- */
+        /* TIMPA KODE LAMA ANDA DENGAN INI */
+.header-top { 
+    background: var(--primary); 
+    padding: 5px 15px 18px; /* Padding dikurangi agar lebih tipis */
+    color: white; 
+    border-radius: 0 0 20px 20px; 
+}
+
+.nav-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 5px; /* Jarak dikurangi */
+}
+        .brand-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; letter-spacing: -0.3px; }
+        .brand-icon { width: 26px; height: 26px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 10px; font-weight: 800; }
         .queue-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
 
-        /* BANNER - Fix agar tidak kebesaran */
-        .banner-container {
-            margin: -15px 15px 15px;
-            position: relative;
-            overflow: hidden;
-            border-radius: 15px;
-            height: 160px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-            background: #eee;
-        }
+        /* TIMPA KODE LAMA ANDA DENGAN INI */
+.banner-container { 
+    margin: -10px 15px 15px; /* Margin atas dikurangi supaya naik */
+    position: relative; 
+    overflow: hidden; 
+    border-radius: 15px; 
+    height: 180px; /* Ditambah dari 145px ke 180px agar gambar lebih besar */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+    background: #eee; 
+}
         #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
-        #banner-track img { min-width: 100%; width: 100%; object-fit: cover; }
+        #banner-track img { min-width: 100%; object-fit: cover; }
+.mode-item.disabled {
+    background: #F1F1F1;
+    color: #AAA;
+    border-color: #DDD;
+    pointer-events: auto;
+    position: relative;
+}
+/* TAMBAHKAN KODE INI */
+.mode-selection { /* Pastikan nama class pembungkus tombol Anda benar */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Membagi 3 kolom sama rata */
+    gap: 8px;
+    padding: 0 18px;
+}
 
-        /* SERVICE BUTTONS (Gojek Style) */
-        .service-area {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 10px 18px;
-        }
-        .service-mode {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-        .service-btn {
-            background: white;
-            border-radius: 15px;
-            padding: 12px 5px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            border: 1px solid #f0f0f0;
-            position: relative;
-            transition: 0.2s;
-        }
-        .service-btn img { width: 35px; height: 35px; margin-bottom: 5px; }
-        .service-btn span { font-size: 10px; font-weight: 700; color: var(--text); }
-        .service-btn.active { border-color: var(--success); background: #f0fff4; transform: scale(0.95); }
-        .service-btn.disabled { opacity: 0.5; filter: grayscale(1); }
+.mode-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 45px; /* Tinggi seragam agar presisi */
+    font-size: 11px;
+    border-radius: 8px;
+    padding: 5px;
+}
+.mode-item.disabled::after {
+    content: "Di luar jangkauan";
+    position: absolute;
+    bottom: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    color: #999;
+}
+.mode-container.secondary {
+    padding-top: 0;
+    margin-top: -6px;
+}
 
-        .badge-status {
-            position: absolute; top: -5px; background: var(--danger); color: white;
-            font-size: 7px; padding: 2px 6px; border-radius: 10px; font-weight: 800;
-        }
+.mode-item.alt {
+    background: #F6F6F6;
+    border: 1px dashed #DDD;
+    color: var(--muted);
+    font-weight: 800;
+}
+.mode-item.alt:active {
+    transform: scale(0.97);
+}
 
-        /* MAPS */
-        #map { height: 130px; border-radius: 15px; margin: 0 18px 20px; border: 1px solid #eee; z-index: 1; }
+        .mode-container { display: flex; gap: 8px; overflow-x: auto; padding: 0 18px 12px; scrollbar-width: none; }
+        .mode-item { white-space: nowrap; padding: 10px 16px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1.2px solid #EFEFEF; cursor: pointer; }
+        .mode-item.active { background: #E8F5E9; border-color: var(--success); color: var(--primary); }
 
-        /* INPUT AREA */
-        .main-content { padding: 0 18px 120px; }
-        .input-card { background: white; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; border: 1px solid #f0f0f0; }
-        .input-card label { display: block; font-size: 9px; font-weight: 700; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
-        .input-card input, .input-card textarea { width: 100%; border: none; font-size: 14px; font-weight: 600; background: transparent; }
+        #map { height: 130px; border-radius: 18px; margin: 0 18px 20px; border: 1px solid #EFEFEF; }
 
-        /* MENU GRID */
-        .search-wrapper { margin: 15px 0; background: white; border-radius: 10px; border: 1px solid #eee; padding: 8px 12px; }
-        #searchMenu { width: 100%; border: none; font-size: 13px; }
+        /* --- Perubahan Area Merah (Input Form) --- */
+        .main-content { padding: 0 18px 180px; }
+        .input-card { background: white; border-radius: 14px; padding: 10px 14px; margin-bottom: 10px; border: 1.2px solid #F0F0F0; transition: all 0.3s ease; }
+        .input-card label { display: block; font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; }
+        .input-card input, .input-card textarea { width: 100%; border: none; font-size: 13px; font-weight: 600; outline: none; background: transparent; color: var(--text); }
+        .input-card input::placeholder, .input-card textarea::placeholder { font-weight: 400; color: #BBB; }
+
+        /* Validasi Efek */
+        /* Sinyal merah tegas pada input yang kosong */
+.error-field { 
+    border: 2px solid var(--danger) !important; 
+    background-color: #FFF5F5 !important; 
+    box-shadow: 0 0 12px rgba(214, 48, 49, 0.2); 
+}
+
+/* Animasi Getar (Shake) */
+@keyframes shake { 
+    0%, 100% { transform: translateX(0); } 
+    25% { transform: translateX(-6px); } 
+    50% { transform: translateX(6px); } 
+    75% { transform: translateX(-6px); } 
+}
+
+.shake-ani { 
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; 
+}
+        .shake-ani { animation: shake 0.4s ease-in-out; }
+
+        .search-wrapper { margin: 12px 0; background: white; border-radius: 12px; border: 1.2px solid var(--soft); padding: 0 12px; display: flex; align-items: center; }
+        #searchMenu { width: 100%; padding: 10px 0; border: none; font-size: 13px; background: transparent; }
+
         .category-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 15px; }
-        .tab { padding: 8px 15px; border-radius: 20px; background: white; font-size: 11px; font-weight: 700; border: 1px solid #eee; white-space: nowrap; }
+        .tab { padding: 8px 15px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1px solid #F0F0F0; white-space: nowrap; }
         .tab.active { background: var(--primary); color: white; }
 
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .menu-item { background: white; border-radius: 15px; padding: 10px; border: 1px solid #f0f0f0; display: flex; flex-direction: column; }
-        .menu-item h4 { margin: 0 0 5px; font-size: 12px; min-height: 30px; }
-        .menu-item .price { font-size: 13px; font-weight: 800; color: var(--primary); margin-bottom: 10px; }
-        .variant-select { width: 100%; padding: 5px; border-radius: 5px; font-size: 10px; border: 1px solid #eee; margin-bottom: 5px; }
+        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .menu-item { background: white; border-radius: 16px; padding: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between; }
+        .menu-info h4 { margin: 0 0 4px; font-size: 12px; font-weight: 800; min-height: 32px; line-height: 1.3; }
+        .menu-info .price { font-size: 13px; font-weight: 900; color: var(--primary); margin-bottom: 8px; }
+        .variant-select { width: 100%; padding: 7px; border-radius: 7px; border: 1px solid #F0F0F0; font-size: 10px; background: #FAFAFA; margin-bottom: 5px; font-weight: 600; }
+        
+        .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: 8px; }
+        .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
+        .qty-btn:disabled { background: #EEE; color: #CCC; }
 
-        .qty-box { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; border-radius: 8px; padding: 4px; }
-        .qty-btn { width: 25px; height: 25px; border-radius: 5px; border: none; background: var(--primary); color: white; font-weight: 800; }
-        .qty-btn:disabled { background: #eee; }
+        .order-summary-mini {
+            position: fixed; bottom: -100%; left: 0; right: 0; 
+            background: white; border-radius: 25px 25px 0 0; 
+            box-shadow: 0 -10px 35px rgba(0,0,0,0.15); 
+            z-index: 999; max-height: 75vh; border-top: 1px solid #eee;
+            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column;
+        }
+        .order-summary-mini.active { bottom: 0; }
+        
+        .sheet-header { padding: 12px 18px; text-align: center; background: white; border-radius: 25px 25px 0 0; border-bottom: 1px solid #F5F5F5; }
+        .sheet-handle { width: 40px; height: 4px; background: #E0E0E0; border-radius: 10px; margin: 0 auto 8px; }
+        .sheet-title { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: 0.8px; }
 
-        /* BOTTOM BAR */
+        .summary-scroll { flex: 1; overflow-y: auto; padding: 8px 18px 140px; }
+        .summary-item { background: white; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F5F5F5; }
+
+        .item-detail-name { flex: 1; margin-right: 8px; }
+        .item-detail-name b { display: block; font-size: 13px; margin-bottom: 2px; }
+        .item-detail-name span { font-size: 10px; color: var(--muted); }
+
+        .mini-qty-box { display: flex; align-items: center; gap: 10px; background: #F8F9FA; padding: 5px 8px; border-radius: 10px; }
+        .mini-qty-btn { width: 26px; height: 26px; border-radius: 7px; border: none; background: white; color: var(--primary); font-weight: 800; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+
+        #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; backdrop-filter: blur(2px); }
+
         .bottom-bar { 
             position: fixed; bottom: 0; left: 0; right: 0; background: white; 
-            padding: 15px 20px 25px; border-radius: 20px 20px 0 0; 
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.1); z-index: 1000; 
+            padding: 12px 20px 25px; border-radius: 25px 25px 0 0; 
+            box-shadow: 0 -8px 25px rgba(0,0,0,0.08); z-index: 1000; 
             display: flex; justify-content: space-between; align-items: center; 
         }
-        .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
-        .order-btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 12px; font-weight: 800; font-size: 13px; }
+        
+        .swipe-hint {
+            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
+            background: var(--primary); color: white; padding: 3px 10px; border-radius: 15px;
+            font-size: 9px; font-weight: 700; display: none;
+        }
 
-        /* UTILS */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: white; width: 100%; max-width: 320px; padding: 20px; border-radius: 20px; text-align: center; }
-        mark { background: #ffeb3b; padding: 0 2px; }
-        .error-field { border: 2px solid var(--danger) !important; animation: shake 0.3s; }
-        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+        .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
+        .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
+        .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
+        .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
+        .order-btn:disabled { opacity: 0.5; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
+.summary-item.removing {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.25s ease;
+}
+
+/* Efek stabilo kuning untuk teks yang cocok dengan pencarian */
+mark {
+    background-color: #FFEB3B; /* Warna kuning stabilo */
+    color: black;
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: 800;
+}
+/* Animasi tombol saat ditekan (Touch Effect) */
+.order-btn:active, .modal-card button:active {
+    transform: scale(0.92); /* Mengecil sedikit */
+    filter: brightness(1.2); /* Menjadi lebih terang */
+    transition: transform 0.1s ease;
+}
+
+/* Tambahan agar transisi kembali ke ukuran normal tidak kaku */
+.order-btn {
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Animasi Berdetak (Pulse) */
+@keyframes pulse-yellow {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
+}
+
+.pulse-attention {
+    animation: pulse-yellow 1s infinite;
+    border: 2px solid var(--accent) !important;
+    background: #FFFDE7 !important;
+}
+
+/* --- CONTAINER AREA LAYANAN (2 BARIS) --- */
+.service-area {
+    display: flex;
+    flex-direction: column;
+    gap: 18px; /* Jarak antar baris */
+    padding: 15px 10px;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.service-mode {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 100%;
+}
+
+/* --- TOMBOL STYLE GOJEK --- */
+.service-btn {
+    width: 82px;
+    height: 82px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+}
+
+/* GAMBAR IKON */
+.service-icon-img {
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+}
+
+/* TULISAN DI BAWAH */
+.service-btn span {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+/* --- LOGIKA BADGE (Dine In & Soon) --- */
+.badge-status {
+    position: absolute;
+    top: -10px; /* Muncul di atas lingkaran */
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--danger);
+    color: white;
+    font-size: 8px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 900;
+    z-index: 10;
+    white-space: nowrap;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Khusus Badge SOON di baris kedua */
+.service-btn.secondary::before {
+    content: "SOON";
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--accent);
+    color: white;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+/* --- STATE: AKTIF --- */
+.service-btn.active {
+    background: linear-gradient(145deg, #1B4332, #2D6A4F);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 25px rgba(27,67,50,0.3);
+}
+.service-btn.active span { color: white; }
+.service-btn.active .service-icon-img { filter: brightness(0) invert(1); }
+
+/* Efek Pulse Lingkaran saat Aktif */
+.service-btn.active:not(.secondary)::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid rgba(27,67,50,0.4);
+    animation: pulseRing 1.5s infinite;
+}
+
+/* --- STATE: DISABLED (Jarak Jauh) --- */
+.service-btn.disabled {
+    opacity: 0.5;
+    filter: grayscale(1);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Animasi */
+@keyframes pulseRing {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    100% { transform: scale(1.3); opacity: 0; }
+}
+
+/* === FORM EXTRA RINGKAS === */
+.form-group {
+    margin-bottom: 8px;
+}
+
+.form-group label {
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    display: block;
+    color: #777;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 7px 9px;
+    font-size: 12.5px;
+    border-radius: 8px;
+    border: 1px solid #E2E2E2;
+    background: #FFFFFF;
+}
+
+/* textarea alamat jangan tinggi */
+.form-group textarea {
+    resize: none;
+}
+
+/* fokus tetap kelihatan */
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
+}
+/* Badge Diluar Jangkauan */
+/* Badge rapi & presisi */
+.badge-status {
+    position: absolute;
+    top: -5px; /* Sedikit di atas lingkaran tombol */
+    left: 50%;
+    transform: translateX(-50%); /* Teknik agar tepat di tengah */
+    background: var(--danger);
+    color: white;
+    font-size: 7px; /* Ukuran font diperkecil agar pas */
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 20px; /* Lebih lonjong agar rapi */
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(214, 48, 49, 0.4);
+    z-index: 5;
+    display: none;
+    pointer-events: none; /* Supaya tidak mengganggu klik tombol */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
     </style>
 </head>
 <body>
 
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
-    <div style="text-align: center; width: 100%;">
-        <h2 style="font-weight: 900; font-size: 22px;">Halo Gais!</h2>
-        <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Klik tombol di bawah untuk mulai pesan menu favoritmu.</p>
-        <button onclick="startApp()" class="order-btn" style="width: 100%;">MULAI SEKARANG</button>
+    <div style="text-align: center; width: 100%; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+        
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">⏳
+            <h2 style="font-weight: 900; font-size: 20px;">Hei..Selamat datang Gais</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalaman Berbelanjamu disini.</p>
+            <button onclick="startApp()" class="order-btn" style="width: 100%;">MULAI SEKARANG</button>
+        </div>
+
+        <div style="font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 20px;">
+            powered by <b>cloudkitchen.dyg++</b>
+        </div>
+        
     </div>
 </div>
 
@@ -150,17 +443,34 @@
 <div class="service-area">
     <div class="service-mode">
         <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-            <div id="badgeDine" class="badge-status" style="display:none;">JAUH</div>
-            <img src="https://cdn-icons-png.flaticon.com/128/2082/2082156.png" onerror="this.src='dine-in.png'">
+            <div id="badgeDine" class="badge-status" style="display:none;">TERLALU JAUH</div>
+            <img src="dine-in.png" class="service-icon-img">
             <span>Dine In</span>
         </div>
+
         <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
-            <img src="https://cdn-icons-png.flaticon.com/128/3081/3081913.png" onerror="this.src='take-away.png'">
+            <img src="take-away.png" class="service-icon-img">
             <span>Take Away</span>
         </div>
+
         <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
-            <img src="https://cdn-icons-png.flaticon.com/128/2830/2830305.png" onerror="this.src='delivery.png'">
+            <img src="delivery.png" class="service-icon-img">
             <span>Delivery</span>
+        </div>
+    </div>
+
+    <div class="service-mode secondary-mode">
+        <div class="service-btn secondary" onclick="openComingSoon()">
+            <img src="katering.png" class="service-icon-img">
+            <span>Katering</span>
+        </div>
+        <div class="service-btn secondary" onclick="openComingSoon()">
+            <img src="jadi mitra.png" class="service-icon-img">
+            <span>Mitra</span>
+        </div>
+        <div class="service-btn secondary" onclick="openComingSoon()">
+            <img src="ngiklan.png" class="service-icon-img">
+            <span>NgIKLAN</span>
         </div>
     </div>
 </div>
@@ -170,38 +480,52 @@
 <div class="main-content">
     <div id="wrapName" class="input-card">
         <label>Nama Anda</label>
-        <input type="text" id="custName" placeholder="Tulis namamu...">
+        <input type="text" id="custName" placeholder="Masukkan nama...">
     </div>
-    <div id="boxMeja" style="display:none;">
-        <div class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="Contoh: 05"></div>
-    </div>
-    <div id="boxAlamat" style="display:none;">
-        <div class="input-card"><label>Alamat Pengiriman</label><textarea id="addressDetail" placeholder="Nama jalan, nomor rumah..." rows="2"></textarea></div>
+    
+    <div id="boxMeja"><div id="wrapMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="Contoh: 08"></div></div>
+    <div id="boxAlamat" style="display:none;"><div id="wrapAddr" class="input-card"><label>Alamat Pengiriman</label><textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea></div></div>
+
+    <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
+    
+    <div class="search-wrapper">
+        <input type="text" id="searchMenu" placeholder="Cari menu favorit Anda..." oninput="filterMenu()">
     </div>
 
-    <div style="font-weight: 800; font-size: 14px; margin: 20px 0 10px;">🍴 Pilih Menu</div>
-    <div class="search-wrapper">
-        <input type="text" id="searchMenu" placeholder="Cari menu..." oninput="filterMenu()">
-    </div>
     <div class="category-tabs" id="cat-tabs"></div>
     <div class="menu-grid" id="menu-container">Memuat menu...</div>
+
+    <div style="font-weight: 800; font-size: 14px; margin: 20px 0 10px;">Catatan Tambahan</div>
+    <div class="input-card"><textarea id="orderNote" placeholder="Contoh: Pedas sedang, tanpa timun..." rows="2"></textarea></div>
 </div>
 
-<div class="bottom-bar">
+<div id="summaryOverlay" onclick="toggleSummary(false)"></div>
+<div id="orderSummaryPanel" class="order-summary-mini">
+    <div class="sheet-header" onclick="toggleSummary(false)">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">RINCIAN PESANAN</div>
+        <div style="font-size: 9px; color: var(--muted); margin-top: 4px;">Klik tanda − sampai 0 untuk hapus</div>
+    </div>
+    <div class="summary-scroll" id="summaryItems"></div>
+</div>
+
+<div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
+    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
     <div>
-        <div id="dist-info" style="font-size: 9px; color: var(--muted); display:none;"></div>
+        <div id="dist-info" class="dist-info"></div>
+        <div id="ongkir-label" class="ongkir-tag"></div>
         <div class="price-total">Rp <span id="miniPrice">0</span></div>
     </div>
-    <button id="btnOrder" class="order-btn" onclick="openModal()" disabled>PILIH MENU</button>
+    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
     <div class="modal-card">
-        <h3 style="font-weight: 900; margin-bottom: 10px;">Kirim Pesanan?</h3>
-        <p style="font-size: 12px; color: #666; margin-bottom: 20px;">Pesanan akan diteruskan ke WhatsApp cloudkitchen.dyg++</p>
-        <div style="display: flex; gap: 10px;">
-            <button onclick="closeModal()" style="flex:1; padding:12px; border:none; background:#eee; border-radius:10px; font-weight:700;">Batal</button>
-            <button onclick="submitOrder()" style="flex:1; padding:12px; border:none; background:var(--primary); color:white; border-radius:10px; font-weight:700;">Kirim</button>
+        <h3 style="font-weight: 900; margin-bottom: 8px; font-size: 18px;">Kirim Pesanan?</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">Data akan dikirim ke WhatsApp resmi cloudkitchen.dyg++</p>
+        <div style="display: flex; gap: 8px;">
+            <button onclick="closeModal()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700; font-size:13px;">Batal</button>
+            <button onclick="submitOrder()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700; font-size:13px;">Kirim WA</button>
         </div>
     </div>
 </div>
@@ -217,39 +541,79 @@
         RADIUS_DINE_IN: 150
     };
 
-    const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000}];
-    const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg"];
+    const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
+    const VARIAN_MIE_GORENG = [{n:'Original',e:0},{n:'Rendang',e:0},{n:'Salero Padang',e:0}];
+    const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
+    const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
+    const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
+    // Ubah 'DINE IN' menjadi null agar tidak ada mode yang terpilih di awal
+let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-    async function startApp() {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            window.userLat = latitude; window.userLng = longitude;
-            userDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
-            
-            if (userDist > CONFIG.RADIUS_DINE_IN) {
-                document.getElementById('mDine').classList.add('disabled');
-                document.getElementById('badgeDine').style.display = 'block';
+async function startApp() {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        window.userLat = latitude;
+        window.userLng = longitude;
+
+        // Hitung jarak
+        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+        userDist = straightLineDist * 1.45; 
+
+        const dineBtn = document.getElementById('mDine');
+        const dineBadge = document.getElementById('badgeDine');
+
+        // LOGIKA BADGE & JARAK (Update Otomatis)
+        if (userDist > CONFIG.RADIUS_DINE_IN) {
+            // JIKA DI LUAR JANGKAUAN
+            if(dineBtn) {
+                dineBtn.classList.add('disabled');
+                dineBtn.onclick = () => showOutOfRangeAlert();
             }
-            
-            initMap(latitude, longitude);
-            initBanner();
-            document.getElementById('welcome-overlay').style.display = 'none';
-            await loadMenu();
-            syncQueue();
-        }, () => alert("Aktifkan GPS untuk melanjutkan."));
+            if(dineBadge) dineBadge.style.display = 'block'; 
+        } else {
+            // JIKA MASUK JANGKAUAN
+            if(dineBtn) {
+                dineBtn.classList.remove('disabled');
+                dineBtn.onclick = function() { changeMode('DINE IN', this); };
+            }
+            if(dineBadge) dineBadge.style.display = 'none'; 
+        }
+
+        // AGAR TIDAK ADA TOMBOL AKTIF DI AWAL
+        currentMode = null; 
+        document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
+
+        // Jalankan fungsi inisialisasi lainnya
+        initMap(latitude, longitude);
+        initBanner();
+        document.getElementById('welcome-overlay').style.display = 'none';
+        await loadMenu();
+        syncQueue();
+        refreshUI(); // Pastikan UI diupdate berdasarkan cart kosong dan mode null
+        
+    }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
+}
+
+    function calculateOngkir(distMeter) {
+        const km = distMeter / 1000;
+        if (km <= 1.5) return 3000;
+        if (km <= 3) return 5000;
+        if (km <= 5) return 8000;
+        return 8000 + (Math.ceil(km - 5) * 2000);
     }
 
     async function loadMenu() {
-        const resp = await fetch(CONFIG.MENU_CSV_URL);
-        const csv = await resp.text();
-        menuData = csv.split('\n').slice(1).map((row, i) => {
-            const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
-            return { id: 'm'+i, kat: cols[0], nama: cols[1], harga: parseInt(cols[2]) || 0 };
-        }).filter(m => m.nama);
-        renderTabs();
-        renderMenu();
+        try {
+            const resp = await fetch(CONFIG.MENU_CSV_URL);
+            const csv = await resp.text();
+            menuData = csv.split('\n').slice(1).map((row, i) => {
+                const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
+                return { id: 'm'+i, kat: cols[0] || '', nama: cols[1] || '', harga: parseInt(cols[2]) || 0 };
+            }).filter(m => m.nama);
+            renderTabs();
+            renderMenu();
+        } catch (e) { console.error("Menu error:", e); }
     }
 
     function renderTabs() {
@@ -260,69 +624,334 @@
 
     function renderMenu(filterKat = 'ALL') {
         const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
-        document.getElementById('menu-container').innerHTML = items.map(m => `
+        const counts = {}; 
+        cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+
+        document.getElementById('menu-container').innerHTML = items.map(m => {
+            const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
+            const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
+            const isMieG = nl.includes("mie") && nl.includes("goreng");
+            const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
+            const isPaket = kl.includes("paket");
+
+            return `
             <div class="menu-item">
-                <h4 data-name="${m.nama}">${m.nama}</h4>
-                <div class="price">Rp ${m.harga.toLocaleString()}</div>
+                <div class="menu-info">
+                    <h4 data-name="${m.nama}">${m.nama}</h4>
+                    <div class="price">Rp ${m.harga.toLocaleString()}</div>
+                    <div class="variant-area">
+                        ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
+                        ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                    </div>
+                </div>
                 <div class="qty-box">
-                    <button class="qty-btn" onclick="updateCart('${m.id}', -1)">−</button>
-                    <span id="qty-${m.id}">0</span>
+                    <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
+                    <span id="qty-${m.id}">${counts[m.id] || 0}</span>
                     <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
                 </div>
-            </div>`).join('');
+            </div>`;
+        }).join('');
     }
 
-    function updateCart(id, change) {
+    function updateCart(id, change, forceVariant = null) {
         const item = menuData.find(m => m.id === id);
-        if (change > 0) cart.push(item);
-        else { const idx = cart.findIndex(c => c.id === id); if (idx > -1) cart.splice(idx, 1); }
+        if (!item) return;
+
+        if (change > 0) {
+            let vData = forceVariant ? {...forceVariant} : {
+                vN: document.getElementById(`n-${id}`)?.value || null,
+                vM: document.getElementById(`m-${id}`)?.value || null,
+                vR: document.getElementById(`r-${id}`)?.value || null,
+                vS: document.getElementById(`s-${id}`)?.value || null,
+            
+    ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
+            };
+            cart.push({ ...item, ...vData });
+        } else {
+            let idx = cart.findLastIndex(c => 
+                c.id === id && 
+                c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
+                c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
+                c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
+                c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
+            );
+            if (idx !== -1) cart.splice(idx, 1);
+        }
         refreshUI();
     }
 
     function refreshUI() {
-        let total = 0;
+        let subtotal = 0; 
         const counts = {};
-        cart.forEach(c => { total += c.harga; counts[c.id] = (counts[c.id] || 0) + 1; });
-        
-        menuData.forEach(m => {
-            const el = document.getElementById(`qty-${m.id}`);
-            if (el) el.innerText = counts[m.id] || 0;
+        cart.forEach(c => { 
+            subtotal += (c.harga + (c.ex || 0)); 
+            counts[c.id] = (counts[c.id] || 0) + 1; 
         });
 
-        document.getElementById('miniPrice').innerText = total.toLocaleString('id-ID');
-        document.getElementById('btnOrder').disabled = total === 0;
-        document.getElementById('btnOrder').innerText = total > 0 ? 'PESAN SEKARANG' : 'PILIH MENU';
+        menuData.forEach(m => {
+            const el = document.getElementById(`qty-${m.id}`);
+            if(el) {
+                const val = counts[m.id] || 0;
+                el.innerText = val;
+                el.previousElementSibling.disabled = val === 0;
+            }
+        });
+
+        const sInd = document.getElementById('swipeInd');
+        const distEl = document.getElementById('dist-info');
+        const ongEl = document.getElementById('ongkir-label');
+        const priceEl = document.getElementById('miniPrice');
+
+        if (subtotal > 0) {
+            sInd.style.display = 'block';
+            if (currentMode === 'DELIVERY') {
+                let ongkir = calculateOngkir(userDist);
+                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+                distEl.style.display = 'block';
+                distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+                ongEl.style.display = 'block';
+                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+            } else {
+                priceEl.innerText = subtotal.toLocaleString('id-ID');
+                distEl.style.display = 'none';
+                ongEl.style.display = 'none';
+            }
+            document.getElementById('btnOrder').disabled = false;
+            document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
+        } else {
+            sInd.style.display = 'none';
+            distEl.style.display = 'none';
+            ongEl.style.display = 'none';
+            priceEl.innerText = "0";
+            document.getElementById('btnOrder').disabled = true;
+            document.getElementById('btnOrder').innerText = 'PILIH MENU';
+            toggleSummary(false); // Tutup rincian jika item habis
+        }
+        updateOrderSummary();
+    }
+
+    function updateOrderSummary() {
+        const container = document.getElementById('summaryItems');
+        if (cart.length === 0) {
+            container.innerHTML = `<div style="text-align:center;padding:40px;color:#999;font-size:12px;">Keranjang kosong</div>`;
+            return;
+        }
+
+        const groups = {};
+        cart.forEach(c => {
+            const key = `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}`;
+            if (!groups[key]) groups[key] = { ...c, qty: 0, key: key };
+            groups[key].qty++;
+        });
+
+        container.innerHTML = Object.values(groups).map(item => `
+            <div class="summary-item">
+                <div class="item-detail-name">
+                    <b>${item.nama}</b>
+                    <span>${[item.vN, item.vM, item.vR, item.vS].filter(Boolean).join(', ') || 'Original'}</span>
+                    <div style="font-size:11px;font-weight:800;color:var(--primary);margin-top:3px;">
+                        Rp ${(item.qty * (item.harga + (item.ex || 0))).toLocaleString('id-ID')}
+                    </div>
+                </div>
+                <div class="mini-qty-box">
+                    <button class="mini-qty-btn" onclick="changeQtyFromSummary('${item.key}', -1)">−</button>
+                    <span style="font-weight:800; min-width:20px; text-align:center;">${item.qty}</span>
+                    <button class="mini-qty-btn" onclick="changeQtyFromSummary('${item.key}', 1)">+</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function changeQtyFromSummary(groupKey, delta) {
+        const sample = cart.find(c => `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}` === groupKey);
+        if (sample) {
+            updateCart(sample.id, delta, {
+                vN: sample.vN, vM: sample.vM, vR: sample.vR, vS: sample.vS, ex: sample.ex
+            });
+        }
+    }
+
+async function submitOrder() {
+    // 1. CEK APAKAH SUDAH PILIH MODE?
+    if (!currentMode) {
+        closeModal();
+        alert("Silakan pilih metode layanan (Dine In / Take Away / Delivery) terlebih dahulu!");
+        
+        // Scroll ke area pemilihan mode agar terlihat oleh user
+        document.querySelector('.service-mode').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Efek visual: Beri sinyal pada tombol yang tersedia
+        document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
+            el.classList.add('pulse-attention');
+            setTimeout(() => el.classList.remove('pulse-attention'), 3000); // Hilang setelah 3 detik
+        });
+        return;
+    }
+
+    // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
+    if (navigator.vibrate) navigator.vibrate(50);
+    const nI = document.getElementById('custName');
+    const tI = document.getElementById('tableNo');
+    const aI = document.getElementById('addressDetail');
+    const noAntrean = document.getElementById('noAntrean').innerText;
+
+    // Validasi input kosong (Nama, Meja, atau Alamat)
+    const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
+    cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
+
+    let targetEl = null;
+    if (!nI.value.trim()) targetEl = nI;
+    else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
+    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+
+    if (targetEl) {
+        const targetCard = targetEl.closest('.input-card');
+        closeModal();
+        targetCard.classList.add('error-field', 'shake-ani');
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.focus();
+        return; 
+    }
+
+    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
+    const summary = {};
+    cart.forEach(c => {
+        let label = c.nama;
+        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+        if(tags) label += ` [${tags}]`;
+        const itemKey = label;
+        const itemPrice = c.harga + (c.ex || 0);
+        
+        if (!summary[itemKey]) {
+            summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
+        }
+        summary[itemKey].qty++;
+    });
+
+    const pRowsWA = Object.entries(summary).map(([name, data]) => 
+        `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
+    );
+
+    // --- 3. Hitung Data & Link Lokasi ---
+    const distKM = (userDist/1000).toFixed(1);
+    const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
+    const finalPrice = document.getElementById('miniPrice').innerText;
+    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
+
+    // --- 4. Susun Format Pesan WhatsApp ---
+    let msg = `Halo cloudkitchen.dyg++!\n\n`;
+    msg += `🛵 *${currentMode}*\n`;
+    msg += `👤 *Nama:* ${nI.value}\n`;
+    msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
+    msg += `━━━━━━━━━━━━━━\n`;
+
+    if (currentMode === 'DINE IN') {
+        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
+    } else {
+        msg += `🏠 *Alamat:* ${aI.value}\n`;
+        msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
+        msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
+    }
+
+    msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
+    
+    const catatan = document.getElementById('orderNote').value || '-';
+    msg += `\n*CATATAN:* ${catatan}\n`;
+    msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
+    
+    msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
+    msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
+    msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
+    msg += `Terimakasih!`;
+
+    // --- 5. Animasi Feedback Tombol & Pengiriman ---
+    // Memicu getar halus saat klik
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    // Mengubah tombol menjadi loading
+    const btnKirim = document.querySelector('#modalConfirm button:last-child');
+    if (btnKirim) {
+        btnKirim.innerHTML = "⌛ Menghubungkan...";
+        btnKirim.style.opacity = "0.7";
+        btnKirim.style.pointerEvents = "none";
+    }
+
+    // Kirim data ke database di latar belakang
+    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
+    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
+
+    // Tunggu animasi sebentar baru pindah ke WA
+    setTimeout(() => {
+        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+    }, 600); 
+}
+
+
+    function toggleSummary(open) {
+        if (cart.length === 0 && open) return;
+        document.getElementById('orderSummaryPanel').classList.toggle('active', open);
+        document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
     }
 
     function changeMode(m, el) {
-        if (el.classList.contains('disabled')) return alert("Lokasi terlalu jauh untuk Dine In");
-        currentMode = m;
-        document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
-        document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
-    }
+    if (el.classList.contains('disabled')) return showOutOfRangeAlert();
+
+    currentMode = m;
+
+    document.querySelectorAll('.service-btn').forEach(o => {
+        o.classList.remove('active', 'pulse-attention');
+    });
+
+    el.classList.add('active');
+
+    document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
+    document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+
+    refreshUI();
+}
+
 
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Warung");
-        L.circle(CONFIG.WARUNG_LOCATION, {radius: CONFIG.RADIUS_DINE_IN}).addTo(map);
+        L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Warung").openPopup();
+        L.marker([lat, lng]).addTo(map).bindPopup("Lokasi Kamu");
     }
 
     function initBanner() {
         const track = document.getElementById('banner-track');
         track.innerHTML = MY_BANNERS.map(img => `<img src="${img}">`).join('');
-        setInterval(() => { bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; track.style.transform = `translateX(-${bannerIdx * 100}%)`; }, 4000);
+        setInterval(() => { bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; track.style.transform = `translateX(-${bannerIdx * 100}%)`; }, 5000);
     }
 
     function filterMenu() {
-        const q = document.getElementById('searchMenu').value.toLowerCase();
-        document.querySelectorAll('.menu-item').forEach(it => {
-            const name = it.querySelector('h4').dataset.name;
-            it.style.display = name.toLowerCase().includes(q) ? 'flex' : 'none';
-        });
-    }
+    const q = document.getElementById('searchMenu').value.toLowerCase();
+    const items = document.querySelectorAll('.menu-item');
+
+    items.forEach(it => {
+        const titleEl = it.querySelector('h4');
+        const originalName = titleEl.dataset.name; // Mengambil nama asli dari atribut data-name
+
+        if (q === "") {
+            // Jika pencarian kosong, kembalikan ke nama asli tanpa highlight
+            titleEl.innerHTML = originalName;
+            it.style.display = 'flex';
+        } else if (originalName.toLowerCase().includes(q)) {
+            // Jika cocok, buat efek highlight menggunakan tag <mark>
+            const regex = new RegExp(`(${q})`, 'gi');
+            const highlightedName = originalName.replace(regex, '<mark>$1</mark>');
+            
+            titleEl.innerHTML = highlightedName;
+            it.style.display = 'flex';
+        } else {
+            // Jika tidak cocok, sembunyikan menu
+            it.style.display = 'none';
+        }
+    });
+}
 
     function filterByTab(cat, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -330,29 +959,47 @@
         renderMenu(cat);
     }
 
-    function openModal() { if(!currentMode) return alert("Pilih metode layanan dulu!"); document.getElementById('modalConfirm').style.display = 'flex'; }
-    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-
-    async function submitOrder() {
-        const name = document.getElementById('custName').value;
-        if (!name) return alert("Isi nama dulu!");
-        
-        let msg = `Halo! Pesanan Baru:\nNama: ${name}\nMode: ${currentMode}\n\n`;
-        cart.forEach(c => msg += `- ${c.nama} (Rp ${c.harga})\n`);
-        msg += `\nTotal: Rp ${document.getElementById('miniPrice').innerText}`;
-        
-        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    }
-
     async function syncQueue() {
-        try {
-            const r = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
-            const n = await r.text();
-            document.getElementById('noAntrean').innerText = "#" + (n || "0");
-        } catch(e) {}
-        setTimeout(syncQueue, 30000);
+    try {
+        // Pastikan URL dan Token sudah benar
+        const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
+        const num = await resp.text(); // Mengambil respons sebagai teks
+        
+        // Cek jika num ada dan bukan string "undefined"
+        if (num && num !== "undefined") { 
+            document.getElementById('noAntrean').innerText = "#" + num;
+        } else {
+            document.getElementById('noAntrean').innerText = "#0";
+        }
+    } catch(e) {
+        console.error("Error sync queue:", e);
     }
+    setTimeout(syncQueue, 20000); // Cek setiap 20 detik
+}
+
+    function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
+    function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
+    function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
+    function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
+
 </script>
+
+<div id="modalComingSoon" class="modal-overlay">
+    <div class="modal-card">
+        <div style="font-size:48px;margin-bottom:10px;">🚧</div>
+        <h3 style="font-weight:900;margin-bottom:6px;">Sedang Dalam Pengembangan</h3>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
+            Fitur ini belum tersedia.<br>
+            Kembali lagi besok ya 🙏
+        </p>
+        <button onclick="closeComingSoon()"
+            style="width:100%;padding:12px;border-radius:12px;border:none;
+                   background:var(--primary);color:white;font-weight:800;">
+            Kembali
+        </button>
+    </div>
+</div>
+
 </body>
 </html>
