@@ -418,14 +418,17 @@ mark {
 }
 
 /* Atur gambar agar pas di dalam kontainer tanpa merusak layout */
+/* FIX FINAL: pastikan PNG benar-benar transparan */
 .service-icon-img {
-background: transparent !important;
-    display: block;
-   }
+    background: transparent !important;
+    filter: none !important;
+    opacity: 0.45;
+}
 
-/* Tambahan agar gambar tidak berubah warna jadi putih saat aktif (jika menggunakan PNG transparan) */
+/* aktif = lebih tegas, BUKAN diubah warna */
 .service-btn.active .service-icon-img {
-    filter: none;
+    filter: none !important;
+    opacity: 1;
 }
 
 /* Membuat gambar menjadi putih saat tombol aktif */
