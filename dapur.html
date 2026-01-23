@@ -81,13 +81,25 @@
         }
 
         @media print {
-            body * { visibility: hidden; }
-            #printSection, #printSection * { visibility: visible; }
-            #printSection {
-                position: absolute; left: 0; top: 0; width: 80mm;
-                font-family: monospace; padding: 5px;
-            }
-        }
+    /* Sembunyikan semua kecuali area struk */
+    body * { visibility: hidden; }
+    #printSection, #printSection * { visibility: visible; }
+    
+    #printSection {
+        position: fixed; /* Gunakan fixed agar menempel di atas */
+        left: 0;
+        top: 0;
+        width: 100%; /* Biarkan sistem RawBT yang mengatur lebar */
+        margin: 0;
+        padding: 0;
+        background-color: white;
+    }
+
+    /* Hilangkan header/footer otomatis dari browser */
+    @page {
+        margin: 0;
+    }
+}
     </style>
 </head>
 <body>
