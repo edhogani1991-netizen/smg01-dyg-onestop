@@ -236,10 +236,10 @@ mark {
     background: #FFFDE7 !important;
 }
 
-/* === GOJEK STYLE SERVICE BUTTON (FIX BESAR & TRANSPARAN) === */
+/* === GOJEK STYLE SERVICE BUTTON (FIX MUNCUL & RAPI) === */
 .service-mode {
     display: flex;
-    justify-content: space-around; /* Lebih rapi untuk 3 tombol */
+    justify-content: space-around;
     padding: 15px 10px 25px;
 }
 
@@ -247,30 +247,30 @@ mark {
     width: 90px;
     height: 90px;
     position: relative;
-    background: transparent;
     display: flex;
     flex-direction: column;
     align-items: center;
+    background: transparent;
     cursor: pointer;
-    transition: all 0.3s ease;
+    border: none;
 }
 
-/* ICON MASKING (Kuncinya di sini untuk buang background kotak) */
+/* CONTAINER ICON (Ini yang memanggil gambar kamu) */
 .icon-mask {
-    width: 55px;  /* Ukuran icon gambar */
+    width: 55px;
     height: 55px;
-    background-color: #CCCCCC; /* Warna icon saat tidak aktif */
+    background-color: #BBBBBB; /* Warna saat tidak aktif */
     -webkit-mask-size: contain;
     mask-size: contain;
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
     -webkit-mask-position: center;
     mask-position: center;
-    opacity: 0.5;
+    opacity: 0.5; /* Transparan ala Gojek */
     transition: all 0.3s ease;
 }
 
-/* Hubungkan ID tombol ke file gambar kamu */
+/* HUBUNGKAN NAMA FILE GAMBAR KAMU DI SINI */
 #mDine .icon-mask { -webkit-mask-image: url('dine-in2.png'); mask-image: url('dine-in2.png'); }
 #mTake .icon-mask { -webkit-mask-image: url('take-away2.png'); mask-image: url('take-away2.png'); }
 #mDeliv .icon-mask { -webkit-mask-image: url('delivery2.png'); mask-image: url('delivery2.png'); }
@@ -280,18 +280,16 @@ mark {
 .icon-mit { -webkit-mask-image: url('jadi-mitra2.png'); mask-image: url('jadi-mitra2.png'); }
 .icon-ikl { -webkit-mask-image: url('ngiklan2.png'); mask-image: url('ngiklan2.png'); }
 
-/* TEKS */
 .service-btn span {
     margin-top: 8px;
     font-size: 11px;
     font-weight: 900;
-    color: var(--muted);
-    text-align: center;
+    color: #888;
 }
 
-/* KONDISI AKTIF */
+/* KONDISI AKTIF (DIKLIK) */
 .service-btn.active .icon-mask {
-    background-color: var(--primary); /* Icon berubah jadi hijau solid */
+    background-color: var(--primary); /* Gambar jadi warna hijau solid */
     opacity: 1;
     transform: scale(1.15);
 }
@@ -300,33 +298,31 @@ mark {
     color: var(--primary);
 }
 
-/* RING PULSE GOJEK */
+/* Efek Ring Gojek */
 .service-btn.active::after {
     content: "";
     position: absolute;
-    top: 0; left: 50%;
-    transform: translateX(-50%);
-    width: 60px; height: 60px;
+    top: -5px; 
+    width: 65px; 
+    height: 65px;
     border-radius: 50%;
     border: 2px solid var(--primary);
     animation: pulseRing 1.4s infinite;
-    z-index: -1;
 }
 
-/* SECONDARY MODE (KATERING, MITRA, DLL) */
+@keyframes pulseRing {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    100% { transform: scale(1.3); opacity: 0; }
+}
+
+/* Secondary Styling */
 .secondary-mode { margin-top: -20px; }
-.service-btn.secondary { width: 75px; height: 75px; }
-.service-btn.secondary .icon-mask { width: 40px; height: 40px; opacity: 0.4; }
+.service-btn.secondary .icon-mask { width: 42px; height: 42px; opacity: 0.4; }
 .service-btn.secondary::before {
     content: "SOON";
     position: absolute; top: 0; right: 5px;
     background: var(--accent); color: white;
     font-size: 7px; font-weight: 900; padding: 2px 5px; border-radius: 10px;
-}
-
-@keyframes pulseRing {
-    0% { transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-    100% { transform: translateX(-50%) scale(1.3); opacity: 0; }
 }
 
 /* === FORM EXTRA RINGKAS === */
@@ -443,12 +439,10 @@ mark {
         <div class="icon-mask icon-kat"></div>
         <span>Katering</span>
     </div>
-
     <div class="service-btn secondary" onclick="openComingSoon()">
         <div class="icon-mask icon-mit"></div>
         <span>Jadi Mitra</span>
     </div>
-
     <div class="service-btn secondary" onclick="openComingSoon()">
         <div class="icon-mask icon-ikl"></div>
         <span>NgIKLAN</span>
