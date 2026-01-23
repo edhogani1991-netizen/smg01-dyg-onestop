@@ -3,100 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KITCHEN DASHBOARD | Cloud Kitchen</title>
+    <title>KITCHEN MONITOR | Cloud Kitchen</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <style>
         :root {
             --primary: #1B4332;
-            --danger: #D63031;
-            --success: #00B894;
+            --danger: #d63031;
             --bg: #f0f2f5;
         }
-        body { font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin:0; padding:15px; }
+        body { font-family:'Segoe UI', sans-serif; background: var(--bg); margin:0; padding:15px; overflow-x: hidden; }
         .container { max-width:1200px; margin:auto; }
+        
         .header-page { 
             display:flex; justify-content:space-between; align-items:center; 
             margin-bottom:20px; background:white; padding:15px 20px; 
             border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); 
         }
+
         .order-grid { 
             display:grid; 
             grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
             gap:15px; 
         }
+
         .order-card { 
             background:white; border-radius:12px; padding:18px; 
             box-shadow:0 4px 6px rgba(0,0,0,0.1); border-top:8px solid var(--primary);
             display:flex; flex-direction:column; position:relative;
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            touch-action: pan-y; overflow: hidden;
+            transition: transform 0.3s ease;
         }
-        .swiped-left { transform: translateX(-120%); opacity:0; }
+
+        /* Overlay Konfirmasi Hapus */
+        .confirm-overlay {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: rgba(214, 48, 49, 0.96); color:white;
+            display:none; flex-direction:column; justify-content:center;
+            align-items:center; z-index: 10; text-align: center;
+        }
+        .confirm-overlay.active { display: flex; }
+        
+        .btn-confirm-group { display: flex; gap: 15px; margin-top: 15px; }
+        .btn-confirm { padding: 12px 30px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn-ya { background: white; color: var(--danger); }
+        .btn-batal { background: transparent; color: white; border: 2px solid white; }
+
         .order-header { 
             display:flex; justify-content:space-between; align-items:center;
             border-bottom:2px dashed #eee; padding-bottom:10px; margin-bottom:15px; 
         }
-        .order-no { font-size:32px; font-weight:900; color:var(--primary); }
-        .order-time { font-size:13px; color:#666; font-weight: bold; }
-        .customer-info { margin-bottom:10px; }
-        .customer-name { font-weight:bold; font-size:20px; color: #2d3436; display:block; }
+        .order-no { font-size:40px; font-weight:900; color:var(--primary); }
+        .order-time { font-size:14px; color:#666; font-weight: bold; }
+        
+        .customer-name { font-weight:bold; font-size:22px; color: #2d3436; display:block; }
         .order-mode { 
-            display:inline-block; margin-top:5px; font-size:11px; font-weight:bold;
-            background: #dfe6e9; color: #2d3436; padding:3px 10px; border-radius:15px; text-transform:uppercase;
+            display:inline-block; margin-top:5px; font-size:12px; font-weight:bold;
+            background: #dfe6e9; color: #2d3436; padding:3px 12px; border-radius:15px; 
+            text-transform: uppercase;
         }
+
         .item-list { 
             background:#f8f9fa; padding:15px; border-radius:8px; flex-grow:1; 
-            margin-bottom:15px; font-family:'Courier New', Courier, monospace; 
-            font-size:17px; border:1px solid #edf2f7;
+            margin-bottom:15px; font-family:'Courier New', monospace; 
+            font-size:19px; border:1px solid #edf2f7; line-height: 1.4; font-weight: bold;
         }
-        .btn-group { display:flex; gap:10px; }
-        button { 
-            flex:1; padding:15px; border:none; border-radius:8px; 
-            cursor:pointer; font-weight:bold; font-size:14px; 
+
+        .btn-print { 
+            width: 100%; padding:16px; border:none; border-radius:8px; 
+            cursor:pointer; font-weight:bold; font-size:16px;
+            background:var(--primary); color:white;
         }
-        .btn-print { background:var(--primary); color:white; }
-        .btn-done { background:var(--success); color:white; }
+
         .swipe-hint { text-align:center; font-size:11px; color:#aaa; margin-top:10px; }
+        .removed { transform: translateX(-150%); opacity: 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header-page">
-        <h2 style="margin:0;">👨‍🍳 DASHBOARD DAPUR</h2>
-        <div id="status-conn" style="font-size:13px; font-weight:bold;">● Menghubungkan...</div>
+        <h2 style="margin:0;">👨‍🍳 MONITOR DAPUR</h2>
+        <div id="status-conn" style="color: orange; font-weight: bold;">● Menghubungkan...</div>
     </div>
-    <div id="orderList" class="order-grid">
-        <p style="text-align:center; grid-column:1/-1;">Memuat pesanan...</p>
-    </div>
+    <div id="orderList" class="order-grid"></div>
 </div>
 
 <audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
 
 <script>
-const PIN_DAPUR = "1212"; 
-if(prompt("Masukkan PIN Dapur:") !== PIN_DAPUR){ 
-    alert("Akses ditolak!"); 
-    document.body.innerHTML="<h1 style='text-align:center;margin-top:50px;'>Akses Dilarang</h1>"; 
-    throw new Error("Invalid PIN"); 
-}
-
 const CONFIG = {
     API_URL: "https://script.google.com/macros/s/AKfycbyHXKH97V_JUlyWcl0y51q3B9t7gKTUXqZo1RZbhClE9xhwmQN7AaIxTAR27tmFw9b2LA/exec",
     TOKEN: "dyg-access-v2",
-    REFRESH_RATE: 10000 // 10 detik
+    REFRESH_RATE: 10000 
 };
 
 let lastOrderCount = 0;
-let isProcessing = [];
+let isRemoving = []; 
 
 async function fetchOrders(){
     try{
         const resp = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true`);
         const data = await resp.json();
         
-        const statusEl = document.getElementById('status-conn');
-        statusEl.innerText = "● TERHUBUNG";
-        statusEl.style.color = "green";
+        document.getElementById('status-conn').innerText = "● TERHUBUNG";
+        document.getElementById('status-conn').style.color = "green";
 
         if(data.length > lastOrderCount && lastOrderCount !== 0) {
             document.getElementById('notifSound').play().catch(()=>{});
@@ -104,65 +114,99 @@ async function fetchOrders(){
         lastOrderCount = data.length;
         renderOrders(data);
     } catch(err) {
-        const statusEl = document.getElementById('status-conn');
-        statusEl.innerText = "○ TERPUTUS";
-        statusEl.style.color = "red";
+        document.getElementById('status-conn').innerText = "○ TERPUTUS";
+        document.getElementById('status-conn').style.color = "red";
     }
 }
 
 function renderOrders(orders){
     const container = document.getElementById('orderList');
-    // Filter out rows that are currently being animated/marked as done
-    const activeOrders = orders.filter(ord => !isProcessing.includes(ord.row_index.toString()));
+    // Filter pesanan yang sedang dalam proses penghapusan
+    const filtered = orders.filter(ord => !isRemoving.includes(ord.row_index.toString()));
 
-    if(activeOrders.length === 0){
+    if(filtered.length === 0){
         container.innerHTML = "<p style='grid-column:1/-1; text-align:center; color:#888; margin-top:50px;'>Tidak ada pesanan aktif.</p>";
         return;
     }
 
-    container.innerHTML = activeOrders.map(ord => {
-        // PERBAIKAN: Mapping field untuk mencegah 'undefined'
-        const noAntrean = ord.no_antrean || ord["no antrean"] || "00";
-        const nama = ord.nama || "Tanpa Nama";
+    container.innerHTML = filtered.map(ord => {
+        // DISESUAIKAN DENGAN SCREENSHOT: kolom bernama 'antrean'
+        const no = ord.antrean || "!!"; 
+        const row = ord.row_index;
         const pesanan = ord.pesanan || "";
-        const mode = ord.mode_pesanan || ord["mode pesanan"] || "-";
-        const total = ord.total_bayar || ord["total bayar"] || "0";
-        const time = ord.timestamp ? new Date(ord.timestamp).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '--:--';
 
         return `
-        <div class="order-card" id="card-${ord.row_index}" data-row="${ord.row_index}">
+        <div class="order-card" id="card-${row}" data-row="${row}">
+            <div class="confirm-overlay" id="overlay-${row}">
+                <b style="font-size:20px;">SELESAIKAN PESANAN?</b>
+                <div class="btn-confirm-group">
+                    <button class="btn-confirm btn-ya" onclick="confirmDelete(${row})">YA</button>
+                    <button class="btn-confirm btn-batal" onclick="cancelDelete(${row})">BATAL</button>
+                </div>
+            </div>
+
             <div class="order-header">
-                <span class="order-no">#${noAntrean}</span>
-                <div class="order-time">${time}</div>
+                <span class="order-no">#${no}</span>
+                <div class="order-time">${new Date(ord.timestamp).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</div>
             </div>
+            
             <div class="customer-info">
-                <span class="customer-name">${nama}</span>
-                <span class="order-mode">${mode}</span>
+                <span class="customer-name">${ord.nama || 'Pelanggan'}</span>
+                <span class="order-mode">${ord.mode_pesanan || 'DINE IN'}</span>
             </div>
+
             <div class="item-list">
                 ${pesanan.split(',').map(item => `• ${item.trim()}`).join('<br>')}
             </div>
-            <div class="btn-group">
-                <button class="btn-print" onclick="printRawBT('${noAntrean}', '${nama}', '${pesanan.replace(/'/g, "\\'")}', '${mode}', '${total}')">CETAK</button>
-                <button class="btn-done" onclick="markDone(${ord.row_index})">SELESAI</button>
-            </div>
-            <div class="swipe-hint">← Geser kiri jika sudah selesai</div>
+
+            <button class="btn-print" onclick="printRawBT('${no}', '${ord.nama}', '${pesanan}', '${ord.mode_pesanan}', '${ord.total_bayar}')">
+                🖨️ CETAK STRUK
+            </button>
+            <div class="swipe-hint">← Geser ke kiri untuk menyelesaikan</div>
         </div>
         `;
     }).join('');
 
-    // Tambahkan Swipe Action
+    // Inisialisasi Hammer.js untuk deteksi Swipe
     document.querySelectorAll('.order-card').forEach(card => {
         const mc = new Hammer(card);
-        mc.on("swipeleft", () => handleAction(card));
+        mc.on("swipeleft", () => {
+            const row = card.getAttribute('data-row');
+            document.getElementById(`overlay-${row}`).classList.add('active');
+        });
     });
 }
 
-// FUNGSI PRINT VIA RAWBT INTENT (Solusi Error Connection)
+function cancelDelete(row) {
+    document.getElementById(`overlay-${row}`).classList.remove('active');
+}
+
+async function confirmDelete(row) {
+    const card = document.getElementById(`card-${row}`);
+    card.classList.add('removed');
+    isRemoving.push(row.toString());
+    
+    try {
+        // Memanggil GAS untuk merubah status menjadi SELESAI di Spreadsheet
+        await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}`);
+        setTimeout(() => {
+            card.remove();
+            // Cek jika sudah kosong
+            if(document.querySelectorAll('.order-card').length === 0) {
+                fetchOrders();
+            }
+        }, 300);
+    } catch(e) {
+        alert("Gagal koneksi ke server.");
+        isRemoving = isRemoving.filter(id => id !== row.toString());
+        card.classList.remove('removed');
+        document.getElementById(`overlay-${row}`).classList.remove('active');
+    }
+}
+
 function printRawBT(no, nama, menu, mode, total) {
     const struk = `
-{center}{h}CLOUD KITCHEN DYG{/h}
-{center}KITCHEN BILL
+{center}{h}KITCHEN BILL{/h}
 --------------------------------
 {h}ANTREAN: #${no}{/h}
 --------------------------------
@@ -171,44 +215,13 @@ Mode: ${mode}
 --------------------------------
 ${menu.split(',').map(m => `[ ] ${m.trim()}`).join('\n')}
 --------------------------------
-{b}TOTAL: Rp ${total}{/b}
-{center}--- ${new Date().toLocaleTimeString()} ---
+{center}--- ${new Date().toLocaleTimeString('id-ID')} ---
 {cut}`;
 
-    const encodedText = encodeURIComponent(struk);
-    const rawbtUrl = `intent:${encodedText}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
-    window.location.href = rawbtUrl;
+    window.location.href = `intent:${encodeURIComponent(struk)}#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;`;
 }
 
-function handleAction(card){
-    const rowIndex = card.getAttribute('data-row');
-    if(isProcessing.includes(rowIndex)) return;
-
-    isProcessing.push(rowIndex);
-    card.classList.add('swiped-left');
-    
-    setTimeout(() => {
-        card.remove();
-        executeDone(rowIndex);
-    }, 400);
-}
-
-function markDone(rowIndex){
-    if(confirm("Selesaikan pesanan ini?")) {
-        handleAction(document.getElementById(`card-${rowIndex}`));
-    }
-}
-
-async function executeDone(rowIndex){
-    try{
-        await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${rowIndex}`);
-        // Biarkan di isProcessing agar tidak muncul lagi saat auto-refresh sebelum server update
-    }catch(e){
-        console.error("Gagal update status");
-        isProcessing = isProcessing.filter(id => id !== rowIndex.toString());
-    }
-}
-
+// Jalankan auto-refresh
 setInterval(fetchOrders, CONFIG.REFRESH_RATE);
 fetchOrders();
 </script>
