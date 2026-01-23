@@ -439,31 +439,6 @@ animation: floatIcon 2.8s ease-in-out infinite;
     filter: grayscale(1);
     opacity: 0.5;
 }
-
-/* Style untuk Badge "Jauhhh Gais" */
-.service-wrapper {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.dist-badge {
-    position: absolute;
-    top: -10px;
-    background: var(--danger);
-    color: white;
-    font-size: 8px;
-    font-weight: 900;
-    padding: 3px 8px;
-    border-radius: 10px;
-    z-index: 10;
-    white-space: nowrap;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    display: none; /* Default sembunyi */
-    animation: shake 0.5s infinite; /* Efek getar agar menarik perhatian */
-}
-
     </style>
 </head>
 <body>
@@ -498,12 +473,9 @@ animation: floatIcon 2.8s ease-in-out infinite;
 
 <!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
-    <div class="service-wrapper">
-        <div id="dist-badge-dine" class="dist-badge">JAUHHH GAIS</div>
-        <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-            <div class="icon"><img src="dine-in.png" class="service-icon-img"></div>
-            <span>Dine In</span>
-        </div>
+    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
+        <div class="icon"><img src="dine-in.png" class="service-icon-img"></div>
+        <span>Dine In</span>
     </div>
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
