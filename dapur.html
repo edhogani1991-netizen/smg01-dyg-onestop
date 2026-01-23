@@ -15,8 +15,7 @@
 
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: var(--bg); 
-            margin: 0; padding: 20px; 
+            background: var(--bg); margin: 0; padding: 20px; 
             overflow-x: hidden;
         }
 
@@ -41,10 +40,9 @@
             display: flex; flex-direction: column;
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
             position: relative;
-            touch-action: pan-y; /* Memungkinkan scroll vertikal */
+            touch-action: pan-y;
         }
 
-        /* Animasi Terlempar ke Kiri */
         .swiped-left {
             transform: translateX(-150%) rotate(-15deg) !important;
             opacity: 0 !important;
@@ -106,10 +104,9 @@
     <div id="printSection" style="display:none;"></div>
 
     <script>
-        // 1. KEAMANAN PIN
+        // 1. PIN KEAMANAN
         const PIN_DAPUR = "1212"; 
-        let akses = prompt("Masukkan PIN Dapur:");
-        if (akses !== PIN_DAPUR) {
+        if (prompt("Masukkan PIN Dapur:") !== PIN_DAPUR) {
             alert("Akses ditolak!");
             document.body.innerHTML = "<h1 style='text-align:center;margin-top:50px;'>Akses Dilarang</h1>";
             throw new Error("Invalid PIN");
@@ -119,10 +116,11 @@
         const CONFIG = {
             API_URL: "https://script.google.com/macros/s/AKfycbyHXKH97V_JUlyWcl0y51q3B9t7gKTUXqZo1RZbhClE9xhwmQN7AaIxTAR27tmFw9b2LA/exec",
             TOKEN: "dyg-access-v2",
-            REFRESH_RATE: 10000 // Cek setiap 10 detik
+            REFRESH_RATE: 10000 
         };
 
         let lastOrderCount = 0;
+        let isProcessing = []; // Menyimpan baris yang sedang dihapus
 
         // 3. AMBIL DATA
         async function fetchOrders() {
@@ -131,8 +129,9 @@
                 const data = await response.json();
                 document.getElementById('status-conn').innerText = "● Terhubung (Otomatis)";
                 
+                // Bunyi jika ada pesanan baru
                 if (data.length > lastOrderCount && lastOrderCount !== 0) {
-                    document.getElementById('notifSound').play().catch(e => console.log("Sound blocked"));
+                    document.getElementById('notifSound').play().catch(() => {});
                 }
                 lastOrderCount = data.length;
                 renderOrders(data);
@@ -141,15 +140,21 @@
             }
         }
 
-        // 4. TAMPILKAN DATA & LOGIC SWIPE
+        // 4. RENDER & SWIPE LOGIC (INSTAN)
         function renderOrders(orders) {
             const container = document.getElementById('orderList');
-            if (!orders || orders.length === 0) {
-                container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#888;'>Tidak ada pesanan aktif.</p>";
+            
+            // Filter agar pesanan yang barusan di-swipe tidak muncul lagi saat refresh
+            const activeOrders = orders.filter(ord => !isProcessing.includes(ord.row_index.toString()));
+
+            if (!activeOrders || activeOrders.length === 0) {
+                if (isProcessing.length === 0) {
+                    container.innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#888;'>Tidak ada pesanan aktif.</p>";
+                }
                 return;
             }
 
-            container.innerHTML = orders.map(ord => `
+            container.innerHTML = activeOrders.map(ord => `
                 <div class="order-card" id="card-${ord.row_index}" data-row="${ord.row_index}">
                     <div class="order-header">
                         <span class="order-no">#${ord.no_antrean}</span>
@@ -166,37 +171,50 @@
                         <button class="btn-print" onclick="preparePrint('${ord.no_antrean}', '${ord.nama}', '${ord.pesanan}', '${ord.mode_pesanan}', '${ord.total_bayar}')">CETAK</button>
                         <button class="btn-done" onclick="markDone(${ord.row_index})">SELESAI</button>
                     </div>
-                    <div class="swipe-hint">← Geser kiri jika sudah selesai</div>
+                    <div class="swipe-hint">← Geser kiri untuk selesai</div>
                 </div>
             `).join('');
 
-            // Pasang deteksi Swipe ke setiap kartu
             document.querySelectorAll('.order-card').forEach(card => {
                 const mc = new Hammer(card);
-                mc.on("swipeleft", function() {
-                    const rowIndex = card.getAttribute('data-row');
-                    card.classList.add('swiped-left'); // Animasi keluar
-                    setTimeout(() => executeDone(rowIndex), 400); // Eksekusi ke sistem
-                });
+                mc.on("swipeleft", () => handleAction(card));
             });
         }
 
-        // 5. EKSEKUSI SELESAI
+        // 5. PENANGANAN AKSI (ANIMASI + REMOVE INSTAN)
+        function handleAction(card) {
+            const rowIndex = card.getAttribute('data-row');
+            isProcessing.push(rowIndex); // Tandai agar tidak muncul saat auto-refresh
+            
+            card.classList.add('swiped-left');
+            
+            // Hapus kartu dari layar secara instan setelah animasi
+            setTimeout(() => {
+                card.remove();
+                if (document.querySelectorAll('.order-card').length === 0) {
+                    document.getElementById('orderList').innerHTML = "<p style='grid-column: 1/-1; text-align:center; color:#888;'>Semua pesanan selesai!</p>";
+                }
+            }, 400);
+
+            // Kirim ke server tanpa menunggu
+            executeDone(rowIndex);
+        }
+
         async function markDone(rowIndex) {
             if (confirm("Selesaikan pesanan?")) {
-                const card = document.getElementById(`card-${rowIndex}`);
-                card.classList.add('swiped-left');
-                setTimeout(() => executeDone(rowIndex), 400);
+                handleAction(document.getElementById(`card-${rowIndex}`));
             }
         }
 
         async function executeDone(rowIndex) {
             try {
                 await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${rowIndex}`);
-                fetchOrders();
+                // Hapus dari daftar processing setelah sukses di server
+                isProcessing = isProcessing.filter(id => id !== rowIndex.toString());
             } catch (e) {
-                alert("Gagal koneksi");
-                fetchOrders();
+                console.error("Gagal update status");
+                isProcessing = isProcessing.filter(id => id !== rowIndex.toString());
+                fetchOrders(); // Refresh jika gagal agar pesanan muncul lagi
             }
         }
 
