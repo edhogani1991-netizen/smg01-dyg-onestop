@@ -237,15 +237,22 @@ mark {
 }
 
 /* === GOJEK STYLE SERVICE BUTTON === */
+/* =========================================
+   SERVICE BUTTONS - GOJEK STYLE
+   Ukuran ikon lebih besar, fungsi & efek tetap
+   ========================================= */
+
+/* CONTAINER */
 .service-mode {
     display: flex;
     justify-content: space-around;
     padding: 8px 18px 14px;
 }
 
+/* PRIMARY BUTTON */
 .service-btn {
-    width: 82px;
-    height: 82px;
+    width: 92px;
+    height: 92px;
     background: white;
     border-radius: 50%;
     box-shadow: 0 8px 18px rgba(0,0,0,0.12);
@@ -259,23 +266,38 @@ mark {
     transition: all 0.25s cubic-bezier(.4,0,.2,1);
 }
 
+/* TEXT LABEL */
 .service-btn span {
     font-size: 10px;
     font-weight: 800;
     color: var(--text);
+    text-align: center;
 }
 
-/* ICON */
+/* ICON WRAPPER */
 .service-btn .icon {
-    font-size: 26px;
-    animation: floatIcon 2.8s ease-in-out infinite;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* AKTIF */
+/* IMAGE DI DALAM ICON */
+.service-btn .icon img {
+    width: 140%;
+    height: 140%;
+    object-fit: cover;
+    transition: all 0.25s ease-in-out;
+}
+
+/* MODE AKTIF */
 .service-btn.active {
     background: linear-gradient(145deg, #1B4332, #2D6A4F);
     color: white;
-    transform: translateY(-6px) scale(1.05);
+    transform: translateY(-6px) scale(1.08);
     box-shadow: 0 14px 30px rgba(27,67,50,0.45);
 }
 
@@ -283,7 +305,7 @@ mark {
     color: white;
 }
 
-/* RING */
+/* RING AKTIF */
 .service-btn.active::after {
     content: "";
     position: absolute;
@@ -293,24 +315,28 @@ mark {
     animation: pulseRing 1.4s infinite;
 }
 
-/* DISABLED */
-.service-btn.disabled {
+/* DISABLED BUTTON */
+.service-btn.disabled img {
     opacity: 0.4;
-    filter: grayscale(1);
+    filter: grayscale(100%);
+    transform: scale(1);
 }
 
-/* ANIMASI ICON */
+/* FLOAT ANIMATION ICON */
 @keyframes floatIcon {
     0%,100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
 }
 
-/* RING PULSE */
+/* PULSE RING */
 @keyframes pulseRing {
     0% { transform: scale(0.9); opacity: 0.8; }
     100% { transform: scale(1.2); opacity: 0; }
 }
-/* === SECONDARY GOJEK STYLE === */
+
+/* =========================================
+   SECONDARY BUTTON (Kecil / Lainnya)
+   ========================================= */
 .secondary-mode {
     margin-top: -4px;
     opacity: 0.92;
@@ -324,8 +350,15 @@ mark {
 }
 
 .service-btn.secondary .icon {
-    font-size: 22px;
+    width: 60px;
+    height: 60px;
     animation: floatIconSoft 3.5s ease-in-out infinite;
+}
+
+.service-btn.secondary .icon img {
+    width: 130%;
+    height: 130%;
+    object-fit: cover;
 }
 
 .service-btn.secondary span {
@@ -334,23 +367,24 @@ mark {
     color: var(--muted);
 }
 
-/* jangan pakai ring hijau */
+/* NON RING AKTIF UNTUK SECONDARY */
 .service-btn.secondary.active::after {
     display: none;
 }
 
-/* animasi lebih lembut */
+/* FLOAT ICON SOFT */
 @keyframes floatIconSoft {
     0%,100% { transform: translateY(0); }
     50% { transform: translateY(-2px); }
 }
 
-/* efek tap */
+/* EFEK TAP SECONDARY */
 .service-btn.secondary:active {
     transform: scale(0.92);
     background: #EFEFEF;
 }
 
+/* LABEL SOON SECONDARY */
 .service-btn.secondary::before {
     content: "SOON";
     position: absolute;
@@ -426,8 +460,8 @@ mark {
 
 /* ICON WRAPPER */
 .service-btn .icon {
-    width: 42px;
-    height: 42px;
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
     overflow: hidden;          /* KUNCI */
     display: flex;
@@ -436,11 +470,12 @@ mark {
 }
 
 /* IMAGE */
-.service-icon-img {
-    width: 110%;
-    height: 110%;
+.service-btn .icon img {
+    width: 130%;
+    height: 130%;
     object-fit: cover;
 }
+
 
     </style>
 </head>
@@ -489,12 +524,12 @@ mark {
 
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
-        <div class="icon">🛍️</div>
+        <div class="icon"><img src="take-away.png" class="service-icon-img"></div>
         <span>Take Away</span>
     </div>
 
     <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
-        <div class="icon">🛵</div>
+        <img src="delivery.png" class="service-icon-img">
         <span>Delivery</span>
     </div>
 
@@ -504,17 +539,17 @@ mark {
 <div class="service-mode secondary-mode">
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon">🍱</div>
+        <div class="icon"><img src="katering.png" class="service-icon-img"></div>
         <span>Katering</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon">🤝</div>
+        <div class="icon"><img src="jadi-mitra.png" class="service-icon-img"></div>
         <span>Jadi Mitra</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon">📢</div>
+        <div class="icon"><img src="ngiklan.png" class="service-icon-img"></div>
         <span>NgIKLAN</span>
     </div>
 
