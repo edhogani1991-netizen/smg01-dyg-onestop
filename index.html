@@ -463,17 +463,17 @@ mark {
 
     <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
         <div id="badgeDine" class="badge-status">DI LUAR JANGKAUAN</div>
-        <div class="icon"><img src="dine-in.png" class="service-icon-img"></div>
+        <div class="icon">🍽️</div>
         <span>Dine In</span>
     </div>
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
-        <div class="icon"><img src="take-away.png" class="service-icon-img"></div>
+        <div class="icon">🛍️</div>
         <span>Take Away</span>
     </div>
 
     <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
-        <div class="icon"><img src="delivery.png" class="service-icon-img"></div>
+        <div class="icon">🛵</div>
         <span>Delivery</span>
     </div>
 
@@ -483,17 +483,17 @@ mark {
 <div class="service-mode secondary-mode">
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="katering.png" class="service-icon-img"></div>
+        <div class="icon">🍱</div>
         <span>Katering</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="jadi-mitra.png" class="service-icon-img"></div>
+        <div class="icon">🤝</div>
         <span>Jadi Mitra</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="ngiklan.png" class="service-icon-img"></div>
+        <div class="icon">📢</div>
         <span>NgIKLAN</span>
     </div>
 
@@ -983,29 +983,19 @@ async function submitOrder() {
     }
 
     async function syncQueue() {
-    try {
-        // Pastikan URL dan Token sudah benar
-        const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
-        const num = await resp.text(); // Mengambil respons sebagai teks
-        
-        // Cek jika num ada dan bukan string "undefined"
-        if (num && num !== "undefined") { 
-            document.getElementById('noAntrean').innerText = "#" + num;
-        } else {
-            document.getElementById('noAntrean').innerText = "#0";
-        }
-    } catch(e) {
-        console.error("Error sync queue:", e);
+        try {
+            const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
+            const num = await resp.text();
+            if (num) document.getElementById('noAntrean').innerText = "#" + num;
+        } catch(e) {}
+        setTimeout(syncQueue, 20000);
     }
-    setTimeout(syncQueue, 20000); // Cek setiap 20 detik
-}
 
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
     function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
-
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
