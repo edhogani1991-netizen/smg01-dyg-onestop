@@ -369,7 +369,7 @@ animation: floatIcon 2.8s ease-in-out infinite;
 }
 
 .service-btn.secondary::before {
-    content: "SOON";
+    content: "SABAR";
     position: absolute;
     top: -6px;
     right: -6px;
@@ -439,6 +439,63 @@ animation: floatIcon 2.8s ease-in-out infinite;
     filter: grayscale(1);
     opacity: 0.5;
 }
+
+/* Style untuk Badge "Jauhhh Gais" */
+.service-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dist-badge {
+    position: absolute;
+    top: -10px;
+    background: var(--danger);
+    color: white;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 3px 8px;
+    border-radius: 10px;
+    z-index: 10;
+    white-space: nowrap;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    display: none; /* Default sembunyi */
+    animation: shake 0.5s infinite; /* Efek getar agar menarik perhatian */
+}
+
+<style>
+    /* ... kode style lainnya ... */
+
+    /* 1. Definisi gerakan getarnya */
+    @keyframes shake {
+        0% { transform: rotate(0deg); }
+        10% { transform: rotate(-5deg); }
+        20% { transform: rotate(5deg); }
+        30% { transform: rotate(-5deg); }
+        40% { transform: rotate(5deg); }
+        50% { transform: rotate(0deg); }
+        100% { transform: rotate(0deg); }
+    }
+
+    /* 2. Terpakan pada badge SABAR */
+    .service-btn.secondary::before {
+        content: "SABAR"; 
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        background: var(--accent);
+        color: white;
+        font-size: 8px;
+        font-weight: 900;
+        padding: 2px 6px;
+        border-radius: 10px;
+        z-index: 10;
+        /* Tambahkan baris ini */
+        animation: shake 2s infinite; 
+    }
+</style>
+
     </style>
 </head>
 <body>
@@ -473,9 +530,12 @@ animation: floatIcon 2.8s ease-in-out infinite;
 
 <!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
-    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-        <div class="icon"><img src="dine-in.png" class="service-icon-img"></div>
-        <span>Dine In</span>
+    <div class="service-wrapper">
+        <div id="dist-badge-dine" class="dist-badge">JAUHHH GAIS</div>
+        <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
+            <div class="icon"><img src="dine-in.png" class="service-icon-img"></div>
+            <span>Dine In</span>
+        </div>
     </div>
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
@@ -591,12 +651,22 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
-        // Cek jangkauan Dine In saja, tapi jangan otomatis klik Delivery
+        const badgeDine = document.getElementById('dist-badge-dine');
+        const dineBtn = document.getElementById('mDine');
+
         if (userDist > CONFIG.RADIUS_DINE_IN) {
-            const dineBtn = document.getElementById('mDine');
+            // JIKA DILUAR RADIUS
+            if(badgeDine) badgeDine.style.display = 'block'; // Munculkan badge
             if(dineBtn) {
                 dineBtn.classList.add('disabled');
                 dineBtn.onclick = () => showOutOfRangeAlert();
+            }
+        } else {
+            // JIKA DIDALAM RADIUS
+            if(badgeDine) badgeDine.style.display = 'none'; // Hilangkan badge
+            if(dineBtn) {
+                dineBtn.classList.remove('disabled');
+                dineBtn.onclick = () => changeMode('DINE IN', dineBtn);
             }
         }
         
@@ -607,6 +677,7 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
         syncQueue();
     }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
 }
+
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
