@@ -236,104 +236,132 @@ mark {
     background: #FFFDE7 !important;
 }
 
-<div class="service-area">
-  <div class="service-row">
-    <div class="service-btn disabled">
-      <div class="badge-top">TERLALU JAUH</div>
-      <img src="dine-in.png" />
-      <span>Dine In</span>
-    </div>
-
-    <div class="service-btn active">
-      <img src="take-away.png" />
-      <span>Take Away</span>
-    </div>
-
-    <div class="service-btn">
-      <img src="delivery.png" />
-      <span>Delivery</span>
-    </div>
-  </div>
-
-  <div class="service-row">
-    <div class="service-btn soon">
-      <img src="katering.png" />
-      <span>Katering</span>
-    </div>
-
-    <div class="service-btn soon">
-      <img src="jadi mitra.png" />
-      <span>Mitra</span>
-    </div>
-
-    <div class="service-btn soon">
-      <img src="ngiklan.png" />
-      <span>NgIKLAN</span>
-    </div>
-  </div>
-</div>
+/* === GOJEK STYLE SERVICE BUTTON === */
+.service-mode {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 18px 14px;
+}
 
 .service-btn {
-  width: 60px;
-  height: 60px;
-  background: #ffffff;
-  border-radius: 50%;
-  box-shadow: 0 4px 10px rgba(0,0,0,.12);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  position: relative;
-  transition: transform .2s ease, box-shadow .2s ease;
+    width: 82px;
+    height: 82px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
 }
 
-/* Khusus Badge SOON di baris kedua */
-.service-btn.secondary {
-  background: #f5f6f7;
-  box-shadow: 0 4px 10px rgba(0,0,0,.08);
+.service-btn span {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text);
 }
 
-.service-btn.secondary span {
-  color: #1b4332;
+/* ICON */
+.service-btn .icon {
+    font-size: 26px;
+    animation: floatIcon 2.8s ease-in-out infinite;
 }
 
-/* --- STATE: AKTIF --- */
+/* AKTIF */
 .service-btn.active {
-  background: #1b4332;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(27,67,50,.35);
-}
-
-.service-btn.active img {
-  filter: brightness(0) invert(1);
+    background: linear-gradient(145deg, #1B4332, #2D6A4F);
+    color: white;
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0 14px 30px rgba(27,67,50,0.45);
 }
 
 .service-btn.active span {
-  color: #ffffff;
-}.service-btn.active .service-icon-img { filter: brightness(0) invert(1); }
+    color: white;
+}
 
-/* Efek Pulse Lingkaran saat Aktif */
-.service-btn.active:not(.secondary)::after {
+/* RING */
+.service-btn.active::after {
     content: "";
     position: absolute;
     inset: -6px;
     border-radius: 50%;
-    border: 2px solid rgba(27,67,50,0.4);
-    animation: pulseRing 1.5s infinite;
+    border: 2px solid rgba(27,67,50,0.5);
+    animation: pulseRing 1.4s infinite;
 }
 
-/* --- STATE: DISABLED (Jarak Jauh) --- */
+/* DISABLED */
 .service-btn.disabled {
-  opacity: .4;
-  filter: grayscale(1);
-  pointer-events: none;
+    opacity: 0.4;
+    filter: grayscale(1);
 }
 
-/* Animasi */
+/* ANIMASI ICON */
+@keyframes floatIcon {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+/* RING PULSE */
 @keyframes pulseRing {
-    0% { transform: scale(0.95); opacity: 0.8; }
-    100% { transform: scale(1.3); opacity: 0; }
+    0% { transform: scale(0.9); opacity: 0.8; }
+    100% { transform: scale(1.2); opacity: 0; }
+}
+/* === SECONDARY GOJEK STYLE === */
+.secondary-mode {
+    margin-top: -4px;
+    opacity: 0.92;
+}
+
+.service-btn.secondary {
+    width: 70px;
+    height: 70px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    background: #F7F7F7;
+}
+
+.service-btn.secondary .icon {
+    font-size: 22px;
+    animation: floatIconSoft 3.5s ease-in-out infinite;
+}
+
+.service-btn.secondary span {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--muted);
+}
+
+/* jangan pakai ring hijau */
+.service-btn.secondary.active::after {
+    display: none;
+}
+
+/* animasi lebih lembut */
+@keyframes floatIconSoft {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+/* efek tap */
+.service-btn.secondary:active {
+    transform: scale(0.92);
+    background: #EFEFEF;
+}
+
+.service-btn.secondary::before {
+    content: "SOON";
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--accent);
+    color: white;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 2px 5px;
+    border-radius: 10px;
 }
 
 /* === FORM EXTRA RINGKAS === */
@@ -396,57 +424,6 @@ mark {
     to { opacity: 1; transform: translateY(0); }
 }
 
-.service-area {
-  padding: 14px 12px;
-  max-width: 420px;
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.service-row {
-  display: flex;
-  justify-content: space-between;
-}
-
-.service-btn img {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-}
-
-.service-btn span {
-  font-size: 9px;
-  font-weight: 600;
-  color: #2f2f2f;
-  line-height: 1;
-}
-
-.badge-top {
-  position: absolute;
-  top: -8px;
-  background: #d63031;
-  color: #fff;
-  font-size: 7px;
-  padding: 2px 6px;
-  border-radius: 8px;
-  font-weight: 700;
-}
-
-.service-btn.soon::after {
-  content: "SOON";
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background: #f39c12;
-  color: #fff;
-  font-size: 7px;
-  font-weight: 700;
-  padding: 2px 5px;
-  border-radius: 6px;
-}
-
     </style>
 </head>
 <body>
@@ -454,9 +431,12 @@ mark {
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
     <div style="text-align: center; width: 100%; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center;">
         
-        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">⏳
-            <h2 style="font-weight: 900; font-size: 20px;">Hei..Selamat datang Gais</h2>
-            <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalaman Berbelanjamu disini.</p>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <img src="welcome.png" 
+                 style="width: 160px; height: 160px; border-radius: 50%; object-fit: cover; margin-bottom: 20px;">
+            
+            <h2 style="font-weight: 900; font-size: 20px;">Hei..Senang Bisa Ketemu</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja disini.</p>
             <button onclick="startApp()" class="order-btn" style="width: 100%;">MULAI SEKARANG</button>
         </div>
 
@@ -478,41 +458,45 @@ mark {
     <div id="banner-track"></div>
 </div>
 
-<div class="service-area">
-  <div class="service-row">
-    <div class="service-btn disabled">
-      <div class="badge-top">TERLALU JAUH</div>
-      <img src="dine-in.png" />
-      <span>Dine In</span>
+<!-- BARIS 1 : MODE ORDER (UTAMA) -->
+<div class="service-mode">
+
+    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
+        <div id="badgeDine" class="badge-status">DI LUAR JANGKAUAN</div>
+        <div class="icon"><img src="dine-in.png" class="service-icon-img"></div>
+        <span>Dine In</span>
     </div>
 
-    <div class="service-btn active">
-      <img src="take-away.png" />
-      <span>Take Away</span>
+    <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
+        <div class="icon"><img src="take-away.png" class="service-icon-img"></div>
+        <span>Take Away</span>
     </div>
 
-    <div class="service-btn">
-      <img src="delivery.png" />
-      <span>Delivery</span>
-    </div>
-  </div>
-
-  <div class="service-row">
-    <div class="service-btn soon">
-      <img src="katering.png" />
-      <span>Katering</span>
+    <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
+        <div class="icon"><img src="delivery.png" class="service-icon-img"></div>
+        <span>Delivery</span>
     </div>
 
-    <div class="service-btn soon">
-      <img src="jadi-mitra.png" />
-      <span>Mitra</span>
+</div>
+
+<!-- BARIS 2 : MODE SECONDARY -->
+<div class="service-mode secondary-mode">
+
+    <div class="service-btn secondary" onclick="openComingSoon()">
+        <div class="icon"><img src="katering.png" class="service-icon-img"></div>
+        <span>Katering</span>
     </div>
 
-    <div class="service-btn soon">
-      <img src="ngiklan.png" />
-      <span>NgIKLAN</span>
+    <div class="service-btn secondary" onclick="openComingSoon()">
+        <div class="icon"><img src="jadi-mitra.png" class="service-icon-img"></div>
+        <span>Jadi Mitra</span>
     </div>
-  </div>
+
+    <div class="service-btn secondary" onclick="openComingSoon()">
+        <div class="icon"><img src="ngiklan.png" class="service-icon-img"></div>
+        <span>NgIKLAN</span>
+    </div>
+
 </div>
 
 <div id="map"></div>
@@ -705,8 +689,7 @@ async function startApp() {
                 vM: document.getElementById(`m-${id}`)?.value || null,
                 vR: document.getElementById(`r-${id}`)?.value || null,
                 vS: document.getElementById(`s-${id}`)?.value || null,
-            
-    ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
+                ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
             };
             cart.push({ ...item, ...vData });
         } else {
