@@ -596,6 +596,43 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
         if (km <= 5) return 8000;
         return 8000 + (Math.ceil(km - 5) * 2000);
     }
+/* ================================
+   DAFTAR MENU TANPA VARIAN SUHU
+   (WAJIB PERSIS)
+   ================================ */
+const NO_SUHU_MENUS = new Set([
+    "kopi klothok",
+    "kopi lelet",
+    "kopi coklat",
+    "kopi jahe",
+    "es kopi item",
+    "es kopiko",
+    "kopi ka'amel",
+    "kopi susu beri",
+    "es susu mantan",
+    "es jossu",
+    "es bissu",
+    "es jeruk susu",
+    "es choco oren",
+    "es jeruk yakult",
+    "es milksex beri",
+    "es matcha",
+    "es squash oren",
+    "jus mangga",
+    "jus stoberi",
+    "smoothies mary",
+    "float mangga",
+    "float stoberi",
+    "nescafe blue",
+    "kopi kapal api"
+]);
+
+function normalizeMenuName(name) {
+    return name
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+}
 
     async function loadMenu() {
         try {
@@ -627,6 +664,11 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
             const isMieG = nl.includes("mie") && nl.includes("goreng");
             const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
             const isPaket = kl.includes("paket");
+const isDrink = kl.includes("drink") || kl.includes("minum") || kl.includes("beverage");
+
+const menuNameClean = normalizeMenuName(m.nama);
+const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
+
 
             return `
             <div class="menu-item">
@@ -637,7 +679,12 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
                         ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                         ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${allowSuhu ? `
+<select id="s-${m.id}" class="variant-select">
+    ${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}
+</select>
+` : ''}
+
                     </div>
                 </div>
                 <div class="qty-box">
