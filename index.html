@@ -546,7 +546,7 @@ mark {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxjb-K_8aJQ5hYNHPG-vUpZ4AL6bZQmILLkFexZgPaQMgk3Wwe7WLQFZUuo5LJS-P4WWA/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw8r4no1QS_l3NlSeV1wbYb76RBl5or18ayesRcBlMQwrztaxfeon6pIeZU8bfWCCb1Vg/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -954,8 +954,10 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     setTimeout(() => {
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    }, 600); 
-}
+        
+        // Langsung tampilkan overlay kembali agar saat user balik, sudah dalam kondisi awal
+        document.getElementById('welcome-overlay').style.display = 'flex';
+    }, 600);
 
 
     function toggleSummary(open) {
@@ -1041,6 +1043,25 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
+// Fungsi untuk mereset tampilan kembali ke awal
+function resetToInitialState() {
+    // 1. Reload halaman secara total agar semua state (cart, mode, dll) kembali ke default
+    window.location.reload();
+}
+
+// Deteksi saat pengguna kembali ke browser
+document.addEventListener('visibilitychange', function() {
+    // Jika statusnya 'visible' artinya pengguna baru saja kembali membuka browser
+    if (document.visibilityState === 'visible') {
+        // Cek apakah sebelumnya pengguna baru saja menekan tombol submit
+        // Kita gunakan sessionStorage sebagai penanda
+        if (sessionStorage.getItem('orderSubmitted') === 'true') {
+            sessionStorage.removeItem('orderSubmitted');
+            resetToInitialState();
+        }
+    }
+});
+
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
