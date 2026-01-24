@@ -61,6 +61,12 @@ async function fetchOrders(){
         // MENAMBAHKAN statusFilter=BARU agar hanya pesanan yang belum diproses yang muncul
         const resp = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&statusFilter=BARU`);
         const data = await resp.json();
+orders.forEach(order => {
+  order.pesanan_detail = order.pesanan_detail
+    ? JSON.parse(order.pesanan_detail)
+    : [];
+});
+
         document.getElementById('status-conn').innerText = "● TERHUBUNG";
         document.getElementById('status-conn').style.color = "green";
 
