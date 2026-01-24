@@ -92,7 +92,6 @@ body{ font-family:'Segoe UI',sans-serif; background:var(--bg); margin:0; padding
 <div id="rekapModal" class="modal"><div class="sheet" id="rekapContent"></div></div>
 
 <script>
-/* ================= KONFIGURASI HARGA ================= */
 const DAFTAR_HARGA = {
 "Nasi Goreng": 15000,
 "Mie Goreng": 15000,
@@ -118,22 +117,39 @@ render(await r.json());
 window.onload=refresh;
 
 function render(data){
-list.innerHTML=data.map(o=>{
-const mode=(o.mode_pesanan||"").toUpperCase();
-return`
-<div class="card">
-<div style="display:flex;justify-content:space-between">
-<div class="antrean">#${o.antrean}</div>
-<div class="mode">${mode} | ${o.nama}</div>
-</div>
-<div class="pesanan" style="margin-top:10px; color:#555;">${o.pesanan.split(',').join('<br>')}</div>
-<div class="total">Rp ${(+o.total_bayar).toLocaleString('id-ID')}</div>
-<div class="btn-group">
-<button class="btn btn-bayar" onclick="openPay(${o.row_index},${o.total_bayar},'${o.antrean}')">BAYAR LUNAS</button>
-<button class="btn btn-split" onclick='openSplit(${JSON.stringify(o)})'>SPLIT BILL</button>
-</div>
-</div>`;
-}).join('');
+    list.innerHTML = data.map((o,i)=>{
+        const mode=(o.mode_pesanan||"").toUpperCase();
+        return `
+        <div class="card">
+            <div style="display:flex;justify-content:space-between">
+                <div class="antrean">#${o.antrean}</div>
+                <div class="mode">${mode} | ${o.nama}</div>
+            </div>
+            <div class="pesanan" style="margin-top:10px; color:#555;">${o.pesanan.split(',').join('<br>')}</div>
+            <div class="total">Rp ${(+o.total_bayar).toLocaleString('id-ID')}</div>
+            <div class="btn-group">
+                <button class="btn btn-bayar" data-row="${o.row_index}" data-total="${o.total_bayar}" data-antrean="${o.antrean}">BAYAR LUNAS</button>
+                <button class="btn btn-split" data-index="${i}">SPLIT BILL</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Pasang event listener
+    document.querySelectorAll('.btn-bayar').forEach(b=>{
+        b.addEventListener('click', e=>{
+            openPay(
+                parseInt(b.dataset.row),
+                parseInt(b.dataset.total),
+                b.dataset.antrean
+            );
+        });
+    });
+
+    document.querySelectorAll('.btn-split').forEach(b=>{
+        b.addEventListener('click', e=>{
+            openSplit(data[parseInt(b.dataset.index)]);
+        });
+    });
 }
 
 /* --- BAYAR LUNAS --- */
@@ -164,12 +180,7 @@ const qtyMatch = itemStr.match(/^(\d+)x/);
 const qtyAsli = qtyMatch ? parseInt(qtyMatch[1]) : 1;
 const namaMenu = itemStr.replace(/^\d+x\s*/, '').trim();
 const hargaMenu = DAFTAR_HARGA[namaMenu] || 0;
-return {
-nama: namaMenu,
-qty_maks: qtyAsli,
-qty_pilih: 0,
-harga_satuan: hargaMenu
-};
+return { nama: namaMenu, qty_maks: qtyAsli, qty_pilih: 0, harga_satuan: hargaMenu };
 });
 renderSplit();
 splitModal.style.display="flex";
