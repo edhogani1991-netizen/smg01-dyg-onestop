@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>KASIR PRO V2.6 | cloudkitchen.dyg++</title>
+<title>KASIR PRO V2.7 | cloudkitchen.dyg++</title>
 <style>
 :root{ --primary:#1B4332; --success:#00b894; --danger:#e74c3c; --warning:#f39c12; --bg:#f0f2f5; }
 body{ font-family:'Segoe UI',sans-serif; background:var(--bg); margin:0; padding:16px; color:#2d3436; }
@@ -25,8 +25,6 @@ body{ font-family:'Segoe UI',sans-serif; background:var(--bg); margin:0; padding
 .change{ font-size:28px; font-weight:900; margin-top:10px; }
 .change.ok{color:var(--success)}
 .change.err{color:var(--danger)}
-
-/* SPLIT STYLES */
 .split-row { display: grid; grid-template-columns: 2fr 1fr 1.2fr; gap: 10px; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
 .qty-ctrl { display: flex; align-items: center; justify-content: center; gap: 10px; background: #f1f2f6; padding: 5px; border-radius: 10px; }
 .btn-q { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; }
@@ -62,7 +60,7 @@ body{ font-family:'Segoe UI',sans-serif; background:var(--bg); margin:0; padding
 
 <div id="splitModal" class="modal">
     <div class="sheet">
-        <h3>🧾 Keranjang Split Bill</h3>
+        <h3>🧾 Split Bill</h3>
         <div id="splitList"></div>
         <div class="subtotal-row">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -88,15 +86,11 @@ body{ font-family:'Segoe UI',sans-serif; background:var(--bg); margin:0; padding
 
 <script>
 const DAFTAR_HARGA = {
-"Nasi Ayam Saus Padang": 25000,
-"Nasi Rica Ayam": 25000,
-"Nasi Goreng": 15000,
-"Es Teh": 5000,
-"Kopi Hitam": 10000
+"nasi ayam saus padang teh": 15000, "nasi rica ayam teh": 15000, "nasi ayam bakar madu teh": 15000, "nasi orak arik ayam bali teh": 15000, "nasi telor balado teh": 12000, "mie lik goreng nyemek teh": 13000, "nasi ayam saus padang": 15000, "nasi ayam saus margarin": 15000, "nasi rica ayam": 15000, "nasi ayam bakar madu": 15000, "nasi ayam bakar saus kacang": 15000, "nasi ayam bakar dabu": 15000, "nasi orak arik ayam bali": 15000, "nasi telor balado": 12000, "nasi telor bakar madu": 13000, "nasi telor bakar saus kacang": 13000, "nasi telor": 12000, "nasi orak arik telor": 12000, "nasi telor gobal gabul": 12000, "mie tek tek": 13000, "mie dogh dogh": 13000, "mie goreng": 9000, "mie rebus": 9000, "mie goreng telur": 11000, "mie rebus telur": 11000, "mie goreng double": 11000, "mie rebus double": 11000, "mie goreng double telur": 14000, "mie rebus double telur": 14000, "nasi ommelet": 15000, "kopi klothok": 9000, "kopi lelet": 9000, "kopi coklat": 10000, "kopi jahe": 10000, "es kopi item": 9000, "es kopiko": 12000, "kopi susu": 10000, "kopi ka amel": 10000, "kopi susu beri": 12000, "susu teman": 8000, "es susu mantan": 12000, "es jossu": 10000, "es bissu": 10000, "es jeruk susu": 15000, "coklat": 10000, "es choco oren": 12000, "es jeruk yakult": 9000, "es milksex beri": 10000, "es matcha": 15000, "es squash oren": 15000, "jus mangga": 8000, "jus stoberi": 10000, "smoothies mary": 15000, "float mangga": 13000, "float stoberi": 15000, "nescafe blue": 5000, "kopi kapal api": 5000, "goodday capucino": 7000, "goodday frez": 7000, "coffemix": 5000, "beng beng": 7000, "milo": 5000, "dancow putih": 8000, "susu putih": 5000, "susu coklat": 5000, "extra joss": 5000, "kukubima": 5000, "jahe": 5000, "jahe jeruk": 8000, "teh jahe": 5000, "susu jahe": 10000, "jeruk": 5000, "teh": 3000, "nasgor biasa": 12000, "nasgor ayam": 18000, "nasgor ayam kremesan": 18000, "nasgor bakso": 14000, "nasgor sosis": 14000, "nasgor bakso sosis": 17000, "nasgor telor cabe ijo": 14000, "nasgor ayam cabe ijo": 20000, "nasgor ruwed": 14000, "nasgor ruwed bumbu rendang": 14000, "nasgor ruwed bumbu padang": 14000, "nasgor margarin": 12000, "nasgor gila": 20000, "nasi gila": 20000, "telor penyet": 7000, "telor bakso sosis penyet": 12000, "ayam penyet": 14000, "pangsit goreng penyet": 7000, "tahu bakso penyet": 8000, "gelantin penyet": 5000, "nasi putih": 4000, "nasi uduk": 4000, "nasi cabe ijo": 6000, "nasi kecombrang": 6000, "nasi rumput laut": 6000, "nasi margarin": 6000, "corndog coklat": 14000, "corndog matcha": 14000, "ropang susu mangga": 14000, "ropang susu oreo": 14000, "risol kentang ayam": 11000, "tahu bakso goreng": 7000, "kentang goreng": 12000, "mie lik prabu goreng nyemek": 13000, "mie lik prabu kuah": 13000, "mie lik yamin goreng": 13000, "mie lik yamin kuah": 13000, "mie lik kuah asam manis": 13000, "mie lik kuah pedas manis": 13000, "mie lik goreng pecel": 13000, "mie lik goreng margarin": 13000
 };
 
 const CONFIG={
-API:"https://script.google.com/macros/s/AKfycbwbCUYUbja26SSa4_rvAXUYVvLZ4bGR07vGKV2xhX9LHNahmc-IyTdw32nijs83zwI2fQ/exec",
+API:"https://script.google.com/macros/s/AKfycbwTMnQ2lTxuguB7o1zmi9TecIns60xMY3Q02au40g4XUxNpkc5lNAQhNudvLwBC2Vt2/exec",
 TOKEN:"dyg-access-v2"
 };
 
@@ -131,7 +125,6 @@ function render(data){
     }).join('');
 }
 
-/* --- LOGIKA LUNAS --- */
 function openPay(r,t,a){
 activeOrder={row:r,total:t,antrean:a};
 payTotal.innerText="Rp "+t.toLocaleString('id-ID');
@@ -149,7 +142,6 @@ confirmBtn.disabled=(method.value==="TUNAI" && c<0);
 confirmBtn.style.opacity=confirmBtn.disabled?.5:1;
 }
 
-/* --- LOGIKA SPLIT BILL (UPDATE DATABASE) --- */
 function openSplit(o){
     activeOrder = o;
     document.getElementById('cashInSplit').value = "";
@@ -159,25 +151,23 @@ function openSplit(o){
         const itemStr = p.trim();
         const qtyMatch = itemStr.match(/^(\d+)x/);
         const qtyAsli = qtyMatch ? parseInt(qtyMatch[1]) : 1;
-        let namaDariDapur = itemStr.replace(/^\d+x\s*/, '').trim();
+        let namaAsli = itemStr.replace(/^\d+x\s*/, '').trim();
         
-        let hargaDitemukan = 0;
-        for (let menuKey in DAFTAR_HARGA) {
-            if (namaDariDapur.toLowerCase().includes(menuKey.toLowerCase())) {
-                hargaDitemukan = DAFTAR_HARGA[menuKey];
+        // Membersihkan karakter khusus untuk pencocokan harga
+        let namaClean = namaAsli.toLowerCase().replace(/[^\w\s]/gi, ' ').replace(/\s+/g, ' ').trim();
+        
+        let harga = 0;
+        for (let key in DAFTAR_HARGA) {
+            if (namaClean.includes(key)) {
+                harga = DAFTAR_HARGA[key];
                 break;
             }
         }
-        return { nama: namaDariDapur, qty_maks: qtyAsli, qty_pilih: 0, harga_satuan: hargaDitemukan };
+        return { nama: namaAsli, qty_maks: qtyAsli, qty_pilih: 0, harga_satuan: harga };
     });
     renderSplit();
     splitModal.style.display="flex";
     toggleCashSplit();
-}
-
-function toggleCashSplit() {
-    cashAreaSplit.style.display = splitMethod.value === "TUNAI" ? "block" : "none";
-    calcSplit();
 }
 
 function renderSplit(){
@@ -189,7 +179,7 @@ function renderSplit(){
         <div class="split-row">
             <div>
                 <div style="font-weight:bold; font-size:13px;">${item.nama}</div>
-                <div style="font-size:11px; color:#888;">Stok: ${item.qty_maks} | Rp ${item.harga_satuan.toLocaleString()}</div>
+                <div style="font-size:11px; color:#e74c3c;">@ Rp ${item.harga_satuan.toLocaleString()}</div>
             </div>
             <div class="qty-ctrl">
                 <button class="btn-q" onclick="updateQtySplit(${idx},-1)">-</button>
@@ -214,6 +204,11 @@ function updateQtySplit(idx, val){
     }
 }
 
+function toggleCashSplit() {
+    cashAreaSplit.style.display = splitMethod.value === "TUNAI" ? "block" : "none";
+    calcSplit();
+}
+
 function calcSplit(){
     const cashIn = parseFloat(document.getElementById('cashInSplit').value) || 0;
     const btn = document.getElementById('confirmSplitBtn');
@@ -231,44 +226,32 @@ async function paySplit(){
     if(confirmSplitBtn.disabled) return;
     confirmSplitBtn.innerText = "MENGUPDATE DATA...";
     
-    // 1. Hitung Pesanan Baru (Sisa yang belum dibayar)
-    let pesananBaru = [];
+    let pesananSisa = [];
     let rincianStruk = "";
     let totalHargaSisa = 0;
 
     cartSplit.forEach(item => {
-        let sisaQty = item.qty_maks - item.qty_pilih;
-        if(sisaQty > 0) {
-            pesananBaru.push(`${sisaQty}x ${item.nama}`);
-            totalHargaSisa += (sisaQty * item.harga_satuan);
+        let sisa = item.qty_maks - item.qty_pilih;
+        if(sisa > 0) {
+            pesananSisa.push(`${sisa}x ${item.nama}`);
+            totalHargaSisa += (sisa * item.harga_satuan);
         }
         if(item.qty_pilih > 0) {
             rincianStruk += `${item.qty_pilih}x ${item.nama} @${item.harga_satuan.toLocaleString()}\n`;
         }
     });
 
-    const statusFinal = pesananBaru.length === 0 ? "LUNAS" : "DAPUR_SELESAI";
-    const stringPesananBaru = pesananBaru.join(', ');
-
-    // 2. Kirim ke Database
-    // Pastikan API Apps Script Anda mendukung parameter 'newOrderList' dan 'newTotal'
-    const url = `${CONFIG.API}?token=${CONFIG.TOKEN}&updateSplit=true&row=${activeOrder.row_index}&newPesanan=${encodeURIComponent(stringPesananBaru)}&newTotal=${totalHargaSisa}&status=${statusFinal}&metode=${splitMethod.value}`;
+    const statusFinal = pesananSisa.length === 0 ? "LUNAS" : "DAPUR_SELESAI";
+    const strPesananSisa = pesananSisa.join(', ');
+    const url = `${CONFIG.API}?token=${CONFIG.TOKEN}&updateSplit=true&row=${activeOrder.row_index}&newPesanan=${encodeURIComponent(strPesananSisa)}&newTotal=${totalHargaSisa}&status=${statusFinal}&metode=${splitMethod.value}`;
     
     try {
         await fetch(url);
-        
-        // 3. Cetak Struk
         const cashIn = document.getElementById('cashInSplit').value || currentSplitTotal;
-        let s=`{center}{h}STRUK SPLIT BILL{/h}\ncloudkitchen.dyg++\n-------------------------\nAntrean: #${activeOrder.antrean}\n-------------------------\n${rincianStruk}-------------------------\nTotal  : Rp ${currentSplitTotal.toLocaleString()}\nBayar  : Rp ${parseInt(cashIn).toLocaleString()}\nKembali: Rp ${(cashIn - currentSplitTotal).toLocaleString()}\nMetode : ${splitMethod.value}\n-------------------------\n{center}${statusFinal === "LUNAS" ? "LUNAS" : "SISA: " + pesananBaru.length + " ITEM"}\n{cut}`;
+        let s=`{center}{h}STRUK SPLIT BILL{/h}\ncloudkitchen.dyg++\n-------------------------\nAntrean: #${activeOrder.antrean}\n-------------------------\n${rincianStruk}-------------------------\nTotal: Rp ${currentSplitTotal.toLocaleString()}\nBayar: Rp ${parseInt(cashIn).toLocaleString()}\nKembali: Rp ${(cashIn - currentSplitTotal).toLocaleString()}\nMetode: ${splitMethod.value}\n-------------------------\n{center}${statusFinal === "LUNAS" ? "LUNAS" : "SISA: " + pesananSisa.length + " ITEM"}\n{cut}`;
         location.href="rawbt:base64,"+btoa(unescape(encodeURIComponent(s)));
-
-        closeModal();
-        refresh();
-    } catch (e) {
-        alert("Gagal update data!");
-    } finally {
-        confirmSplitBtn.innerText = "BAYAR & UPDATE DATA";
-    }
+        closeModal(); refresh();
+    } catch (e) { alert("Gagal!"); }
 }
 
 async function pay(){
@@ -281,7 +264,7 @@ async function pay(){
 
 function printStruk(total,metode,bayar,antrean){
     let c = bayar - total;
-    let s=`{center}{h}STRUK PEMBAYARAN{/h}\ncloudkitchen.dyg++\n-------------------------\nAntrean: #${antrean}\nTotal  : Rp ${total.toLocaleString()}\nBayar  : Rp ${parseInt(bayar).toLocaleString()}\nKembali: Rp ${c.toLocaleString()}\nMetode : ${metode}\n-------------------------\n{center}TERIMA KASIH\n{cut}`;
+    let s=`{center}{h}STRUK PEMBAYARAN{/h}\ncloudkitchen.dyg++\n-------------------------\nAntrean: #${antrean}\nTotal: Rp ${total.toLocaleString()}\nBayar: Rp ${parseInt(bayar).toLocaleString()}\nKembali: Rp ${c.toLocaleString()}\nMetode: ${metode}\n-------------------------\n{center}TERIMA KASIH\n{cut}`;
     location.href="rawbt:base64,"+btoa(unescape(encodeURIComponent(s)));
 }
 
@@ -292,7 +275,7 @@ async function showRekap(){
     rekapModal.style.display="flex";
 }
 
-function closeModal(){ document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); confirmBtn.innerText="KONFIRMASI LUNAS"; }
+function closeModal(){ document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); confirmBtn.innerText="KONFIRMASI LUNAS"; confirmSplitBtn.innerText="BAYAR & UPDATE DATA";}
 </script>
 </body>
 </html>
