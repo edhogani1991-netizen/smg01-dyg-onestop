@@ -1,128 +1,300 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASIR MEJA | CloudKitchen</title>
-    <style>
-        :root { --primary: #1B4332; --danger: #d63031; --bg: #f0f2f5; }
-        body { font-family: sans-serif; background: var(--bg); padding: 15px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 15px; }
-        .card-meja { background: white; border-radius: 15px; padding: 20px; border-left: 10px solid var(--primary); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .total-box { font-size: 24px; font-weight: 900; color: var(--danger); text-align: right; margin-top: 15px; border-top: 2px solid #eee; padding-top: 10px; }
-        .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); align-items:flex-end; z-index:100; }
-        .sheet { background:white; width:100%; border-radius:20px 20px 0 0; padding:20px; box-sizing:border-box; max-height: 90vh; overflow-y: auto; }
-        .split-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eee; align-items: center; }
-        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>KASIR PRO V2.7 | cloudkitchen.dyg++</title>
+<style>
+:root{ --primary:#1B4332; --success:#00b894; --danger:#e74c3c; --warning:#f39c12; --bg:#f0f2f5; }
+body{ font-family:'Segoe UI',sans-serif; background:var(--bg); margin:0; padding:16px; color:#2d3436; }
+.header{ display:flex; justify-content:space-between; align-items:center; background:#fff; padding:16px 20px; border-radius:16px; margin-bottom:16px; box-shadow:0 2px 6px rgba(0,0,0,.08); }
+.order-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(360px,1fr)); gap:16px; }
+.card{ background:#fff; border-radius:16px; padding:16px; border-left:10px solid var(--success); box-shadow:0 4px 8px rgba(0,0,0,.08); }
+.antrean{ font-size:30px; font-weight:900; color:var(--primary); }
+.mode{ font-size:14px; font-weight:bold; opacity:.7; }
+.total{ font-size:22px; font-weight:900; color:var(--danger); margin-top:8px; }
+.btn-group{ display:grid; grid-template-columns:1fr; gap:12px; margin-top:14px; }
+.btn{ height:56px; border-radius:14px; font-size:16px; font-weight:900; border:none; color:#fff; cursor:pointer; }
+.btn:active{transform:scale(.97)}
+.btn-bayar{background:var(--success)}
+.btn-split{background:var(--warning)}
+.btn-rekap{ background:var(--primary); height:44px; font-size:14px; }
+.modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); align-items:flex-end; z-index:1000; }
+.sheet{ background:#fff; width:100%; border-radius:24px 24px 0 0; padding:20px; max-height:90vh; overflow:auto; box-sizing: border-box;}
+.input{ width:100%; height:56px; font-size:22px; font-weight:900; border-radius:14px; border:2px solid #ddd; text-align:center; margin-top:10px; box-sizing: border-box;}
+.change{ font-size:28px; font-weight:900; margin-top:10px; }
+.change.ok{color:var(--success)}
+.change.err{color:var(--danger)}
+.split-row { display: grid; grid-template-columns: 2fr 1fr 1.2fr; gap: 10px; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+.qty-ctrl { display: flex; align-items: center; justify-content: center; gap: 10px; background: #f1f2f6; padding: 5px; border-radius: 10px; }
+.btn-q { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; }
+.subtotal-row { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-top: 15px; }
+</style>
 </head>
 <body>
-    <h2 style="text-align:center">KASIR - COMPILE MEJA</h2>
-    <div id="listMeja" class="grid"></div>
 
-    <div id="splitModal" class="modal">
-        <div class="sheet">
-            <h3>🧾 Split Bill Meja</h3>
-            <div id="splitItems"></div>
-            <div class="total-box" id="splitTotal">Total Pilih: Rp 0</div>
-            <button class="btn" style="background:var(--primary); color:white; width:100%; margin-top:15px" onclick="paySplit()">BAYAR ITEM TERPILIH</button>
-            <button class="btn" style="background:#888; color:white; width:100%; margin-top:10px" onclick="document.getElementById('splitModal').style.display='none'">BATAL</button>
+<div class="header">
+<h2>💰 KASIR</h2>
+<button class="btn btn-rekap" onclick="showRekap()">📊 REKAP</button>
+</div>
+
+<div id="list" class="order-grid"></div>
+
+<div id="payModal" class="modal">
+    <div class="sheet">
+        <h3>Total Tagihan</h3>
+        <div id="payTotal" class="total">Rp 0</div>
+        <select id="method" class="input" onchange="toggleCash()">
+            <option value="TUNAI">💵 TUNAI</option>
+            <option value="QRIS">📱 QRIS</option>
+            <option value="KARTU">💳 KARTU</option>
+        </select>
+        <div id="cashArea">
+            <input id="cashIn" type="number" class="input" placeholder="Uang diterima" oninput="calc()">
+            <div id="change" class="change">Rp 0</div>
+        </div>
+        <button id="confirmBtn" class="btn btn-bayar" style="width:100%; margin-top:16px" onclick="pay()">KONFIRMASI LUNAS</button>
+        <button class="btn" style="width:100%; background:#7f8c8d; margin-top:8px;" onclick="closeModal()">BATAL</button>
+    </div>
+</div>
+
+<div id="splitModal" class="modal">
+    <div class="sheet">
+        <h3>🧾 Split Bill</h3>
+        <div id="splitList"></div>
+        <div class="subtotal-row">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:bold;">Subtotal:</span>
+                <span id="splitTotalDisplay" style="font-size:24px; font-weight:900; color:var(--danger);">Rp 0</span>
+            </div>
+            <select id="splitMethod" class="input" onchange="toggleCashSplit()">
+                <option value="TUNAI">💵 TUNAI</option>
+                <option value="QRIS">📱 QRIS</option>
+                <option value="KARTU">💳 KARTU</option>
+            </select>
+            <div id="cashAreaSplit">
+                <input id="cashInSplit" type="number" class="input" placeholder="Uang diterima" oninput="calcSplit()">
+                <div id="changeSplit" class="change" style="font-size: 20px;">Kembalian: Rp 0</div>
+            </div>
+            <button id="confirmSplitBtn" class="btn btn-bayar" style="width:100%; margin-top:16px" onclick="paySplit()">BAYAR & UPDATE DATA</button>
+            <button class="btn" style="width:100%; background:#7f8c8d; margin-top:8px;" onclick="closeModal()">BATAL</button>
         </div>
     </div>
+</div>
 
-    <script>
-        const API = "https://script.google.com/macros/s/AKfycbxjb-K_8aJQ5hYNHPG-vUpZ4AL6bZQmILLkFexZgPaQMgk3Wwe7WLQFZUuo5LJS-P4WWA/exec"; // GANTI DENGAN URL WEB APP ANDA
-        let currentGroup = [];
-        let cartSplit = [];
+<div id="rekapModal" class="modal"><div class="sheet" id="rekapContent"></div></div>
 
-        async function load() {
-            const r = await fetch(API + "?token=dyg-access-v2");
-            const data = await r.json();
-            renderMeja(data.filter(o => o.status !== "LUNAS"));
-        }
+<script>
 
-        function renderMeja(data) {
-            const groups = data.reduce((acc, obj) => {
-                const meja = obj.mode_pesanan || "Take Away";
-                if (!acc[meja]) acc[meja] = [];
-                acc[meja].push(obj);
-                return acc;
-            }, {});
+const CONFIG={
+API:"https://script.google.com/macros/s/AKfycbwTMnQ2lTxuguB7o1zmi9TecIns60xMY3Q02au40g4XUxNpkc5lNAQhNudvLwBC2Vt2/exec",
+TOKEN:"dyg-access-v2"
+};
 
-            document.getElementById('listMeja').innerHTML = Object.keys(groups).map(meja => {
-                const items = groups[meja];
-                const total = items.reduce((sum, o) => sum + Number(o.total_bayar), 0);
-                return `
-                <div class="card-meja">
-                    <div style="display:flex; justify-content:space-between">
-                        <b style="font-size:20px">🪑 MEJA ${meja}</b>
-                        <span style="font-size:12px">Antrean: #${items.map(o=>o.no_antrean).join(', #')}</span>
-                    </div>
-                    <div style="margin:15px 0; font-size:14px; color:#555">
-                        ${items.map(o => `<div>• ${o.pesanan}</div>`).join('')}
-                    </div>
-                    <div class="total-box">Total: Rp ${total.toLocaleString()}</div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px">
-                        <button class="btn" style="background:var(--primary); color:white" onclick="payFull('${meja}', ${total})">BAYAR LUNAS</button>
-                        <button class="btn" style="background:#f39c12; color:white" onclick='openSplitMeja(${JSON.stringify(items)})'>SPLIT BILL</button>
-                    </div>
-                </div>`;
-            }).join('');
-        }
+let activeOrder=null;
+let cartSplit=[];
+let currentSplitTotal = 0;
 
-        function openSplitMeja(items) {
-            currentGroup = items;
-            cartSplit = [];
-            
-            // Pecah semua item dari semua antrean di meja tersebut
-            items.forEach(antrean => {
-                const parts = antrean.pesanan.split(',');
-                const totalBayarAntrean = Number(antrean.total_bayar);
-                const estimasiHargaPerItem = Math.round(totalBayarAntrean / parts.length);
-                
-                parts.forEach(p => {
-                    cartSplit.push({
-                        row: antrean.row_index,
-                        nama: p.trim(),
-                        harga: estimasiHargaPerItem, // Otomatis ambil harga rata-rata dari total (Aman untuk varian)
-                        selected: false
-                    });
-                });
+async function refresh(){
+try {
+const r=await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&getOrders=true&statusFilter=DAPUR_SELESAI`);
+render(await r.json());
+} catch(e) { console.error("Refresh Gagal"); }
+}
+window.onload=refresh;
+
+function render(data){
+    list.innerHTML = data.map((o,i)=>{
+        const mode=(o.mode_pesanan||"").toUpperCase();
+        return `
+        <div class="card">
+            <div style="display:flex;justify-content:space-between">
+                <div class="antrean">#${o.antrean}</div>
+                <div class="mode">${mode} | ${o.nama}</div>
+            </div>
+            <div class="pesanan" style="margin-top:10px; color:#555;">${o.pesanan.split(',').join('<br>')}</div>
+            <div class="total">Rp ${(+o.total_bayar).toLocaleString('id-ID')}</div>
+            <div class="btn-group">
+                <button class="btn btn-bayar" onclick='openPay(${o.row_index}, ${o.total_bayar}, "${o.antrean}")'>BAYAR LUNAS</button>
+                <button class="btn btn-split" onclick='openSplit(${JSON.stringify(o)})'>SPLIT BILL</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openPay(r,t,a){
+activeOrder={row:r,total:t,antrean:a};
+payTotal.innerText="Rp "+t.toLocaleString('id-ID');
+cashIn.value="";
+change.innerText="Rp 0";
+payModal.style.display="flex";
+toggleCash();
+}
+function toggleCash(){ cashArea.style.display=method.value==="TUNAI"?"block":"none"; calc(); }
+function calc(){
+let c=(cashIn.value||0)-activeOrder.total;
+change.innerText="Rp "+Math.max(0,c).toLocaleString('id-ID');
+change.className="change "+(c>=0?"ok":"err");
+confirmBtn.disabled=(method.value==="TUNAI" && c<0);
+confirmBtn.style.opacity=confirmBtn.disabled?.5:1;
+}
+
+function openSplit(o){
+    activeOrder = o;
+    cartSplit = [];
+
+    if(!o.pesanan_detail){
+        alert("Data pesanan tidak lengkap (tidak ada harga)");
+        return;
+    }
+
+    o.pesanan_detail.forEach(item => {
+        for(let i=0;i<item.qty;i++){
+            cartSplit.push({
+                nama: item.nama,
+                harga_satuan: item.harga,
+                qty_pilih: 0,
+                qty_maks: 1
             });
-
-            renderSplitList();
-            document.getElementById('splitModal').style.display = 'flex';
         }
+    });
 
-        function renderSplitList() {
-            let total = 0;
-            document.getElementById('splitItems').innerHTML = cartSplit.map((item, i) => {
-                if(item.selected) total += item.harga;
-                return `
-                <div class="split-row">
-                    <span>${item.nama}</span>
-                    <b>Rp ${item.harga.toLocaleString()}</b>
-                    <input type="checkbox" ${item.selected?'checked':''} onchange="cartSplit[${i}].selected = !cartSplit[${i}].selected; renderSplitList()">
-                </div>`;
-            }).join('');
-            document.getElementById('splitTotal').innerText = "Total Pilih: Rp " + total.toLocaleString();
+    renderSplit();
+    splitModal.style.display = "flex";
+    toggleCashSplit();
+}
+
+        // 3. PINTU DARURAT (Fallback)
+        // Jika harga masih 0 (tidak ketemu), gunakan rata-rata total bayar dari database
+        if (harga === 0) {
+    console.warn("Harga tidak ditemukan:", namaAsli);
+}
+
+        return { 
+            nama: namaAsli, 
+            qty_maks: qtyAsli, 
+            qty_pilih: 0, 
+            harga_satuan: harga 
+        };
+    });
+
+    renderSplit();
+    splitModal.style.display="flex";
+    toggleCashSplit();
+}
+
+function renderSplit(){
+    currentSplitTotal = 0;
+
+    splitList.innerHTML = cartSplit.map((item, idx) => {
+        const sub = item.qty_pilih * item.harga_satuan;
+        currentSplitTotal += sub;
+
+        return `
+        <div class="split-row">
+            <div>
+                <b>${item.nama}</b>
+                <div style="font-size:12px;color:#888">
+                    Rp ${item.harga_satuan.toLocaleString('id-ID')}
+                </div>
+            </div>
+            <div class="qty-ctrl">
+                <button class="btn-q" onclick="updateQtySplit(${idx},-1)">-</button>
+                <b>${item.qty_pilih}</b>
+                <button class="btn-q" onclick="updateQtySplit(${idx},1)">+</button>
+            </div>
+            <div><b>Rp ${sub.toLocaleString('id-ID')}</b></div>
+        </div>`;
+    }).join('');
+
+    splitTotalDisplay.innerText =
+        "Rp " + currentSplitTotal.toLocaleString('id-ID');
+
+    calcSplit();
+}
+
+
+function updateQtySplit(idx, val){
+    const item = cartSplit[idx];
+    const newQty = item.qty_pilih + val;
+    if(newQty >= 0 && newQty <= item.qty_maks){
+        item.qty_pilih = newQty;
+        renderSplit();
+    }
+}
+
+function toggleCashSplit() {
+    cashAreaSplit.style.display = splitMethod.value === "TUNAI" ? "block" : "none";
+    calcSplit();
+}
+
+function calcSplit(){
+    const cashIn = parseFloat(document.getElementById('cashInSplit').value) || 0;
+    const btn = document.getElementById('confirmSplitBtn');
+    if(splitMethod.value === "TUNAI"){
+        let c = cashIn - currentSplitTotal;
+        changeSplit.innerText = "Kembalian: Rp " + Math.max(0, c).toLocaleString();
+        btn.disabled = (currentSplitTotal <= 0 || cashIn < currentSplitTotal);
+    } else {
+        btn.disabled = currentSplitTotal <= 0;
+    }
+    btn.style.opacity = btn.disabled ? "0.5" : "1";
+}
+
+async function paySplit(){
+    if(confirmSplitBtn.disabled) return;
+    confirmSplitBtn.innerText = "MENGUPDATE DATA...";
+    
+    let pesananSisa = [];
+    let rincianStruk = "";
+    let totalHargaSisa = 0;
+
+    cartSplit.forEach(item => {
+        let sisa = item.qty_maks - item.qty_pilih;
+        if(sisa > 0) {
+            pesananSisa.push(`${sisa}x ${item.nama}`);
+            totalHargaSisa += (sisa * item.harga_satuan);
         }
-
-        async function payFull(meja, total) {
-            if(!confirm(`Lunaskan Meja ${meja}?`)) return;
-            await fetch(API + `?token=dyg-access-v2&payFullMeja=true&meja=${meja}`, {mode:'no-cors'});
-            load();
+        if(item.qty_pilih > 0) {
+            rincianStruk += `${item.qty_pilih}x ${item.nama} @${item.harga_satuan.toLocaleString()}\n`;
         }
+    });
 
-        async function paySplit() {
-            // Logika Update Split (Mengurangi item di Sheets)
-            alert("Fitur Split Item sedang memproses update ke Sheets...");
-            // Proses loop untuk setiap baris yang itemnya terpilih...
-            document.getElementById('splitModal').style.display = 'none';
-            load();
-        }
+    const statusFinal = pesananSisa.length === 0 ? "LUNAS" : "DAPUR_SELESAI";
+    const strPesananSisa = pesananSisa.join(', ');
+    const url = `${CONFIG.API}?token=${CONFIG.TOKEN}&updateSplit=true&row=${activeOrder.row_index}&newPesanan=${encodeURIComponent(strPesananSisa)}&newTotal=${totalHargaSisa}&status=${statusFinal}&metode=${splitMethod.value}`;
+    
+    try {
+        await fetch(url);
+        const cashIn = document.getElementById('cashInSplit').value || currentSplitTotal;
+        let s=`{center}{h}STRUK SPLIT BILL{/h}\ncloudkitchen.dyg++\n-------------------------\nAntrean: #${activeOrder.antrean}\n-------------------------\n${rincianStruk}-------------------------\nTotal: Rp ${currentSplitTotal.toLocaleString()}\nBayar: Rp ${parseInt(cashIn).toLocaleString()}\nKembali: Rp ${(cashIn - currentSplitTotal).toLocaleString()}\nMetode: ${splitMethod.value}\n-------------------------\n{center}${statusFinal === "LUNAS" ? "LUNAS" : "SISA: " + pesananSisa.length + " ITEM"}\n{cut}`;
+        location.href="rawbt:base64,"+btoa(unescape(encodeURIComponent(s)));
+        closeModal(); refresh();
+    } catch (e) { alert("Gagal!"); }
+}
 
-        setInterval(load, 15000); load();
-    </script>
+async function pay(){
+    if(confirmBtn.disabled) return;
+    confirmBtn.innerText = "MEMPROSES...";
+    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&updateStatus=true&row=${activeOrder.row}&finalStatus=LUNAS&metode=${method.value}`);
+    printStruk(activeOrder.total, method.value, (cashIn.value || activeOrder.total), activeOrder.antrean);
+    closeModal(); refresh();
+}
+
+function printStruk(total,metode,bayar,antrean){
+    let c = bayar - total;
+    let s=`{center}{h}STRUK PEMBAYARAN{/h}\ncloudkitchen.dyg++\n-------------------------\nAntrean: #${antrean}\nTotal: Rp ${total.toLocaleString()}\nBayar: Rp ${parseInt(bayar).toLocaleString()}\nKembali: Rp ${c.toLocaleString()}\nMetode: ${metode}\n-------------------------\n{center}TERIMA KASIH\n{cut}`;
+    location.href="rawbt:base64,"+btoa(unescape(encodeURIComponent(s)));
+}
+
+async function showRekap(){
+    const r=await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&getRekap=true`);
+    const d=await r.json();
+    rekapContent.innerHTML=`<h3>📊 Rekap Hari Ini</h3><div style="background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:15px;"><p>Total Omzet:</p><h2 style="color:var(--success); margin:0;">Rp ${(+d.total).toLocaleString()}</h2></div><div style="text-align:left; font-size:14px; margin-bottom:20px;">💵 Tunai: Rp ${(+d.tunai).toLocaleString()}<br>📱 QRIS: Rp ${(+d.qris).toLocaleString()}<br>💳 Kartu: Rp ${(+d.kartu).toLocaleString()}</div><button class="btn btn-bayar" style="width:100%" onclick="closeModal()">TUTUP</button>`;
+    rekapModal.style.display="flex";
+}
+
+function closeModal(){ document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); confirmBtn.innerText="KONFIRMASI LUNAS"; confirmSplitBtn.innerText="BAYAR & UPDATE DATA";}
+</script>
 </body>
 </html>

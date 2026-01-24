@@ -1,45 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DAPUR | CloudKitchen</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KITCHEN MONITOR | Cloud Kitchen</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
     <style>
-        :root { --primary: #1B4332; --bg: #f0f2f5; }
-        body { font-family: sans-serif; background: var(--bg); padding: 20px; margin: 0; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
-        .card { background: white; border-radius: 12px; padding: 20px; border-top: 10px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .meja { background: #ff7675; color: white; padding: 4px 12px; border-radius: 20px; font-weight: bold; }
-        .item-list { font-size: 20px; font-weight: bold; line-height: 1.5; color: #2d3436; margin: 15px 0; }
-        .btn { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        :root { --primary: #1B4332; --danger: #d63031; --bg: #f0f2f5; }
+        body { font-family:'Segoe UI', sans-serif; background: var(--bg); margin:0; padding:15px; overflow-x: hidden; }
+        .container { max-width:1200px; margin:auto; }
+        .header-page { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:white; padding:15px 20px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); }
+        .order-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:15px; }
+        .order-card { background:white; border-radius:12px; padding:18px; box-shadow:0 4px 6px rgba(0,0,0,0.1); border-top:8px solid var(--primary); display:flex; flex-direction:column; position:relative; touch-action: pan-y; overflow: hidden; transition: all 0.3s ease; }
+        .confirm-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(214, 48, 49, 0.96); color:white; display:none; flex-direction:column; justify-content:center; align-items:center; z-index: 10; text-align: center; }
+        .confirm-overlay.active { display: flex; }
+        .btn-confirm-group { display: flex; gap: 15px; margin-top: 15px; }
+        .btn-confirm { padding: 12px 30px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn-ya { background: white; color: var(--danger); }
+        .btn-batal { background: transparent; color: white; border: 2px solid white; }
+        .order-header { display:flex; justify-content:space-between; align-items:center; border-bottom:2px dashed #eee; padding-bottom:10px; margin-bottom:15px; }
+        .order-no { font-size:40px; font-weight:900; color:var(--primary); }
+        .customer-name { font-weight:bold; font-size:22px; color: #2d3436; }
+        .order-mode { display:inline-block; margin-top:5px; font-size:12px; font-weight:bold; background: #dfe6e9; color: #2d3436; padding:3px 12px; border-radius:15px; text-transform: uppercase; }
+        .item-list { background:#f8f9fa; padding:15px; border-radius:8px; flex-grow:1; margin-bottom:15px; font-family:'Courier New', monospace; font-size:19px; border:1px solid #edf2f7; line-height: 1.4; font-weight: bold; }
+        .btn-print { width: 100%; padding:18px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:16px; background:var(--primary); color:white; }
+        .removed { transform: scale(0.8); opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>
-    <h1 style="text-align:center; color: var(--primary)">DAPUR MONITOR</h1>
-    <div id="list" class="grid">Memuat pesanan...</div>
 
-    <script>
-        const API = "https://script.google.com/macros/s/AKfycbxjb-K_8aJQ5hYNHPG-vUpZ4AL6bZQmILLkFexZgPaQMgk3Wwe7WLQFZUuo5LJS-P4WWA/exec"; // GANTI DENGAN URL WEB APP ANDA
-        async function load() {
-            const r = await fetch(API + "?token=dyg-access-v2");
-            const data = await r.json();
-            const filter = data.filter(o => o.status === "BARU" || o.status === "DIPROSES");
-            document.getElementById('list').innerHTML = filter.map(o => `
-                <div class="card">
-                    <div style="display:flex; justify-content:space-between">
-                        <span style="font-size:24px; font-weight:bold">#${o.no_antrean}</span>
-                        <span class="meja">MEJA: ${o.mode_pesanan}</span>
-                    </div>
-                    <div class="item-list">${o.pesanan.split(',').join('<br>')}</div>
-                    <button class="btn" onclick="done(${o.row_index})">MASAK SELESAI</button>
+<div class="container">
+    <div class="header-page">
+        <h2 style="margin:0;">👨‍🍳 MONITOR DAPUR</h2>
+        <div id="status-conn" style="color: orange; font-weight: bold;">● Menghubungkan...</div>
+    </div>
+    <div id="orderList" class="order-grid"></div>
+</div>
+
+<audio id="notifSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+<script>
+const PIN_DAPUR = "1212";
+if(prompt("Masukkan PIN Dapur:") !== PIN_DAPUR){
+    alert("Akses ditolak!");
+    document.body.innerHTML="<h1 style='text-align:center;margin-top:50px;'>Akses Dilarang</h1>"; 
+    throw new Error("Invalid PIN");
+}
+
+const CONFIG = {
+    API_URL: "https://script.google.com/macros/s/AKfycbxjb-K_8aJQ5hYNHPG-vUpZ4AL6bZQmILLkFexZgPaQMgk3Wwe7WLQFZUuo5LJS-P4WWA/exec",
+    TOKEN: "dyg-access-v2",
+    REFRESH_RATE: 10000
+};
+
+let lastOrderCount = 0;
+let isRemoving = []; 
+
+async function fetchOrders(){
+    try{
+        // MENAMBAHKAN statusFilter=BARU agar hanya pesanan yang belum diproses yang muncul
+        const resp = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&statusFilter=BARU`);
+        const data = await resp.json();
+orders.forEach(order => {
+  order.pesanan_detail = order.pesanan_detail
+    ? JSON.parse(order.pesanan_detail)
+    : [];
+});
+
+        document.getElementById('status-conn').innerText = "● TERHUBUNG";
+        document.getElementById('status-conn').style.color = "green";
+
+        if(data.length > lastOrderCount && lastOrderCount !== 0) {
+            document.getElementById('notifSound').play().catch(()=>{});
+        }
+        lastOrderCount = data.length;
+        renderOrders(data);
+    } catch(err) {
+        document.getElementById('status-conn').innerText = "○ TERPUTUS";
+        document.getElementById('status-conn').style.color = "red";
+    }
+}
+
+function renderOrders(orders){
+    const container = document.getElementById('orderList');
+    const filtered = orders.filter(ord => !isRemoving.includes(ord.row_index.toString()));
+
+    if(filtered.length === 0){
+        container.innerHTML = "<p style='grid-column:1/-1; text-align:center; color:#888; margin-top:50px;'>Antrean dapur bersih.</p>";
+        return;
+    }
+
+    container.innerHTML = filtered.map(ord => {
+        // PERBAIKAN: Gunakan ord.antrean (sesuai judul kolom di spreadsheet Anda)
+        // Jika ord.antrean tidak ada, dia akan coba cari ord.no_antrean
+        const no = ord.antrean || ord.no_antrean || "!!";
+        const nama = ord.nama || "Tanpa Nama";
+        const pesananRaw = ord.pesanan || "";
+        const mode = ord.mode_pesanan || "DINE IN";
+
+        return `
+        <div class="order-card" id="card-${ord.row_index}" data-row="${ord.row_index}">
+            <div class="confirm-overlay" id="overlay-${ord.row_index}">
+                <b style="font-size:20px;">HAPUS PESANAN?</b>
+                <div class="btn-confirm-group">
+                    <button class="btn-confirm btn-ya" onclick="confirmDelete(${ord.row_index})">YA</button>
+                    <button class="btn-confirm btn-batal" onclick="cancelDelete(${ord.row_index})">BATAL</button>
                 </div>
-            `).join('');
-        }
-        async function done(row) {
-            await fetch(API + `?token=dyg-access-v2&updateStatus=true&row=${row}&finalStatus=DAPUR_SELESAI`, {mode:'no-cors'});
-            load();
-        }
-        setInterval(load, 10000); load();
-    </script>
+            </div>
+            <div class="order-header">
+                <span class="order-no">#${no}</span>
+                <div style="font-size:14px;color:#666;font-weight:bold;">
+                    ${ord.timestamp ? new Date(ord.timestamp).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}) : '--:--'}
+                </div>
+            </div>
+            <div class="customer-info">
+                <span class="customer-name">${nama}</span>
+                <span class="order-mode">${mode}</span>
+            </div>
+            <div class="item-list">
+                ${pesananRaw ? pesananRaw.split(',').map(item => `• ${item.trim()}`).join('<br>') : 'Menu Kosong'}
+            </div>
+            <button class="btn-print" onclick="printAndClose('${ord.row_index}', '${no}', '${nama.replace(/'/g, "\\'")}', '${pesananRaw.replace(/'/g, "\\'")}', '${mode}')">
+                🖨️ CETAK & SELESAI
+            </button>
+        </div>`;
+    }).join('');
+
+    document.querySelectorAll('.order-card').forEach(card => {
+        const mc = new Hammer(card);
+        mc.on("swipeleft", () => {
+            const row = card.getAttribute('data-row');
+            document.getElementById(`overlay-${row}`).classList.add('active');
+        });
+    });
+}
+
+function printAndClose(row, no, nama, menu, mode) {
+    const card = document.getElementById(`card-${row}`);
+    if(card) card.classList.add('removed');
+    isRemoving.push(row.toString());
+
+    const struk = `{center}{h}KITCHEN BILL{/h}\n--------------------------------\n{h}ANTREAN: #${no}{/h}\n--------------------------------\nNama: ${nama}\nMode: ${mode}\n--------------------------------\n${menu.split(',').map(m => `[ ] ${m.trim()}`).join('\n')}\n--------------------------------\n{center}--- ${new Date().toLocaleTimeString('id-ID')} ---\n{cut}`;
+
+    try {
+        window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(struk)));
+    } catch(e) {}
+
+    // PENTING: Update status menjadi DAPUR_SELESAI agar muncul di Kasir
+    fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}&finalStatus=DAPUR_SELESAI`)
+    .catch(e => console.log("Pending..."));
+}
+
+async function confirmDelete(row) {
+    const card = document.getElementById(`card-${row}`);
+    card.classList.add('removed');
+    isRemoving.push(row.toString());
+    await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}&finalStatus=DAPUR_SELESAI`);
+}
+
+function cancelDelete(row) { document.getElementById(`overlay-${row}`).classList.remove('active'); }
+
+setInterval(fetchOrders, CONFIG.REFRESH_RATE);
+fetchOrders();
+</script>
 </body>
 </html>
