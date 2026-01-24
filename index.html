@@ -546,7 +546,7 @@ mark {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwbCUYUbja26SSa4_rvAXUYVvLZ4bGR07vGKV2xhX9LHNahmc-IyTdw32nijs83zwI2fQ/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxxkNv1NGjHw4vMIK9i3k43KgEwud_VgDIImbRNrCKtk3bmCEnoTZmCI2HRxR48Owo7-Q/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -946,9 +946,13 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
         btnKirim.style.pointerEvents = "none";
     }
 
-    // Kirim data ke database di latar belakang
-    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
+    // 1. Buat data detail pesanan dalam format JSON
+const detailJSON = JSON.stringify(summary); 
+
+// 2. Kirim ke Google Apps Script (Tambahkan parameter &detail di akhir URL)
+fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}&detail=${encodeURIComponent(detailJSON)}`, { 
+    mode: 'no-cors' 
+});
 
     // Tunggu animasi sebentar baru pindah ke WA
     setTimeout(() => {
