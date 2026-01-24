@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KASIR DASHBOARD | cloudkitchen.dyg++</title>
+    <style>
+        :root {
+            --primary: #1B4332;
+            --success: #00b894;
+            --bg: #f0f2f5;
+            --text: #2d3436;
+        }
+        body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin:0; padding:15px; }
+        .header { 
+            display:flex; justify-content:space-between; align-items:center; 
+            background:white; padding:15px 20px; border-radius:12px; 
+            box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px;
+        }
+        .order-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:15px; }
+        .card { 
+            background:white; border-radius:12px; padding:15px; 
+            border-left: 8px solid var(--success);
+            box-shadow:0 4px 6px rgba(0,0,0,0.1); 
+            display: flex; flex-direction: column;
+        }
+        .card-header { display: flex; justify-content: space-between; border-bottom: 1px dashed #ddd; padding-bottom: 10px; margin-bottom: 10px; }
+        .antrean-num { font-size: 24px; font-weight: 900; color: var(--primary); }
+        .mode-tag { background: #e8f5e9; color: var(--primary); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .menu-list { flex-grow: 1; font-size: 15px; color: #444; margin-bottom: 15px; }
+        .total-box { font-size: 20px; font-weight: 800; color: #d63031; margin-bottom: 15px; border-top: 1px solid #eee; pt: 10px; }
+        .btn-lunas { 
+            width:100%; padding: 12px; background: var(--success); 
+            color:white; border:none; border-radius:8px; 
+            font-weight:bold; cursor:pointer; font-size: 16px;
+        }
+        .btn-lunas:active { transform: scale(0.98); }
+        #status-indicator { font-size: 12px; font-weight: bold; color: var(--success); }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h2 style="margin:0; color: var(--primary);">💰 KASIR MONITOR</h2>
+        <span id="status-indicator">● Menghubungkan ke Server...</span>
+    </div>
+    <div style="text-align:right">
+        <div id="clock" style="font-weight:bold">00:00:00</div>
+    </div>
+</div>
+
+<div id="listTagihan" class="order-grid">
+    </div>
+
+<script>
+    const CONFIG = {
+        // GANTI DENGAN URL WEB APP GAS ANDA
+        API_URL: "https://https://script.google.com/macros/s/AKfycbzuck0UqrJEfycrr2FPvUFE2RKHE7EcdEUirP3MQ0e7c6gmZS5SFcNENH_TWVY8Yaj1XQ/exec",
+        TOKEN: "dyg-access-v2"
+    };
+
+    // Fungsi Ambil Data dari GAS
+    async function refreshData() {
+        try {
+            // Kita minta data yang statusFilter-nya = DAPUR_SELESAI
+            const response = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&statusFilter=DAPUR_SELESAI`);
+            const orders = await response.json();
+            renderOrders(orders);
+            document.getElementById('status-indicator').innerText = "● SERVER TERHUBUNG (AUTO-REFRESH)";
+        } catch (e) {
+            document.getElementById('status-indicator').innerText = "○ SERVER ERROR / OFFLINE";
+            console.error(e);
+        }
+    }
+
+    function renderOrders(orders) {
+        const container = document.getElementById('listTagihan');
+        if (orders.length === 0) {
+            container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:50px; color:#999;">
+                <h3>Belum ada pesanan selesai dari dapur...</h3>
+                <p>Monitor ini akan otomatis update setiap 10 detik</p>
+            </div>`;
+            return;
+        }
+
+        container.innerHTML = orders.map(ord => `
+            <div class="card" id="card-${ord.row_index}">
+                <div class="card-header">
+                    <div>
+                        <span class="antrean-num">#${ord.no_antrean}</span>
+                        <div style="font-size:14px; color:#666;">${ord.nama}</div>
+                    </div>
+                    <span class="mode-tag">${ord.mode_pesanan.toUpperCase()}</span>
+                </div>
+                <div class="menu-list">
+                    ${ord.pesanan.split(',').map(m => `• ${m.trim()}<br>`).join('')}
+                </div>
+                <div class="total-box">
+                    Total: Rp ${parseInt(ord.total_bayar).toLocaleString('id-ID')}
+                </div>
+                <button class="btn-lunas" onclick="prosesPembayaran('${ord.row_index}', '${ord.no_antrean}', '${ord.total_bayar}')">
+                    KONFIRMASI LUNAS
+                </button>
+            </div>
+        `).join('');
+    }
+
+    async function prosesPembayaran(row, antrean, total) {
+        if(!confirm(`Konfirmasi pelunasan Antrean #${antrean}?\nTotal: Rp ${parseInt(total).toLocaleString('id-ID')}`)) return;
+
+        // Visual feedback (kartu agak transparan saat proses)
+        document.getElementById(`card-${row}`).style.opacity = "0.5";
+
+        try {
+            // Update status di Google Sheet menjadi LUNAS
+            const resp = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}&finalStatus=LUNAS`);
+            if (await resp.text() === "Success") {
+                // Opsional: Panggil cetak struk kasir di sini jika pakai RawBT
+                alert(`Pesanan #${antrean} Berhasil Dilunaskan!`);
+                refreshData();
+            }
+        } catch (e) {
+            alert("Gagal koneksi ke server. Coba lagi.");
+            document.getElementById(`card-${row}`).style.opacity = "1";
+        }
+    }
+
+    // Jam Digital
+    setInterval(() => {
+        document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID');
+    }, 1000);
+
+    // Refresh data tiap 10 detik
+    setInterval(refreshData, 10000);
+    refreshData();
+</script>
+
+</body>
+</html>

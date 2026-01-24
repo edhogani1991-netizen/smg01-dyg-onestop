@@ -99,7 +99,7 @@ if(prompt("Masukkan PIN Dapur:") !== PIN_DAPUR){
 }
 
 const CONFIG = {
-    API_URL: "https://script.google.com/macros/s/AKfycbyHXKH97V_JUlyWcl0y51q3B9t7gKTUXqZo1RZbhClE9xhwmQN7AaIxTAR27tmFw9b2LA/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbzuck0UqrJEfycrr2FPvUFE2RKHE7EcdEUirP3MQ0e7c6gmZS5SFcNENH_TWVY8Yaj1XQ/exec",
     TOKEN: "dyg-access-v2",
     REFRESH_RATE: 10000
 };
@@ -200,7 +200,8 @@ function printAndClose(row, no, nama, menu, mode, total) {
     }
 
     // 4. Update server di background (Tanpa menunggu)
-    fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}`)
+    // Tambahkan &finalStatus=DAPUR_SELESAI
+fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}&finalStatus=DAPUR_SELESAI`)
     .catch(e => console.log("Server update pending..."));
 }
 
