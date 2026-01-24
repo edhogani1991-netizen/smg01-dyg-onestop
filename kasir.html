@@ -3,182 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KASIR DASHBOARD | cloudkitchen.dyg++</title>
+    <title>KASIR PRO + REKAP | cloudkitchen.dyg++</title>
     <style>
-        :root {
-            --primary: #1B4332;
-            --success: #00b894;
-            --bg: #f0f2f5;
-            --text: #2d3436;
-        }
-        body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin:0; padding:15px; }
+        :root { --primary: #1B4332; --success: #00b894; --bg: #f0f2f5; --danger: #e74c3c; --warning: #f39c12; }
+        body { font-family:'Segoe UI', sans-serif; background: var(--bg); margin:0; padding:15px; color: #2d3436; }
         
-        /* Area Login */
-        .login-box { 
-            background:white; padding:30px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.1); 
-            text-align:center; width:300px; margin: 100px auto; 
-        }
-        .login-box input { width:100%; padding:12px; margin-bottom:15px; border:1px solid #ddd; border-radius:8px; font-size:18px; text-align:center; box-sizing:border-box; }
-        .btn-login { width:100%; padding:12px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; }
-
-        /* Area Dashboard */
-        #dashboard { display:none; }
-        .header { 
-            display:flex; justify-content:space-between; align-items:center; 
-            background:white; padding:15px 20px; border-radius:12px; 
-            box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px;
-        }
-        .order-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:15px; }
-        .card { 
-            background:white; border-radius:12px; padding:15px; 
-            border-left: 8px solid var(--success);
-            box-shadow:0 4px 6px rgba(0,0,0,0.1); 
-            display: flex; flex-direction: column;
-        }
-        .card-header { display: flex; justify-content: space-between; border-bottom: 1px dashed #ddd; padding-bottom: 10px; margin-bottom: 10px; }
+        /* Layout */
+        .header { display:flex; justify-content:space-between; align-items:center; background:white; padding:15px 20px; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .order-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap:15px; }
+        
+        /* Card */
+        .card { background:white; border-radius:12px; padding:15px; border-left: 8px solid var(--success); box-shadow:0 4px 6px rgba(0,0,0,0.1); }
         .antrean-num { font-size: 24px; font-weight: 900; color: var(--primary); }
-        .mode-tag { background: #e8f5e9; color: var(--primary); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-        .menu-list { flex-grow: 1; font-size: 15px; color: #444; margin-bottom: 15px; font-weight: 500;}
-        .total-box { font-size: 20px; font-weight: 800; color: #d63031; margin-bottom: 15px; border-top: 1px solid #eee; padding-top: 10px; }
-        .btn-lunas { 
-            width:100%; padding: 12px; background: var(--success); 
-            color:white; border:none; border-radius:8px; 
-            font-weight:bold; cursor:pointer; font-size: 16px;
-        }
-        #status-indicator { font-size: 12px; font-weight: bold; }
+        .total-box { font-size: 18px; font-weight: 800; color: var(--danger); margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; font-size: 13px; }
+        .btn-lunas { background: var(--success); }
+        .btn-split { background: var(--warning); }
+        .btn-rekap { background: var(--primary); padding: 8px 15px; font-size: 12px; }
+
+        /* Modal Split & Rekap */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; width: 95%; max-width: 450px; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
+        .qty-ctrl { display: flex; align-items: center; gap: 10px; }
+        .btn-qty { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #ddd; background: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="loginArea" class="login-box">
-    <h2 style="color: var(--primary);">🔐 KASIR PIN</h2>
-    <input type="password" id="pinInput" placeholder="Masukkan PIN" maxlength="4" inputmode="numeric">
-    <button class="btn-login" onclick="checkPin()">MASUK</button>
-</div>
-
 <div id="dashboard">
     <div class="header">
         <div>
-            <h2 style="margin:0; color: var(--primary);">💰 KASIR MONITOR</h2>
-            <span id="status-indicator" style="color: orange;">● Menghubungkan...</span>
+            <h2 style="margin:0;">💰 KASIR MONITOR</h2>
+            <button class="btn btn-rekap" onclick="showRekap()">📊 REKAP HARI INI</button>
         </div>
-        <div style="text-align:right">
+        <div style="text-align:right;">
             <div id="clock" style="font-weight:bold">00:00:00</div>
-            <button onclick="location.reload()" style="font-size:10px; border:none; background:none; color:red; cursor:pointer;">Logout</button>
+            <span id="status-indicator" style="font-size:10px;">● ONLINE</span>
         </div>
     </div>
+    <div id="listTagihan" class="order-grid"></div>
+</div>
 
-    <div id="listTagihan" class="order-grid">
+<div id="splitModal" class="modal">
+    <div class="modal-content">
+        <h3>🛒 Keranjang Split Bill</h3>
+        <div id="itemList"></div>
+        <div style="margin-top:20px; border-top:2px solid #eee; padding-top:15px;">
+            <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:bold; margin-bottom:10px;">
+                <span>Total:</span><span id="cartTotalDisplay">Rp 0</span>
+            </div>
+            <select id="splitMethod" style="width:100%; padding:10px; margin-bottom:10px;">
+                <option value="TUNAI">TUNAI</option>
+                <option value="QRIS">QRIS</option>
+                <option value="KARTU">KARTU</option>
+            </select>
+            <button class="btn btn-lunas" style="width:100%;" onclick="prosesSplit()">BAYAR & CETAK STRUK</button>
+            <button class="btn" style="width:100%; background:#7f8c8d; margin-top:5px;" onclick="closeModal()">BATAL</button>
+        </div>
+    </div>
+</div>
+
+<div id="rekapModal" class="modal">
+    <div class="modal-content" id="rekapContent" style="text-align:left;">
         </div>
 </div>
 
 <script>
     const CONFIG = {
-        // GANTI DENGAN URL WEB APP GAS ANDA
-        API_URL: "https://script.google.com/macros/s/AKfycbzuck0UqrJEfycrr2FPvUFE2RKHE7EcdEUirP3MQ0e7c6gmZS5SFcNENH_TWVY8Yaj1XQ/exec",
-        TOKEN: "dyg-access-v2",
-        PIN: "1234" // Ganti PIN sesuai keinginan
+        API_URL: "https://script.google.com/macros/s/AKfycbwTMnQ2lTxuguB7o1zmi9TecIns60xMY3Q02au40g4XUxNpkc5lNAQhNudvLwBC2Vt2/exec",
+        TOKEN: "dyg-access-v2"
     };
 
-    function checkPin() {
-        const input = document.getElementById('pinInput').value;
-        if(input === CONFIG.PIN) {
-            document.getElementById('loginArea').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            refreshData();
-            setInterval(refreshData, 10000);
-        } else {
-            alert("PIN Salah!");
-            document.getElementById('pinInput').value = '';
-        }
-    }
+    let activeOrder = null;
+    let cart = {};
 
     async function refreshData() {
         try {
-            // Kita filter status 'DAPUR_SELESAI' (Hasil dari klik dapur)
-            const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&statusFilter=DAPUR_SELESAI`;
-            const response = await fetch(url);
-            
-            if (!response.ok) throw new Error("Offline");
-            
+            const response = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&statusFilter=DAPUR_SELESAI`);
             const orders = await response.json();
             renderOrders(orders);
-            
-            const indicator = document.getElementById('status-indicator');
-            indicator.innerText = "● SERVER ONLINE";
-            indicator.style.color = "var(--success)"; 
-        } catch (e) {
-            const indicator = document.getElementById('status-indicator');
-            indicator.innerText = "○ SERVER ERROR / OFFLINE";
-            indicator.style.color = "red";
-        }
+        } catch (e) { console.log("Offline"); }
     }
 
     function renderOrders(orders) {
         const container = document.getElementById('listTagihan');
-        if (orders.length === 0) {
-            container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:50px; color:#999;">
-                <h3>Belum ada tagihan masuk...</h3>
-                <p>Monitor otomatis update setiap 10 detik</p>
-            </div>`;
-            return;
-        }
-
-        container.innerHTML = orders.map(ord => {
-            // Perbaikan pengambilan variabel agar tidak undefined
-            const no = ord.antrean || ord.no_antrean || "!!";
-            const nama = ord.nama || "Pelanggan";
-            const total = ord.total_bayar || 0;
-            const pesanan = ord.pesanan || "";
-
-            return `
-            <div class="card" id="card-${ord.row_index}">
-                <div class="card-header">
-                    <div>
-                        <span class="antrean-num">#${no}</span>
-                        <div style="font-size:14px; color:#666;">${nama}</div>
-                    </div>
-                    <span class="mode-tag">${(ord.mode_pesanan || "DINE IN").toUpperCase()}</span>
+        container.innerHTML = orders.map(ord => `
+            <div class="card">
+                <div style="display:flex; justify-content:space-between;">
+                    <span class="antrean-num">#${ord.antrean}</span>
+                    <span style="font-size:12px; color:#666;">${ord.nama}</span>
                 </div>
-                <div class="menu-list">
-                    ${pesanan.split(',').map(m => `• ${m.trim()}<br>`).join('')}
+                <div style="margin:10px 0; font-size:14px; color:#444;">${ord.pesanan.split(',').join('<br>')}</div>
+                <div class="total-box">Rp ${parseInt(ord.total_bayar).toLocaleString('id-ID')}</div>
+                <div class="btn-group">
+                    <button class="btn btn-lunas" onclick="bayarLunasFull(${JSON.stringify(ord).replace(/"/g, '&quot;')})">LUNAS SEMUA</button>
+                    <button class="btn btn-split" onclick="openSplit(${JSON.stringify(ord).replace(/"/g, '&quot;')})">SPLIT BILL</button>
                 </div>
-                <div class="total-box">
-                    Total: Rp ${parseInt(total).toLocaleString('id-ID')}
-                </div>
-                <button class="btn-lunas" onclick="prosesPembayaran('${ord.row_index}', '${no}', '${total}')">
-                    KONFIRMASI LUNAS
-                </button>
             </div>
-            `;
-        }).join('');
+        `).join('');
     }
 
-    async function prosesPembayaran(row, antrean, total) {
-        if(!confirm(`Konfirmasi pelunasan Antrean #${antrean}?\nTotal: Rp ${parseInt(total).toLocaleString('id-ID')}`)) return;
-
-        document.getElementById(`card-${row}`).style.opacity = "0.5";
-
-        try {
-            // Status diubah menjadi LUNAS agar hilang dari monitor kasir
-            const resp = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}&finalStatus=LUNAS`);
-            if (await resp.text() === "Success") {
-                // CETAK STRUK KASIR
-                const struk = `{center}{h}STRUK PEMBAYARAN{/h}\n{center}cloudkitchen.dyg++\n--------------------------------\nAntrean: #${antrean}\nTotal: Rp ${parseInt(total).toLocaleString('id-ID')}\n--------------------------------\n{center}TERIMA KASIH\n{center}LUNAS\n{cut}`;
-                window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(struk)));
-                
-                refreshData();
-            }
-        } catch (e) {
-            alert("Gagal koneksi ke server.");
-            document.getElementById(`card-${row}`).style.opacity = "1";
-        }
+    // LOGIKA SPLIT BILL (+/-)
+    function openSplit(ord) {
+        activeOrder = ord;
+        cart = {};
+        const items = ord.pesanan.split(',');
+        document.getElementById('itemList').innerHTML = items.map(item => `
+            <div class="item-row">
+                <span>${item.trim()}</span>
+                <div class="qty-ctrl">
+                    <button class="btn-qty" onclick="updateQty('${item.trim()}', -1)">-</button>
+                    <b id="qty-${item.trim()}">0</b>
+                    <button class="btn-qty" onclick="updateQty('${item.trim()}', 1)">+</button>
+                </div>
+            </div>
+        `).join('');
+        document.getElementById('splitModal').style.display = 'flex';
     }
 
-    setInterval(() => {
-        document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID');
-    }, 1000);
+    function updateQty(item, delta) {
+        if (!cart[item]) cart[item] = 0;
+        cart[item] = Math.max(0, cart[item] + delta);
+        document.getElementById(`qty-${item}`).innerText = cart[item];
+        let totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+        document.getElementById('cartTotalDisplay').innerText = totalItems + " Item";
+    }
+
+    async function prosesSplit() {
+        const nominal = prompt("Masukkan total rupiah untuk item terpilih:");
+        if(!nominal || nominal == "0") return;
+        
+        const trxId = "SPLIT-" + Date.now();
+        const metode = document.getElementById('splitMethod').value;
+        
+        // Struk Split
+        let rincian = "";
+        for (let k in cart) { if(cart[k] > 0) rincian += `${cart[k]}x ${k}\n`; }
+        
+        let struk = `{center}{h}STRUK SPLIT BILL{/h}\n{center}cloudkitchen.dyg++\n--------------------------------\nID: ${trxId}\nAntrean: #${activeOrder.antrean}\n--------------------------------\n${rincian}--------------------------------\n{right}TOTAL: Rp ${parseInt(nominal).toLocaleString()}\nMETODE: ${metode}\n--------------------------------\n{cut}`;
+        
+        window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(struk)));
+        closeModal();
+    }
+
+    // FITUR REKAP HARIAN
+    async function showRekap() {
+        const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getRekap=true`);
+        const data = await res.json();
+        
+        document.getElementById('rekapContent').innerHTML = `
+            <h3 style="text-align:center;">📊 REKAP PENDAPATAN HARI INI</h3>
+            <hr>
+            <p>Total Transaksi: <b>${data.trxCount}</b></p>
+            <p>💵 Tunai: <b>Rp ${data.tunai.toLocaleString()}</b></p>
+            <p>📱 QRIS: <b>Rp ${data.qris.toLocaleString()}</b></p>
+            <p>💳 Kartu: <b>Rp ${data.kartu.toLocaleString()}</b></p>
+            <hr>
+            <h2 style="text-align:center; color:var(--success);">TOTAL: Rp ${data.total.toLocaleString()}</h2>
+            <button class="btn btn-lunas" style="width:100%;" onclick="cetakRekap(${JSON.stringify(data)})">CETAK LAPORAN</button>
+            <button class="btn" style="width:100%; background:#7f8c8d; margin-top:5px;" onclick="closeModal()">TUTUP</button>
+        `;
+        document.getElementById('rekapModal').style.display = 'flex';
+    }
+
+    function cetakRekap(d) {
+        let s = `{center}{h}LAPORAN HARIAN{/h}\n{center}${new Date().toLocaleDateString()}\n--------------------------------\n`;
+        s += `Tunai    : Rp ${d.tunai.toLocaleString()}\nQRIS     : Rp ${d.qris.toLocaleString()}\nKartu    : Rp ${d.kartu.toLocaleString()}\n`;
+        s += `--------------------------------\n{right}{h}TOTAL: Rp ${d.total.toLocaleString()}{/h}\n--------------------------------\n{cut}`;
+        window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(s)));
+    }
+
+    function closeModal() { 
+        document.getElementById('splitModal').style.display = 'none'; 
+        document.getElementById('rekapModal').style.display = 'none'; 
+    }
+
+    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'); }, 1000);
+    window.onload = refreshData;
 </script>
-
 </body>
 </html>
