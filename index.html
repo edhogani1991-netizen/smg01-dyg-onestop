@@ -1267,21 +1267,37 @@ document.querySelectorAll('.service-btn').forEach(btn => {
     });
 });
 
-// Pengunci Tanggal (Minimal Besok)
+// --- PENGGANTI KODE PENGUNCI TANGGAL LAMA ---
 document.addEventListener('DOMContentLoaded', function() {
     const dInput = document.getElementById('eventDate');
+    
     if (dInput) {
+        // 1. Tentukan tanggal besok sebagai batas minimal
         const besok = new Date();
         besok.setDate(besok.getDate() + 1);
-        
-        // Format manual agar akurat dengan zona waktu lokal
-        const yyyy = besok.getFullYear();
-        const mm = String(besok.getMonth() + 1).padStart(2, '0');
-        const dd = String(besok.getDate()).padStart(2, '0');
-        const besokFormat = `${yyyy}-${mm}-${dd}`;
-        
+        const y = besok.getFullYear();
+        const m = String(besok.getMonth() + 1).padStart(2, '0');
+        const d = String(besok.getDate()).padStart(2, '0');
+        const besokFormat = `${y}-${m}-${d}`;
+
+        // Set atribut min dan value default
         dInput.setAttribute('min', besokFormat);
-        dInput.value = besokFormat; // Set otomatis ke besok agar user tidak salah
+        dInput.value = besokFormat;
+
+        // 2. LOGIKA ALERT SAAT KLIK HARI INI
+        dInput.addEventListener('input', function() {
+            const hariIni = new Date();
+            const yNow = hariIni.getFullYear();
+            const mNow = String(hariIni.getMonth() + 1).padStart(2, '0');
+            const dNow = String(hariIni.getDate()).padStart(2, '0');
+            const tglHariIni = `${yNow}-${mNow}-${dNow}`;
+
+            // Jika user memaksa pilih hari ini (lewat ketik atau bug kalender)
+            if (this.value === tglHariIni) {
+                alert("Ups! Pesanan katering tidak bisa untuk hari ini ya. 🙏\nMinimal pemesanan adalah H-1. Silakan pilih tanggal mulai besok.");
+                this.value = besokFormat; // Kembalikan otomatis ke tanggal besok
+            }
+        });
     }
 });
 </script>
