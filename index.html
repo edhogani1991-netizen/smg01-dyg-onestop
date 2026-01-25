@@ -378,6 +378,23 @@ mark {
     }
 }
 
+/* BADGE */
+.badge {
+    position: absolute;
+    top: -8px;
+    right: -4px;
+    background: #FF6B6B;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+
 /* ===============================
    SECONDARY MENU (SAMA 140%)
    =============================== */
@@ -464,17 +481,6 @@ mark {
     touch-action: manipulation;
 }
 
-.service-btn .badge {
-    display: inline-block;
-    background: #FFB100;
-    color: #fff;
-    font-size: 10px;
-    padding: 2px 5px;
-    border-radius: 5px;
-    margin-left: 5px;
-}
-
-
 /* === FORM EXTRA RINGKAS === */
 .form-group {
     margin-bottom: 8px;
@@ -535,9 +541,6 @@ mark {
     filter: grayscale(1);
     opacity: 0.5;
 }
-
-
-
     </style>
 </head>
 <body>
@@ -571,21 +574,37 @@ mark {
 </div>
 
 <div class="service-mode">
-    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-        <div class="icon-box"><img src="dine-in3.png" class="service-icon-img"></div>
+
+    <div class="service-mode">
+
+    <!-- DINE IN -->
+    <div class="service-btn dinein" id="mDine">
+        <div class="icon-box">
+            <img src="dinein.png" class="service-icon-img" alt="Dine In">
+        </div>
         <span>Dine In</span>
+        <div id="dineInBadge" class="badge"></div>
     </div>
 
-    <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
-        <div class="icon-box"><img src="take-away3.png" class="service-icon-img"></div>
+    <!-- TAKE AWAY -->
+    <div class="service-btn takeaway" id="mTake">
+        <div class="icon-box">
+            <img src="takeaway.png" class="service-icon-img" alt="Take Away">
+        </div>
         <span>Take Away</span>
     </div>
 
-    <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
-        <div class="icon-box"><img src="delivery3.png" class="service-icon-img"></div>
+    <!-- DELIVERY -->
+    <div class="service-btn delivery" id="mDelivery">
+        <div class="icon-box">
+            <img src="delivery.png" class="service-icon-img" alt="Delivery">
+        </div>
         <span>Delivery</span>
+        <div id="deliveryBadge" class="badge"></div>
     </div>
+
 </div>
+
 
 <div class="service-mode secondary-mode">
     <div class="service-btn secondary" onclick="openComingSoon()">
@@ -665,7 +684,8 @@ mark {
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
         TOKEN: 'dyg-access-v2',
-        RADIUS_DINE_IN: 150
+        RADIUS_DINE_IN: 150 ,
+RADIUS_DELIVERY: 50
     };
 
     const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
@@ -677,60 +697,42 @@ mark {
     // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-function updateServiceBadges(userLat, userLng) {
-    const delivBtn = document.getElementById('mDeliv');
+    async function startApp() {
+navigator.geolocation.getCurrentPosition((pos) => {
+    const { latitude, longitude } = pos.coords;
+    window.userLat = latitude;
+    window.userLng = longitude;
+
+    const distMeter = L.latLng(latitude, longitude)
+                       .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45; // koreksi
+    window.userDist = distMeter;
+
     const dineBtn = document.getElementById('mDine');
-    
-    if (!delivBtn || !dineBtn) return;
+    const deliveryBtn = document.getElementById('mDelivery');
+    const dineBadge = document.getElementById('dineInBadge');
+    const deliveryBadge = document.getElementById('deliveryBadge');
 
-    const dist = L.latLng(userLat, userLng).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
-
-    // DELIVERY → Nonaktif jika ≤ 50m
-    if(dist <= 50) {
-        delivBtn.classList.add('disabled');
-        delivBtn.querySelector('.badge')?.remove();
-        const badge = document.createElement('span');
-        badge.className = 'badge';
-        badge.innerText = "Jangkauan Dine In";
-        delivBtn.appendChild(badge);
-    } else {
-        delivBtn.classList.remove('disabled');
-        delivBtn.querySelector('.badge')?.remove();
-    }
-
-    // DINE IN → Nonaktif jika > 200m
-    if(dist > 200) {
+    // DINE IN
+    if (distMeter > CONFIG.RADIUS_DINE_IN) {
         dineBtn.classList.add('disabled');
-        dineBtn.querySelector('.badge')?.remove();
-        const badge = document.createElement('span');
-        badge.className = 'badge';
-        badge.innerText = "Jangkauan Deliv";
-        dineBtn.appendChild(badge);
+        dineBadge.innerText = "Jangkauan Delivery";
+        dineBadge.style.opacity = 1;
     } else {
         dineBtn.classList.remove('disabled');
-        dineBtn.querySelector('.badge')?.remove();
+        dineBadge.style.opacity = 0;
     }
-}
 
+    // DELIVERY
+    if (distMeter < CONFIG.RADIUS_DELIVERY) {
+        deliveryBtn.classList.add('disabled');
+        deliveryBadge.innerText = "Jangkauan Dine In";
+        deliveryBadge.style.opacity = 1;
+    } else {
+        deliveryBtn.classList.remove('disabled');
+        deliveryBadge.style.opacity = 0;
+    }
+});
 
-    async function startApp() {
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        window.userLat = latitude;
-        window.userLng = longitude;
-
-        const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-        userDist = straightLineDist * 1.45; 
-
-        // Cek jangkauan Dine In saja, tapi jangan otomatis klik Delivery
-        if (userDist > CONFIG.RADIUS_DINE_IN) {
-            const dineBtn = document.getElementById('mDine');
-            if(dineBtn) {
-                dineBtn.classList.add('disabled');
-                dineBtn.onclick = () => showOutOfRangeAlert();
-            }
-        }
-        
         initMap(latitude, longitude);
         initBanner();
         document.getElementById('welcome-overlay').style.display = 'none';
