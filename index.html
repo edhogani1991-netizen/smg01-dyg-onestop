@@ -550,9 +550,26 @@ mark {
         <input type="text" id="custName" placeholder="Masukkan nama...">
     </div>
     
-    <div id="boxMeja"><div id="wrapMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="Contoh: 08"></div></div>
-    <div id="boxAlamat" style="display:none;"><div id="wrapAddr" class="input-card"><label>Alamat Pengiriman</label><textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea></div></div>
+    <div id="boxMeja" style="display:none;">
+        <div class="input-card">
+            <label>Nomor Meja</label>
+            <input type="number" id="tableNo" placeholder="Contoh: 08">
+        </div>
+    </div>
 
+    <div id="boxAlamat" style="display:none;">
+        <div class="input-card">
+            <label>Alamat Pengiriman</label>
+            <textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea>
+        </div>
+    </div>
+
+    <div id="boxTanggal" style="display:none;">
+        <div class="input-card">
+            <label>Tanggal Pengiriman Katering</label>
+            <input type="date" id="kt-tanggal-baru" onclick="this.showPicker()">
+        </div>
+    </div>
     <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
     
     <div class="search-wrapper">
@@ -928,7 +945,12 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
                 el.style.border = "none";
             }, 2000);
         });
-        return; 
+    if (currentMode === 'KATERING') {
+        const tglValue = document.getElementById('kt-tanggal-input').value;
+        if (!tglValue) {
+            alert("Silakan pilih tanggal pengiriman katering.");
+            return;
+        }
     }
 
     // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
@@ -1049,21 +1071,46 @@ function changeMode(mode, el) {
         return;
     }
 
-    // HAPUS EFEK DENYUT SEGERA SETELAH DIPILIH
+    // Hapus efek denyut pada icon
     document.querySelectorAll('.icon-box').forEach(icon => {
         icon.classList.remove('pulse-active');
     });
 
-    // LOGIKA MODE LAYANAN ANDA YANG SUDAH ADA...
     currentMode = mode;
+    
+    // Atur status aktif pada tombol
     document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
     
-    // Tampilkan box input meja/alamat sesuai mode
-    document.getElementById('boxMeja').style.display = mode === 'DINE IN' ? 'block' : 'none';
-    document.getElementById('boxAlamat').style.display = mode === 'DELIVERY' ? 'block' : 'none';
-}
+    // Reset semua tampilan kolom tambahan
+    document.getElementById('boxMeja').style.display = 'none';
+    document.getElementById('boxAlamat').style.display = 'none';
+    document.getElementById('boxTanggal').style.display = 'none';
 
+    // Tampilkan kolom sesuai mode yang dipilih
+    if (mode === 'DINE IN') {
+        document.getElementById('boxMeja').style.display = 'block';
+    } else if (mode === 'DELIVERY') {
+        document.getElementById('boxAlamat').style.display = 'block';
+    } else if (mode === 'KATERING') {
+        document.getElementById('boxTanggal').style.display = 'block';
+        
+        // Atur minimal tanggal katering = Besok
+        const tglInput = document.getElementById('kt-tanggal-input');
+        const besok = new Date();
+        besok.setDate(besok.getDate() + 1);
+        tglInput.min = besok.toISOString().split('T')[0];
+    }
+
+    // Fokus otomatis ke input nama
+    const nameField = document.getElementById('custName');
+    if (nameField) {
+        setTimeout(() => {
+            nameField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            nameField.focus();
+        }, 300);
+    }
+}
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
