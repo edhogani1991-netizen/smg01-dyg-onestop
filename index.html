@@ -243,186 +243,167 @@ mark {
    ===================================================== */
 
 /* ===============================
-   CONTAINER
+   CONTAINER UTAMA (Baris 1 & 2 Sama)
    =============================== */
-.service-mode {
+.service-mode, 
+.secondary-menu {
     display: flex;
     justify-content: space-between;
-    padding: 15px 18px;
-    gap: 8px; 
+    padding: 10px 18px;
+    gap: 4px; /* Rapat agar gambar besar bisa mepet */
+    background: transparent;
 }
 
 .service-btn {
-    width: 22%; 
+    width: 25%; /* 4 Kolom murni */
     display: flex;
     flex-direction: column;
     align-items: center;
     cursor: pointer;
     position: relative;
     user-select: none;
-    transition: transform 0.22s cubic-bezier(.2,.8,.2,1);
-}
-
-/* Hover & Tap Feel */
-@media (hover: hover) {
-    .service-btn:hover {
-        transform: translateY(-3px);
-    }
+    transition: transform 0.2s cubic-bezier(.2,.8,.2,1);
 }
 
 .service-btn:active {
-    transform: scale(0.94);
+    transform: scale(0.92);
 }
 
 /* ===============================
-   ICON WRAPPER (78px Dasar)
+   ICON WRAPPER (Transparan & Seragam)
    =============================== */
 .icon-box {
-    width: 78px;
-    height: 78px;
+    width: 70px; 
+    height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
+    background: transparent !important; /* Semua baris transparan */
     border-radius: 50%;
     position: relative;
-    overflow: visible; /* Kunci agar icon 120% tampil penuh */
+    overflow: visible; 
     transition: all 0.3s ease;
 }
 
 /* ===============================
-   ICON PNG – 120% (Proporsional)
+   ICON PNG – 135% (Sangat Besar & Rapi)
    =============================== */
 .service-icon-img {
-    width: 120%; /* Sesuai instruksi Anda */
-    height: 120%;
+    width: 135%; 
+    height: 135%;
     object-fit: contain;
     background: transparent !important;
-    opacity: 0.8;
+    opacity: 0.85;
     transform-origin: center;
-    transition: 
-        transform 0.35s cubic-bezier(.2,.8,.2,1),
-        filter 0.35s ease,
-        opacity 0.35s ease;
     z-index: 2;
+    /* Efek bayangan halus agar gambar tidak terlihat "mati" */
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+    transition: 
+        transform 0.4s cubic-bezier(.17,.67,.43,1.49),
+        filter 0.3s ease,
+        opacity 0.3s ease;
 }
 
 /* ===============================
-   LABEL (Disetel pas di bawah icon 120%)
+   LABEL (Font Abu-Abu Konsisten)
    =============================== */
 .service-btn span {
-    margin-top: 2px; /* Disesuaikan agar jaraknya manis dengan icon 120% */
-    font-size: 10px;
+    margin-top: 4px;
+    font-size: 11px;
     font-weight: 800;
     line-height: 1.1;
-    color: #888;
+    color: #888; /* Abu-abu konsisten baris 1 & 2 */
     text-align: center;
-    transition: color 0.25s ease, transform 0.25s ease;
     white-space: nowrap;
+    transition: all 0.25s ease;
 }
 
 /* ===============================
-   STATES
+   STATE: ACTIVE
    =============================== */
-/* Inactive */
-.service-btn:not(.active) .service-icon-img {
-    filter: grayscale(1) brightness(0.9);
-    opacity: 0.45;
-}
-
-/* Active */
 .service-btn.active .service-icon-img {
-    filter: brightness(0) invert(1);
+    filter: brightness(1.1) drop-shadow(0 8px 15px rgba(0,0,0,0.2));
     opacity: 1;
-    transform: scale(1.1); /* Sedikit pop-up saat aktif */
+    transform: scale(1.1) translateY(-5px); /* Efek mengambang sedikit */
 }
 
 .service-btn.active span {
-    color: var(--primary);
+    color: #555; /* Abu-abu lebih gelap saat aktif agar kontras */
     font-weight: 900;
-    transform: translateY(-1px);
 }
 
 /* ===============================
-   ANIMASI PULSE (Tetap Ada)
+   ANIMASI PULSE (Tetap Ada & Presisi)
    =============================== */
 .service-btn.active::after {
     content: "";
     position: absolute;
-    top: 39px; /* Pas di tengah icon-box (78/2) */
+    top: 35px; /* Tengah icon-box */
     left: 50%;
-    width: 85px; 
-    height: 85px;
+    width: 70px;
+    height: 70px;
     border: 2px solid var(--primary);
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    animation: pulseRing 1.4s infinite;
+    animation: pulseRing 1.5s infinite ease-out;
     pointer-events: none;
     z-index: 1;
 }
 
 @keyframes pulseRing {
-    0% {
-        transform: translate(-50%, -50%) scale(0.8);
-        opacity: 0.8;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1.3);
-        opacity: 0;
-    }
+    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.7; }
+    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
 }
 
 /* ===============================
-   BADGE (Tetap Ada)
+   BADGE (Rapih & Standout)
    =============================== */
 .badge {
     position: absolute;
-    top: -2px;
-    right: 0px;
-    background: #FF6B6B;
+    top: 0;
+    right: 2px;
+    background: #FF4747;
     color: white;
-    font-size: 8px;
-    font-weight: 600;
-    padding: 1px 4px;
-    border-radius: 8px;
-    pointer-events: none;
-    opacity: 1; /* Pastikan terlihat jika ada isinya */
-    transition: all 0.3s ease;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 20px;
+    box-shadow: 0 2px 5px rgba(255, 71, 71, 0.4);
     z-index: 10;
+    pointer-events: none;
 }
 
 /* ===============================
-   SECONDARY MENU (Disesuaikan 120%)
+   SECONDARY MENU (Disamakan)
    =============================== */
 .secondary-menu .service-btn {
-    width: 76px;
+    width: 25%;
 }
 
 .secondary-menu .icon-box {
-    width: 64px;
-    height: 64px;
-    background: #f8f8f8;
-}
-
-.secondary-menu .service-icon-img {
-    width: 120%;
-    height: 120%;
+    width: 70px; 
+    height: 70px;
 }
 
 /* ===============================
-   MOBILE SMALL (≤360px)
+   MOBILE OPTIMIZATION
    =============================== */
 @media (max-width: 360px) {
     .icon-box {
-        width: 68px;
-        height: 68px;
+        width: 60px;
+        height: 60px;
+    }
+    .service-btn.active::after {
+        top: 30px;
+        width: 60px;
+        height: 60px;
     }
     .service-btn span {
-        font-size: 9px;
+        font-size: 10px;
     }
 }
 
-/* ANTI DOUBLE ZOOM */
+/* UX POLISH */
 .service-btn, .icon-box {
     touch-action: manipulation;
 }
@@ -495,7 +476,7 @@ mark {
     <div style="text-align: center; width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: center;">
         
         <div style="margin-bottom: 20px;">
-            <img src="welcome.png" alt="Welcome" style="width: 120px; height: auto; display: block; margin: 0 auto;">
+            <img src="welcome.png" alt="Welcome" style="width: 150px; height: 100%; display: block; margin: 0 auto;">
         </div>
 
         <h2 style="font-weight: 900; font-size: 22px; margin: 0 0 10px 0; color: var(--text);">Hei.. Senang mengenalmu</h2>
