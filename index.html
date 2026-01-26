@@ -545,31 +545,41 @@ mark {
     filter: grayscale(1);
     opacity: 0.5;
 }
+
+.gps-status.error {
+    color: #d63031;
+    font-weight: 600;
+}
+
+
     </style>
 </head>
 <body>
 
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
-    <div style="text-align: center; width: 100%; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center;">
-        
-        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
-            <div style="font-size: 60px; margin-bottom: 15px;">📍</div>
-            <h2 style="font-weight: 900; font-size: 20px;">Hei..Senang bisa mengenalmu</h2>
-            <p style="color: var(--muted); font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja disini.</p>
-            <button onclick="startApp()" class="order-btn" style="width: 100%;">MULAI SEKARANG</button>
+    <div style="text-align:center; width:100%; height:100%; display:flex; flex-direction:column; justify-content:space-between;">
+
+        <!-- KONTEN TENGAH -->
+        <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
+            <div style="font-size:60px; margin-bottom:15px;">📍</div>
+            <h2 style="font-weight:900; font-size:20px;">Hei.. Senang bisa mengenalmu</h2>
+            <p style="color:var(--muted); font-size:13px; margin-bottom:25px;">
+                Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja di sini.
+            </p>
+
+            <button onclick="startApp()" class="order-btn" style="width:100%;">
+                MULAI SEKARANG
+            </button>
+
+            <!-- STATUS GPS -->
+            <div id="gps-status" class="gps-status"></div>
         </div>
 
-        <div style="font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 20px;">
+        <!-- FOOTER -->
+        <div style="font-size:10px; color:#999; letter-spacing:1px; margin-top:20px;">
             powered by <b>cloudkitchen.dyg++</b>
         </div>
-        
-    </div>
-</div>
 
-<div class="header-top">
-    <div class="nav-row">
-        <div class="brand-logo"><div class="brand-icon">D+</div> cloudkitchen.dyg++</div>
-        <div class="queue-badge" id="noAntrean">#0</div>
     </div>
 </div>
 
@@ -708,8 +718,12 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 // GANTI FUNGSI startApp ANDA DENGAN INI
 async function startApp() {
     const overlay = document.getElementById('welcome-overlay');
-    
+    const status = document.getElementById('gps-status');
+
+    status.innerText = '📍 Mengakses lokasi...';
     navigator.geolocation.getCurrentPosition(async (pos) => {
+status.innerText = '📍 Lokasi terdeteksi';
+
         const { latitude, longitude } = pos.coords;
         window.userLat = latitude;
         window.userLng = longitude;
@@ -742,14 +756,16 @@ async function startApp() {
         overlay.style.display = 'none';
         
         await loadMenu();
-        syncQueue();
-        
-    }, () => {
-        alert("Gagal akses lokasi. Harap aktifkan GPS.");
-        // Tetap izinkan masuk jika GPS gagal (opsional)
-        overlay.style.display = 'none';
-        loadMenu();
-    }, { enableHighAccuracy: true });
+ },
+        (err) => {
+            status.innerText = '❌ Lokasi wajib diaktifkan';
+            alert('Aktifkan GPS untuk melanjutkan pemesanan');
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 15000
+        }
+    );
 }
 
     function calculateOngkir(distMeter) {
@@ -1008,7 +1024,7 @@ async function submitOrder() {
     // VALIDASI: Cek apakah sudah pilih mode?
     if (!currentMode) {
         closeModal();
-        alert("Mohon pilih layanan terlebih dahulu (Dine In, Take Away, atau Delivery)");
+        alert("Layanan Pesan Menu hanya untuk (Dine In, Take Away, Delivery, Katering)");
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
