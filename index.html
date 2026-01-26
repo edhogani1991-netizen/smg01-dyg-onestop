@@ -1185,36 +1185,36 @@ function calculateOngkir(distMeter) {
 }
 
 function refreshUI() {
-    let subtotal = 0; 
+    let subtotal = 0;
     const counts = {};
-    
-    // Hitung subtotal
+
+    // Hitung subtotal & qty
     cart.forEach(c => { 
-        subtotal += (c.harga + (c.ex || 0)); 
+        subtotal += (c.price ?? (c.harga + (c.ex || 0)));
         counts[c.id] = (counts[c.id] || 0) + 1; 
     });
 
-    // Update tampilan angka (badge) di menu
+    // Update badge qty di menu
     menuData.forEach(m => {
         const el = document.getElementById(`qty-${m.id}`);
-        if(el) {
+        if (el) {
             const val = counts[m.id] || 0;
             el.innerText = val;
             el.previousElementSibling.disabled = val === 0;
         }
     });
 
-    const sInd = document.getElementById('swipeInd');
+    const sInd   = document.getElementById('swipeInd');
     const distEl = document.getElementById('dist-info');
-    const ongEl = document.getElementById('ongkir-label');
-    const priceEl = document.getElementById('miniPrice');
+    const ongEl  = document.getElementById('ongkir-label');
+    const priceEl= document.getElementById('miniPrice');
 
     if (subtotal > 0) {
         sInd.style.display = 'block';
-        let currentDist = window.userDist || 0;
+        const currentDist = window.userDist || 0;
 
         if (currentMode === 'DELIVERY') {
-            let ongkir = calculateOngkir(currentDist);
+            const ongkir = calculateOngkir(currentDist);
             priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
             distEl.style.display = 'block';
             distEl.innerText = `Rute: ${(currentDist/1000).toFixed(1)} KM`;
@@ -1225,7 +1225,7 @@ function refreshUI() {
             distEl.style.display = 'none';
             ongEl.style.display = 'none';
         }
-        
+
         document.getElementById('btnOrder').disabled = false;
         document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
     } else {
@@ -1237,8 +1237,10 @@ function refreshUI() {
         document.getElementById('btnOrder').innerText = 'PILIH MENU';
         if (typeof toggleSummary === "function") toggleSummary(false);
     }
+
     updateOrderSummary();
 }
+
 
 // 3. Fungsi Ganti Mode Layanan (Otomatis Ubah Kolom)
 function changeMode(m, el) {
