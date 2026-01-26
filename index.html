@@ -244,44 +244,60 @@ mark {
 }
 
 .service-btn {
-    background: transparent;
-    box-shadow: none;
-    position: relative; /* penting */
+    width: 82px;
+    height: 82px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
 }
 
 .service-btn span {
-    position: absolute;
+    position: absolute; /* Letakkan teks di atas ikon */
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%); /* Geser ke tengah sempurna */
     font-size: 11px;
     font-weight: 900;
     color: var(--text);
     text-align: center;
     line-height: 1;
-    width: 90%;
-    pointer-events: none;
+    width: 90%; /* Supaya teks panjang bisa membungkus/wrap */
+    pointer-events: none; /* Klik tembus ke tombol */
     z-index: 2;
-    opacity: 0.35;
+opacity: 0.3;
 }
 
 /* ICON */
+/* Pastikan kontainer icon memiliki ukuran tetap */
 .service-btn .icon {
-    background: transparent !important;
-position: relative;
-    z-index: 2;
+    width: 90px; 
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+animation: floatIcon 2.8s ease-in-out infinite;
 }
 
 /* AKTIF */
 .service-btn.active {
-    transform: scale(1.08);
+    background: linear-gradient(145deg, #1B4332, #2D6A4F);
+    color: white;
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0 14px 30px rgba(27,67,50,0.45);
 }
 
 .service-btn.active span {
-    color: var(--primary);
-    opacity: 1;
+    color: white;
 }
-
 
 /* RING */
 .service-btn.active::after {
@@ -317,7 +333,10 @@ position: relative;
 }
 
 .service-btn.secondary {
-   background: transparent; /* ✅ */
+    width: 70px;
+    height: 70px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    background: #F7F7F7;
 }
 
 /* Penyesuaian khusus untuk tombol sekunder agar lebih kecil */
@@ -346,7 +365,7 @@ position: relative;
 /* efek tap */
 .service-btn.secondary:active {
     transform: scale(0.92);
-    filter: brightness(0.95);
+    background: #EFEFEF;
 }
 
 .service-btn.secondary::before {
@@ -360,11 +379,6 @@ position: relative;
     font-weight: 900;
     padding: 2px 5px;
     border-radius: 10px;
-}
-
-.service-btn::after {
-    pointer-events: none;
-    z-index: 1;
 }
 
 /* === FORM EXTRA RINGKAS === */
@@ -405,13 +419,14 @@ position: relative;
 
 /* Atur gambar agar pas di dalam kontainer tanpa merusak layout */
 .service-icon-img {
-background: transparent !important;
-    display: block;
-   }
+    width: 130%;
+    height: 130%;
+    object-fit: contain; /* Gambar akan mengecil secara proporsional */
 
 /* Tambahan agar gambar tidak berubah warna jadi putih saat aktif (jika menggunakan PNG transparan) */
 .service-btn.active .service-icon-img {
-    filter: none;
+    /* Jika gambar Anda berwarna hitam dan ingin jadi putih saat aktif, gunakan filter: */
+    /* filter: brightness(0) invert(1); */
 }
 
 /* Membuat gambar menjadi putih saat tombol aktif */
@@ -459,17 +474,17 @@ background: transparent !important;
 <!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
     <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
-        <div class="icon"><img src="dine-in2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="dine-in3.png" class="service-icon-img"></div>
         <span>Dine In</span>
     </div>
 
     <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
-        <div class="icon"><img src="take-away2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="take-away3.png" class="service-icon-img"></div>
         <span>Take Away</span>
     </div>
 
     <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
-        <div class="icon"><img src="delivery2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="delivery3.png" class="service-icon-img"></div>
         <span>Delivery</span>
     </div>
 </div>
@@ -477,17 +492,17 @@ background: transparent !important;
 
 <div class="service-mode secondary-mode">
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="katering2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="katering3.png" class="service-icon-img"></div>
         <span>Katering</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="jadi-mitra2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="jadi-mitra3.png" class="service-icon-img"></div>
         <span>Jadi Mitra</span>
     </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
-        <div class="icon"><img src="ngiklan2.png" class="service-icon-img"></div>
+        <div class="icon"><img src="ngiklan3.png" class="service-icon-img"></div>
         <span>NgIKLAN</span>
     </div>
 </div>
