@@ -545,44 +545,31 @@ mark {
     filter: grayscale(1);
     opacity: 0.5;
 }
-
-.gps-status.error {
-    color: #d63031;
-    font-weight: 600;
-}
-
-
     </style>
 </head>
 <body>
 
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
-    <div style="text-align:center; width:100%; height:100%; display:flex; flex-direction:column; justify-content:space-between;">
-
-        <!-- KONTEN TENGAH -->
-        <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
-            <div style="font-size:60px; margin-bottom:15px;">📍</div>
-            <h2 style="font-weight:900; font-size:20px;">Hei.. Senang bisa mengenalmu</h2>
-            <p style="color:var(--muted); font-size:13px; margin-bottom:25px;">
-                PERHATIAN GAIS!!!.
-Aplikasi disesuaikan dengan radius dari WARUNG DOYONG.
-Pastikan izin lokasi agar aplikasi dapat dijalankan.
-Terima Kasih
-            </p>
-
-            <button onclick="startApp()" class="order-btn" style="width:100%;">
-                MULAI SEKARANG
-            </button>
-
-            <!-- STATUS GPS -->
-            <div id="gps-status" class="gps-status"></div>
+    <div style="text-align: center; width: 100%; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+        
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+            <div style="font-size: 60px; margin-bottom: 15px;">📍</div>
+            <h2 style="font-weight: 900; font-size: 20px;">Hei..Senang bisa mengenalmu</h2>
+            <p style="color: var(--muted); font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja disini.</p>
+            <button onclick="startApp()" class="order-btn" style="width: 100%;">MULAI SEKARANG</button>
         </div>
 
-        <!-- FOOTER -->
-        <div style="font-size:10px; color:#999; letter-spacing:1px; margin-top:20px;">
+        <div style="font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 20px;">
             powered by <b>cloudkitchen.dyg++</b>
         </div>
+        
+    </div>
+</div>
 
+<div class="header-top">
+    <div class="nav-row">
+        <div class="brand-logo"><div class="brand-icon">D+</div> cloudkitchen.dyg++</div>
+        <div class="queue-badge" id="noAntrean">#0</div>
     </div>
 </div>
 
@@ -759,16 +746,14 @@ status.innerText = '📍 Lokasi terdeteksi';
         overlay.style.display = 'none';
         
         await loadMenu();
- },
-        (err) => {
-            status.innerText = '❌ Lokasi wajib diaktifkan';
-            alert('Aktifkan GPS untuk melanjutkan pemesanan');
-        },
-        {
-            enableHighAccuracy: true,
-            timeout: 15000
-        }
-    );
+        syncQueue();
+        
+    }, () => {
+        alert("Gagal akses lokasi. Harap aktifkan GPS.");
+        // Tetap izinkan masuk jika GPS gagal (opsional)
+        overlay.style.display = 'none';
+        loadMenu();
+    }, { enableHighAccuracy: true });
 }
 
     function calculateOngkir(distMeter) {
@@ -1022,9 +1007,7 @@ async function submitOrder() {
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
     const dI = document.getElementById('eventDate'); // Elemen Tanggal Katering
-    // Menggunakan nilai "0" jika elemen tidak ditemukan, agar kode tidak macet
-const antreanEl = document.getElementById('noAntrean');
-const noAntrean = antreanEl ? antreanEl.innerText : "0";
+    const noAntrean = document.getElementById('noAntrean').innerText;
 
     // VALIDASI: Cek apakah sudah pilih mode?
     if (!currentMode) {
@@ -1104,7 +1087,7 @@ const noAntrean = antreanEl ? antreanEl.innerText : "0";
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
+    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
 
     // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
