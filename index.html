@@ -521,6 +521,12 @@ mark {
     
     <div id="boxMeja"><div id="wrapMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="Contoh: 08"></div></div>
     <div id="boxAlamat" style="display:none;"><div id="wrapAddr" class="input-card"><label>Alamat Pengiriman</label><textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea></div></div>
+<div id="boxKateringInfo" style="display: none; margin-bottom: 15px;">
+    <div class="input-card">
+        <label style="font-size: 11px; font-weight: 800; color: var(--muted); margin-bottom: 5px; display: block;">TANGGAL PENGIRIMAN (Minimal Besok)</label>
+        <input type="date" id="tglKatering" class="input-field" style="width: 100%;">
+    </div>
+</div>
 
     <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
     
@@ -815,7 +821,8 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
-    const noAntrean = document.getElementById('noAntrean').innerText;
+const noAntrean = document.getElementById('noAntrean').innerText;
+    const tglK = document.getElementById('tglKatering')?.value || ''; // Tambahkan ini
 
     // Validasi input kosong (Nama, Meja, atau Alamat)
     const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
@@ -824,7 +831,8 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     let targetEl = null;
     if (!nI.value.trim()) targetEl = nI;
     else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
-    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+    else if (currentMode === 'KATERING' && !document.getElementById('tglKatering').value) targetEl = document.getElementById('tglKatering'); // Tambahkan ini
 
     if (targetEl) {
         const targetCard = targetEl.closest('.input-card');
@@ -871,6 +879,11 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
         msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
     } else {
         msg += `🏠 *Alamat:* ${aI.value}\n`;
+        // TAMBAHKAN KODE INI DI SINI
+        if (currentMode === 'KATERING') {
+            msg += `📅 *Tanggal Kirim:* ${tglK}\n`;
+        }
+        // -------------------------
         msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
         msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
     }
@@ -916,19 +929,44 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
         document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
     }
 
-    function changeMode(m, el) {
+function changeMode(m, el) {
     if (el.classList.contains('disabled')) return showOutOfRangeAlert();
-
     currentMode = m;
 
-    document.querySelectorAll('.service-btn').forEach(o => {
-        o.classList.remove('active', 'pulse-attention');
-    });
-
+    document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
     el.classList.add('active');
 
-    document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
-    document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
+    // Kontrol visibilitas box
+    const boxMeja = document.getElementById('boxMeja');
+    const boxAlamat = document.getElementById('boxAlamat');
+    const boxKatering = document.getElementById('boxKateringInfo');
+
+    // Reset view
+    boxMeja.style.display = 'none';
+    boxAlamat.style.display = 'none';
+    boxKatering.style.display = 'none';
+
+    if (m === 'DINE IN') {
+        boxMeja.style.display = 'block';
+    } else if (m === 'DELIVERY') {
+        boxAlamat.style.display = 'block';
+    } else if (m === 'KATERING') {
+        boxAlamat.style.display = 'block'; // Katering butuh alamat
+        boxKatering.style.display = 'block'; // Munculkan kalender
+        
+        // LOGIKA MINIMAL H+1 (Besok)
+        const inputTgl = document.getElementById('tglKatering');
+        const besok = new Date();
+        besok.setDate(besok.getDate() + 1); // Tambah 1 hari dari hari ini
+        
+        const yyyy = besok.getFullYear();
+        const mm = String(besok.getMonth() + 1).padStart(2, '0');
+        const dd = String(besok.getDate()).padStart(2, '0');
+        
+        const minDate = `${yyyy}-${mm}-${dd}`;
+        inputTgl.min = minDate; // Set minimal tanggal di kalender
+        inputTgl.value = minDate; // Set default ke besok
+    }
 
     refreshUI();
 }
