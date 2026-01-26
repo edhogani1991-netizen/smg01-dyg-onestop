@@ -579,7 +579,8 @@ mark {
 
 <div class="service-mode">
 
-    <div class="service-btn dinein" id="mDine" onclick="changeMode('DINE IN', this)">
+    <!-- DINE IN -->
+    <div class="service-btn dinein" id="mDine">
         <div class="icon-box">
             <img src="dine-in3.png" class="service-icon-img" alt="Dine In">
         </div>
@@ -587,14 +588,16 @@ mark {
         <div id="dineInBadge" class="badge"></div>
     </div>
 
-    <div class="service-btn takeaway" id="mTake" onclick="changeMode('TAKE AWAY', this)">
+    <!-- TAKE AWAY -->
+    <div class="service-btn takeaway" id="mTake">
         <div class="icon-box">
             <img src="take-away3.png" class="service-icon-img" alt="Take Away">
         </div>
         <span>Take Away</span>
     </div>
 
-    <div class="service-btn delivery" id="mDelivery" onclick="changeMode('DELIVERY', this)">
+    <!-- DELIVERY -->
+    <div class="service-btn delivery" id="mDelivery">
         <div class="icon-box">
             <img src="delivery3.png" class="service-icon-img" alt="Delivery">
         </div>
@@ -603,6 +606,7 @@ mark {
     </div>
 
 </div>
+
 
 <div class="service-mode secondary-mode">
     <div class="service-btn secondary" id="mKatering" onclick="changeMode('KATERING', this)">
@@ -698,61 +702,56 @@ RADIUS_DELIVERY: 50
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
+    // Ubah bagian ini di awal script Anda
+let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
+
+// GANTI FUNGSI startApp ANDA DENGAN INI
 async function startApp() {
     const overlay = document.getElementById('welcome-overlay');
-    const btnStart = overlay.querySelector('button');
+    const status = document.getElementById('gps-status');
 
-    // Visual loading tombol tetap sama
-    btnStart.innerHTML = '<span class="shake-ani" style="display:inline-block">⏳</span> Sedang Memuat Lokasi...';
-    btnStart.disabled = true;
-    btnStart.style.opacity = "0.8";
-
-    // 1. Ambil data menu secara paralel (tidak berubah)
-    const menuPromise = loadMenu(); 
-
-    const geoOptions = { 
-        enableHighAccuracy: true, 
-        timeout: 8000, // Timeout 8 detik agar tidak stuck jika GPS lambat
-        maximumAge: 0 
-    };
-
+    status.innerText = '📍 Mengakses lokasi...';
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
         window.userLat = latitude;
         window.userLng = longitude;
 
-        // --- PUSAT PERBAIKAN: Isi variabel userDist global ---
-        userDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
-        window.userDist = userDist; 
+        // Koreksi jarak
+        const distMeter = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
+        window.userDist = distMeter;
 
-        // Update badge (hanya logika jarak, tidak ubah tampilan)
+        // Update Badge Jangkauan
         const dineBadge = document.getElementById('dineInBadge');
-        if (userDist > CONFIG.RADIUS_DINE_IN) {
+        const deliveryBadge = document.getElementById('deliveryBadge');
+
+        if (distMeter > CONFIG.RADIUS_DINE_IN) {
             document.getElementById('mDine').classList.add('disabled');
-            if(dineBadge) {
-                dineBadge.innerText = "Luar Jangkauan";
-                dineBadge.style.opacity = 1;
-            }
+            dineBadge.innerText = "Jangkauan Delivery";
+            dineBadge.style.opacity = 1;
         }
 
+        if (distMeter < CONFIG.RADIUS_DELIVERY) {
+            document.getElementById('mDelivery').classList.add('disabled');
+            deliveryBadge.innerText = "Jangkauan Dine In";
+            deliveryBadge.style.opacity = 1;
+        }
+
+        // Jalankan inisialisasi
         initMap(latitude, longitude);
         initBanner();
         
-        await menuPromise; 
-        overlay.style.display = 'none'; // Menu dimunculkan
+        // SEMBUNYIKAN OVERLAY
+        overlay.style.display = 'none';
+        
+        await loadMenu();
         syncQueue();
         
-        // --- TRIGGER OTOMATIS: Update harga & ongkir ---
-        refreshUI();
-        
-    }, async (err) => {
-        // Jika GPS ditolak/gagal, menu tetap harus muncul
-        console.warn("GPS Error:", err.message);
-        initBanner();
-        await menuPromise;
-        overlay.style.display = 'none'; // Pastikan menu tetap muncul
-        refreshUI();
-    }, geoOptions);
+    }, () => {
+        alert("Gagal akses lokasi. Harap aktifkan GPS.");
+        // Tetap izinkan masuk jika GPS gagal (opsional)
+        overlay.style.display = 'none';
+        loadMenu();
+    }, { enableHighAccuracy: true });
 }
 
     function calculateOngkir(distMeter) {
@@ -1086,7 +1085,7 @@ async function submitOrder() {
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
+    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
 
     // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
