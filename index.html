@@ -690,6 +690,7 @@ mark {
     </div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
         WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw8r4no1QS_l3NlSeV1wbYb76RBl5or18ayesRcBlMQwrztaxfeon6pIeZU8bfWCCb1Vg/exec',
@@ -957,6 +958,7 @@ mark {
     window.addEventListener('DOMContentLoaded', startApp);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && sessionStorage.getItem('orderSubmitted') === 'true') { sessionStorage.removeItem('orderSubmitted'); window.location.reload(); } });
 </script>
+
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
         <div style="font-size:48px;margin-bottom:10px;">🚧</div>
