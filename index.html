@@ -699,7 +699,7 @@ mark {
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
         TOKEN: 'dyg-access-v2',
         RADIUS_DINE_IN: 150 ,
-RADIUS_DELIVERY: 50
+        RADIUS_DELIVERY: 50
     };
 
     const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
@@ -708,119 +708,75 @@ RADIUS_DELIVERY: 50
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    // Ubah bagian ini di awal script Anda
-let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
+    let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-// GANTI FUNGSI startApp ANDA DENGAN INI
-async function startApp() {
-    const overlay = document.getElementById('welcome-overlay');
-    
-    // Pastikan fungsi pendukung didefinisikan secara global agar tidak ReferenceError
-    if (typeof calculateOngkir !== 'function') {
-        window.calculateOngkir = function(distMeter) {
-            const km = distMeter / 1000;
-            if (km <= 1.5) return 3000;
-            if (km <= 3) return 5000;
-            if (km <= 5) return 8000;
-            return 8000 + (Math.ceil(km - 5) * 2000);
-        };
+    // --- FUNGSI UTAMA START APP ---
+    async function startApp() {
+        const overlay = document.getElementById('welcome-overlay');
+        
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            try {
+                const { latitude, longitude } = pos.coords;
+                window.userLat = latitude;
+                window.userLng = longitude;
+
+                // Hitung Jarak
+                const distMeter = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
+                window.userDist = distMeter;
+
+                // Update Badge & Status Tombol
+                const dineBadge = document.getElementById('dineInBadge');
+                const deliveryBadge = document.getElementById('deliveryBadge');
+                const mDine = document.getElementById('mDine');
+                const mDelivery = document.getElementById('mDelivery');
+
+                if (distMeter > CONFIG.RADIUS_DINE_IN) {
+                    if (mDine) mDine.classList.add('disabled');
+                    if (dineBadge) {
+                        dineBadge.innerText = "Luar Jangkauan";
+                        dineBadge.style.opacity = 1;
+                    }
+                }
+
+                if (distMeter < CONFIG.RADIUS_DELIVERY) {
+                    if (mDelivery) mDelivery.classList.add('disabled');
+                    if (deliveryBadge) {
+                        deliveryBadge.innerText = "Pakai Dine In";
+                        deliveryBadge.style.opacity = 1;
+                    }
+                }
+
+                initMap(latitude, longitude);
+                initBanner();
+                overlay.style.display = 'none';
+                await loadMenu();
+                syncQueue();
+            } catch (err) {
+                console.error("Initialization Error:", err);
+                overlay.style.display = 'none';
+            }
+        }, (err) => {
+            console.warn("GPS Error:", err.message);
+            alert("Gagal akses lokasi. Menggunakan mode standar.");
+            overlay.style.display = 'none';
+            loadMenu();
+            initBanner();
+        }, { 
+            enableHighAccuracy: true,
+            timeout: 8000 
+        });
     }
 
-    // Gunakan timeout pada Geolocation agar tidak menunggu selamanya jika GPS lemot
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-        try {
-            const { latitude, longitude } = pos.coords;
-            window.userLat = latitude;
-            window.userLng = longitude;
+    const NO_SUHU_MENUS = new Set([
+        "kopi klothok", "kopi lelet", "kopi coklat", "kopi jahe", "es kopi item", "es kopiko", "kopi ka'amel", "kopi susu beri", 
+        "es susu mantan", "es jossu", "es bissu", "es jeruk susu", "es choco oren", "es jeruk yakult", "es milksex beri", 
+        "es matcha", "es squash oren", "jus mangga", "jus stoberi", "smoothies mary", "float mangga", "float stoberi", 
+        "nescafe blue", "kopi kapal api"
+    ]);
 
-            // Hitung Jarak
-            const distMeter = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
-            window.userDist = distMeter;
-
-            // Update Badge & Status Tombol
-            const dineBadge = document.getElementById('dineInBadge');
-            const deliveryBadge = document.getElementById('deliveryBadge');
-            const mDine = document.getElementById('mDine');
-            const mDelivery = document.getElementById('mDelivery');
-
-            if (distMeter > CONFIG.RADIUS_DINE_IN) {
-                if (mDine) mDine.classList.add('disabled');
-                if (dineBadge) {
-                    dineBadge.innerText = "Luar Jangkauan";
-                    dineBadge.style.opacity = 1;
-                }
-            }
-
-            if (distMeter < CONFIG.RADIUS_DELIVERY) {
-                if (mDelivery) mDelivery.classList.add('disabled');
-                if (deliveryBadge) {
-                    deliveryBadge.innerText = "Pakai Dine In";
-                    deliveryBadge.style.opacity = 1;
-                }
-            }
-
-            // Inisialisasi UI
-            initMap(latitude, longitude);
-            initBanner();
-            
-            // TUTUP OVERLAY SEKARANG
-            overlay.style.display = 'none';
-            
-            await loadMenu();
-            syncQueue();
-        } catch (err) {
-            console.error("Initialization Error:", err);
-            overlay.style.display = 'none'; // Tetap masuk meski inisialisasi gagal
-        }
-        
-    }, (err) => {
-        console.warn("GPS Error:", err.message);
-        alert("Gagal akses lokasi. Menggunakan mode standar.");
-        overlay.style.display = 'none';
-        loadMenu();
-        initBanner();
-    }, { 
-        enableHighAccuracy: true,
-        timeout: 8000 // Beri batas waktu 8 detik
-    });
-}
-    /* ================================
-   DAFTAR MENU TANPA VARIAN SUHU
-   (WAJIB PERSIS)
-   ================================ */
-const NO_SUHU_MENUS = new Set([
-    "kopi klothok",
-    "kopi lelet",
-    "kopi coklat",
-    "kopi jahe",
-    "es kopi item",
-    "es kopiko",
-    "kopi ka'amel",
-    "kopi susu beri",
-    "es susu mantan",
-    "es jossu",
-    "es bissu",
-    "es jeruk susu",
-    "es choco oren",
-    "es jeruk yakult",
-    "es milksex beri",
-    "es matcha",
-    "es squash oren",
-    "jus mangga",
-    "jus stoberi",
-    "smoothies mary",
-    "float mangga",
-    "float stoberi",
-    "nescafe blue",
-    "kopi kapal api"
-]);
-
-function normalizeMenuName(name) {
-    return name
-        .toLowerCase()
-        .replace(/\s+/g, ' ')
-        .trim();
-}
+    function normalizeMenuName(name) {
+        return name.toLowerCase().replace(/\s+/g, ' ').trim();
+    }
 
     async function loadMenu() {
         try {
@@ -851,12 +807,9 @@ function normalizeMenuName(name) {
             const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
             const isMieG = nl.includes("mie") && nl.includes("goreng");
             const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
-            const isPaket = kl.includes("paket");
-const isDrink = kl.includes("drink") || kl.includes("minum") || kl.includes("beverage");
-
-const menuNameClean = normalizeMenuName(m.nama);
-const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
-
+            const isDrink = kl.includes("drink") || kl.includes("minum") || kl.includes("beverage");
+            const menuNameClean = normalizeMenuName(m.nama);
+            const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
 
             return `
             <div class="menu-item">
@@ -867,12 +820,7 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
                         ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                         ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${allowSuhu ? `
-<select id="s-${m.id}" class="variant-select">
-    ${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}
-</select>
-` : ''}
-
+                        ${allowSuhu ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                     </div>
                 </div>
                 <div class="qty-box">
@@ -885,55 +833,123 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     }
 
     function updateCart(id, change, forceVariant = null) {
-    const item = menuData.find(m => m.id === id);
-    if (!item) return;
+        const item = menuData.find(m => m.id === id);
+        if (!item) return;
 
-    if (change > 0) {
-        // 1. Ambil data varian langsung dari elemen select saat tombol + diklik
-        const nEl = document.getElementById(`n-${id}`);
-        const mEl = document.getElementById(`m-${id}`);
-        const rEl = document.getElementById(`r-${id}`);
-        const sEl = document.getElementById(`s-${id}`);
+        if (change > 0) {
+            const nEl = document.getElementById(`n-${id}`);
+            const mEl = document.getElementById(`m-${id}`);
+            const rEl = document.getElementById(`r-${id}`);
+            const sEl = document.getElementById(`s-${id}`);
 
-        const vNasi = nEl ? nEl.value : null;
-        
-        // 2. LOGIKA TAMBAH 2000: Cek apakah varian nasi yang dipilih harganya +2000
-        let extraPrice = 0;
-        if (vNasi) {
-            const varianSpek = VARIAN_NASI.find(x => x.n === vNasi);
-            if (varianSpek) extraPrice = varianSpek.e; // Mengambil nilai 2000 dari konstanta VARIAN_NASI
+            const vNasi = forceVariant ? forceVariant.vN : (nEl ? nEl.value : null);
+            let extraPrice = 0;
+            if (vNasi) {
+                const varianSpek = VARIAN_NASI.find(x => x.n === vNasi);
+                if (varianSpek) extraPrice = varianSpek.e;
+            }
+
+            let vData = forceVariant ? {...forceVariant} : {
+                vN: vNasi,
+                vM: mEl ? mEl.value : null,
+                vR: rEl ? rEl.value : null,
+                vS: sEl ? sEl.value : null,
+                ex: extraPrice
+            };
+            
+            cart.push({ 
+                ...item, 
+                ...vData,
+                name: vData.vN ? `${item.nama} (${vData.vN})` : item.nama,
+                price: item.harga + (vData.ex || extraPrice)
+            });
+        } else {
+            let idx = cart.findLastIndex(c => 
+                c.id === id && 
+                c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
+                c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
+                c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
+                c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
+            );
+            if (idx !== -1) cart.splice(idx, 1);
         }
-
-        let vData = forceVariant ? {...forceVariant} : {
-            vN: vNasi,
-            vM: mEl ? mEl.value : null,
-            vR: rEl ? rEl.value : null,
-            vS: sEl ? sEl.value : null,
-            ex: extraPrice // Menyimpan biaya tambahan ke dalam item keranjang
-        };
-        
-        // 3. Masukkan ke keranjang. Kita tambahkan properti 'price' yang sudah ditambah extraPrice
-        // agar kolom 'total_bayar' di Google Sheets nanti hasilnya benar (misal: 17000)
-        cart.push({ 
-            ...item, 
-            ...vData,
-            name: vData.vN ? `${item.nama} (${vData.vN})` : item.nama, // Penamaan agar jelas di Dapur/Kasir
-            price: item.harga + extraPrice // HARGA FINAL: 15000 + 2000
-        });
-    } else {
-        // Logika hapus item (tetap sama)
-        let idx = cart.findLastIndex(c => 
-            c.id === id && 
-            c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
-            c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
-            c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
-            c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
-        );
-        if (idx !== -1) cart.splice(idx, 1);
+        refreshUI();
     }
-    refreshUI();
-}
-    
+
+    function calculateOngkir(distMeter) {
+        const km = distMeter / 1000;
+        if (km <= 1.5) return 3000;
+        if (km <= 3) return 5000;
+        if (km <= 5) return 8000;
+        return 8000 + (Math.ceil(km - 5) * 2000);
+    }
+
+    function refreshUI() {
+        let subtotal = 0; 
+        const counts = {};
+        
+        cart.forEach(c => { 
+            subtotal += c.price; 
+            counts[c.id] = (counts[c.id] || 0) + 1; 
+        });
+
+        // Update qty display
+        document.querySelectorAll('[id^="qty-"]').forEach(span => {
+            const id = span.id.replace('qty-', '');
+            span.innerText = counts[id] || 0;
+            if(span.previousElementSibling) span.previousElementSibling.disabled = !(counts[id]);
+        });
+
+        const sInd = document.getElementById('swipeInd');
+        const distEl = document.getElementById('dist-info');
+        const ongEl = document.getElementById('ongkir-label');
+        const priceEl = document.getElementById('miniPrice');
+
+        if (subtotal > 0) {
+            sInd.style.display = 'block';
+            let currentDist = window.userDist || 0;
+
+            if (currentMode === 'DELIVERY') {
+                let ongkir = calculateOngkir(currentDist);
+                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+                distEl.style.display = 'block';
+                distEl.innerText = `Rute: ${(currentDist/1000).toFixed(1)} KM`;
+                ongEl.style.display = 'block';
+                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+            } else {
+                priceEl.innerText = subtotal.toLocaleString('id-ID');
+                distEl.style.display = 'none';
+                ongEl.style.display = 'none';
+            }
+            
+            document.getElementById('btnOrder').disabled = false;
+            document.getElementById('btnOrder').innerText = `PESAN (${cart.length})`;
+        } else {
+            sInd.style.display = 'none';
+            distEl.style.display = 'none';
+            ongEl.style.display = 'none';
+            priceEl.innerText = "0";
+            document.getElementById('btnOrder').disabled = true;
+            document.getElementById('btnOrder').innerText = 'PILIH MENU';
+        }
+        updateOrderSummary();
+    }
+
+    function changeMode(m, el) {
+        if (el.classList.contains('disabled')) {
+            alert("Maaf, lokasi Anda di luar jangkauan untuk layanan ini.");
+            return;
+        }
+        currentMode = m;
+        document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('boxMeja').style.display = (m === 'DINE IN') ? 'block' : 'none';
+        document.getElementById('boxAlamat').style.display = (m === 'DELIVERY' || m === 'KATERING') ? 'block' : 'none';
+        const boxTgl = document.getElementById('boxTanggal');
+        if (boxTgl) boxTgl.style.display = (m === 'KATERING') ? 'block' : 'none';
+        refreshUI();
+    }
+
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
         if (cart.length === 0) {
@@ -949,225 +965,65 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
         });
 
         container.innerHTML = Object.values(groups).map(item => `
-            <div class="summary-item" id="sum-${item.key}">
+            <div class="summary-item">
                 <div class="item-detail-name">
                     <b>${item.name}</b>
                     <span>Rp ${(item.price).toLocaleString('id-ID')} x ${item.qty}</span>
                 </div>
                 <div class="mini-qty-box">
-                    <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${JSON.stringify({vN:item.vN,vM:item.vM,vR:item.vR,vS:item.vS})})">−</button>
+                    <button class="mini-qty-btn" onclick="updateCart('${item.id}', -1, ${JSON.stringify({vN:item.vN,vM:item.vM,vR:item.vR,vS:item.vS,ex:item.ex})})">−</button>
                     <span>${item.qty}</span>
-                    <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${JSON.stringify({vN:item.vN,vM:item.vM,vR:item.vR,vS:item.vS})})">+</button>
+                    <button class="mini-qty-btn" onclick="updateCart('${item.id}', 1, ${JSON.stringify({vN:item.vN,vM:item.vM,vR:item.vR,vS:item.vS,ex:item.ex})})">+</button>
                 </div>
-            </div>
-        `).join('');
-    }
-
-    function changeQtyFromSummary(groupKey, delta) {
-        const sample = cart.find(c => `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}` === groupKey);
-        if (sample) {
-            updateCart(sample.id, delta, {
-                vN: sample.vN, vM: sample.vM, vR: sample.vR, vS: sample.vS, ex: sample.ex
-            });
-        }
+            </div>`).join('');
     }
 
     async function submitOrder() {
-    // VALIDASI: Cek apakah sudah pilih mode?
-    if (!currentMode) {
-        closeModal();
-        alert("Mohon pilih layanan terlebih dahulu (Dine In, Take Away, atau Delivery)");
-        
-        // Scroll ke atas agar tombol layanan terlihat
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        // Beri efek getar/pulse pada tombol layanan yang aktif/tersedia
-        document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
-            el.classList.add('shake-ani');
-            el.style.border = "2px solid var(--accent)";
-            setTimeout(() => {
-                el.classList.remove('shake-ani');
-                el.style.border = "none";
-            }, 2000);
+        if (!currentMode) {
+            alert("Mohon pilih layanan terlebih dahulu");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return; 
+        }
+
+        const nI = document.getElementById('custName');
+        const tI = document.getElementById('tableNo');
+        const aI = document.getElementById('addressDetail');
+        const noAntrean = document.getElementById('noAntrean').innerText;
+
+        if (!nI.value.trim()) { alert("Nama wajib diisi"); nI.focus(); return; }
+        if (currentMode === 'DINE IN' && !tI.value.trim()) { alert("Nomor meja wajib diisi"); tI.focus(); return; }
+        if (currentMode === 'DELIVERY' && !aI.value.trim()) { alert("Alamat lengkap wajib diisi"); aI.focus(); return; }
+
+        const summary = {};
+        cart.forEach(c => {
+            let label = c.nama;
+            let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+            if(tags) label += ` [${tags}]`;
+            if (!summary[label]) summary[label] = { qty: 0, price: c.price };
+            summary[label].qty++;
         });
-        return; 
-    }
 
-    // 2. JIKA SUDAH PILIH MODE, LANJUTKAN VALIDASI NAMA/MEJA SEPERTI BIASA
-    if (navigator.vibrate) navigator.vibrate(50);
-    const nI = document.getElementById('custName');
-    const tI = document.getElementById('tableNo');
-    const aI = document.getElementById('addressDetail');
-    const noAntrean = document.getElementById('noAntrean').innerText;
+        const pRowsWA = Object.entries(summary).map(([name, data]) => 
+            `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.price).toLocaleString('id-ID')})`
+        );
 
-    // Validasi input kosong (Nama, Meja, atau Alamat)
-    const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
-    cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
+        const distKM = (window.userDist/1000).toFixed(1);
+        const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(window.userDist) : 0;
+        const finalPrice = document.getElementById('miniPrice').innerText;
+        const userLocationUrl = `http://googleusercontent.com/maps.google.com/?q=${window.userLat},${window.userLng}`;
 
-    let targetEl = null;
-    if (!nI.value.trim()) targetEl = nI;
-    else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
-    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+        let msg = `Halo cloudkitchen.dyg++!\n\n`;
+        msg += `🛵 *${currentMode}*\n👤 *Nama:* ${nI.value}\n🔢 *ANTREAN: ${noAntrean}*\n━━━━━━━━━━━━━━\n`;
 
-    if (targetEl) {
-        const targetCard = targetEl.closest('.input-card');
-        closeModal();
-        targetCard.classList.add('error-field', 'shake-ani');
-        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        targetEl.focus();
-        return; 
-    }
+        if (currentMode === 'DINE IN') msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
+        else msg += `🏠 *Alamat:* ${aI.value}\n🌐 *Lokasi:* ${userLocationUrl}\n🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
 
-    // --- 2. Rangkai Rincian Pesanan (Item + Harga) ---
-    const summary = {};
-    cart.forEach(c => {
-        let label = c.nama;
-        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-        if(tags) label += ` [${tags}]`;
-        const itemKey = label;
-        const itemPrice = c.harga + (c.ex || 0);
-        
-        if (!summary[itemKey]) {
-            summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
-        }
-        summary[itemKey].qty++;
-    });
+        msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n\n*TOTAL BAYAR: Rp ${finalPrice}*\n\nTerimakasih!`;
 
-    const pRowsWA = Object.entries(summary).map(([name, data]) => 
-        `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
-    );
-
-    // --- 3. Hitung Data & Link Lokasi ---
-    const distKM = (userDist/1000).toFixed(1);
-    const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
-    const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
-
-    // --- 4. Susun Format Pesan WhatsApp ---
-    let msg = `Halo cloudkitchen.dyg++!\n\n`;
-    msg += `🛵 *${currentMode}*\n`;
-    msg += `👤 *Nama:* ${nI.value}\n`;
-    msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
-    msg += `━━━━━━━━━━━━━━\n`;
-
-    if (currentMode === 'DINE IN') {
-        msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
-    } else {
-        msg += `🏠 *Alamat:* ${aI.value}\n`;
-        msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
-        msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
-    }
-
-    msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
-    
-    const catatan = document.getElementById('orderNote').value || '-';
-    msg += `\n*CATATAN:* ${catatan}\n`;
-    msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
-    
-    msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
-    msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
-    msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
-    msg += `Terimakasih!`;
-
-    // --- 5. Animasi Feedback Tombol & Pengiriman ---
-    // Memicu getar halus saat klik
-    if (navigator.vibrate) navigator.vibrate(50);
-
-    // Mengubah tombol menjadi loading
-    const btnKirim = document.querySelector('#modalConfirm button:last-child');
-    if (btnKirim) {
-        btnKirim.innerHTML = "⌛ Menghubungkan...";
-        btnKirim.style.opacity = "0.7";
-        btnKirim.style.pointerEvents = "none";
-    }
-
-    // Kirim data ke database di latar belakang
-    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
-
-    // Tunggu animasi sebentar baru pindah ke WA
-    setTimeout(() => {
         const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+        sessionStorage.setItem('orderSubmitted', 'true');
         window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    }, 600); 
-}
-
-
-        function toggleSummary(show) {
-        const panel = document.getElementById('orderSummaryPanel');
-        const overlay = document.getElementById('summaryOverlay');
-        if (show) {
-            panel.classList.add('active');
-            overlay.style.display = 'block';
-        } else {
-            panel.classList.remove('active');
-            overlay.style.display = 'none';
-        }
     }
-
-    // 1. Fungsi Batasan Tanggal (Dijalankan otomatis saat web dibuka)
-function setupDateLimit() {
-    const dateInput = document.getElementById('eventDate');
-    if (dateInput) {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1); // Set ke Besok
-
-        const yyyy = tomorrow.getFullYear();
-        const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
-        const dd = String(tomorrow.getDate()).padStart(2, '0');
-        
-        const minDate = `${yyyy}-${mm}-${dd}`;
-        dateInput.setAttribute("min", minDate);
-    }
-}
-
-// Panggil fungsi pembatas tanggal saat halaman siap
-window.addEventListener('DOMContentLoaded', setupDateLimit);
-
-// 2. Fungsi Hitung Ongkir Realistis
-function calculateOngkir(distMeter) {
-    const km = distMeter / 1000;
-    if (km <= 1.5) return 3000;
-    if (km <= 3) return 5000;
-    if (km <= 5) return 8000;
-    return 8000 + (Math.ceil(km - 5) * 2000);
-}
-
-function refreshUI() {
-    let subtotal = 0; 
-    const counts = {};
-    
-    // Hitung subtotal
-    cart.forEach(c => { 
-        subtotal += (c.harga + (c.ex || 0)); 
-        counts[c.id] = (counts[c.id] || 0) + 1; 
-    });
-
-   
-// 3. Fungsi Ganti Mode Layanan (Otomatis Ubah Kolom)
-function changeMode(m, el) {
-    if (el.classList.contains('disabled')) return showOutOfRangeAlert();
-
-    currentMode = m;
-
-    // Visual tombol aktif
-    document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
-    el.classList.add('active');
-
-    // LOGIKA KOLOM OTOMATIS
-    // Dine In: Meja | Delivery: Alamat | Katering: Alamat + Tanggal
-    document.getElementById('boxMeja').style.display = (m === 'DINE IN') ? 'block' : 'none';
-    document.getElementById('boxAlamat').style.display = (m === 'DELIVERY' || m === 'KATERING') ? 'block' : 'none';
-    
-    const boxTgl = document.getElementById('boxTanggal');
-    if (boxTgl) {
-        boxTgl.style.display = (m === 'KATERING') ? 'block' : 'none';
-    }
-
-    refreshUI();
-}
-
 
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
@@ -1178,46 +1034,23 @@ function changeMode(m, el) {
 
     function initBanner() {
         const track = document.getElementById('banner-track');
+        if(!track) return;
         track.innerHTML = MY_BANNERS.map(img => `<img src="${img}">`).join('');
         setInterval(() => { bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; track.style.transform = `translateX(-${bannerIdx * 100}%)`; }, 5000);
     }
 
+    function toggleSummary(show) {
+        document.getElementById('orderSummaryPanel').classList.toggle('active', show);
+        document.getElementById('summaryOverlay').style.display = show ? 'block' : 'none';
+    }
+
     function filterMenu() {
-    const q = document.getElementById('searchMenu').value.toLowerCase();
-    const items = document.querySelectorAll('.menu-item');
-
-    items.forEach(it => {
-        const titleEl = it.querySelector('h4');
-        const originalName = titleEl.dataset.name; // Mengambil nama asli dari atribut data-name
-
-        if (q === "") {
-            // Jika pencarian kosong, kembalikan ke nama asli tanpa highlight
-            titleEl.innerHTML = originalName;
-            it.style.display = 'flex';
-        } else if (originalName.toLowerCase().includes(q)) {
-            // Jika cocok, buat efek highlight menggunakan tag <mark>
-            const regex = new RegExp(`(${q})`, 'gi');
-            const highlightedName = originalName.replace(regex, '<mark>$1</mark>');
-            
-            titleEl.innerHTML = highlightedName;
-            it.style.display = 'flex';
-        } else {
-            // Jika tidak cocok, sembunyikan menu
-            it.style.display = 'none';
-        }
-    });
-}
-
-   function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
-    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-    function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
-    function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
-    function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
-// Fungsi untuk mereset tampilan kembali ke awal
-function resetToInitialState() {
-    // 1. Reload halaman secara total agar semua state (cart, mode, dll) kembali ke default
-    window.location.reload();
-}
+        const q = document.getElementById('searchMenu').value.toLowerCase();
+        document.querySelectorAll('.menu-item').forEach(it => {
+            const name = it.querySelector('h4').dataset.name.toLowerCase();
+            it.style.display = name.includes(q) ? 'flex' : 'none';
+        });
+    }
 
     function filterByTab(cat, el) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1234,53 +1067,29 @@ function resetToInitialState() {
         setTimeout(syncQueue, 20000);
     }
 
-// Deteksi saat pengguna kembali ke browser
-document.addEventListener('visibilitychange', function() {
-    // Jika statusnya 'visible' artinya pengguna baru saja kembali membuka browser
-    if (document.visibilityState === 'visible') {
-        // Cek apakah sebelumnya pengguna baru saja menekan tombol submit
-        // Kita gunakan sessionStorage sebagai penanda
-        if (sessionStorage.getItem('orderSubmitted') === 'true') {
-            sessionStorage.removeItem('orderSubmitted');
-            resetToInitialState();
+    // Modal helpers
+    function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
+    function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
+    function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
+    function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
+
+    // Event Listeners
+    window.addEventListener('DOMContentLoaded', () => {
+        startApp();
+        const dateInput = document.getElementById('eventDate');
+        if (dateInput) {
+            const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.setAttribute("min", tomorrow.toISOString().split('T')[0]);
         }
-    }
-});
-
-document.querySelectorAll('.service-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-
-        // 1. MATIKAN ACTIVE LAIN
-        document.querySelectorAll('.service-btn')
-            .forEach(b => b.classList.remove('active'));
-
-        // 2. AKTIFKAN YANG DIKLIK
-        btn.classList.add('active');
-
-        // 3. AUTO SCROLL KE INPUT NAMA
-        const nameField = document.getElementById('custName');
-        if (!nameField) return;
-
-        // delay kecil agar animasi tombol sempat render
-        setTimeout(() => {
-            const rect = nameField.getBoundingClientRect();
-
-            // scroll hanya jika input belum terlihat/terlalu atas
-            if (rect.top > 150 || rect.bottom < 0) {
-                nameField.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-            }
-
-            // fokus otomatis (UX PRO)
-            nameField.focus();
-        }, 250);
     });
-});
 
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && sessionStorage.getItem('orderSubmitted') === 'true') {
+            sessionStorage.removeItem('orderSubmitted');
+            window.location.reload();
+        }
+    });
 </script>
-
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
         <div style="font-size:48px;margin-bottom:10px;">🚧</div>
@@ -1299,3 +1108,5 @@ document.querySelectorAll('.service-btn').forEach(btn => {
 
 </body>
 </html>
+
+index
