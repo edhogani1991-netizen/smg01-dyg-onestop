@@ -701,21 +701,37 @@ RADIUS_DELIVERY: 50
     // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-// GANTI FUNGSI startApp ANDA DENGAN INI
 async function startApp() {
     const overlay = document.getElementById('welcome-overlay');
+    const btnStart = overlay.querySelector('button');
 
-        navigator.geolocation.getCurrentPosition(async (pos) => {
+    // 1. UBAH TAMPILAN TOMBOL LANGSUNG (User Feedback)
+    btnStart.innerHTML = '<span class="shake-ani" style="display:inline-block">⏳</span> Sedang Memuat Lokasi...';
+    btnStart.disabled = true;
+    btnStart.style.opacity = "0.8";
 
+    // 2. JALANKAN LOAD MENU SECARA PARALEL (Jangan di-await di dalam callback GPS)
+    // Kita panggil loadMenu duluan biar data siap saat GPS ketemu
+    const menuPromise = loadMenu(); 
+
+    // Opsi GPS: Tambahkan timeout 10 detik agar tidak hang selamanya
+    const geoOptions = { 
+        enableHighAccuracy: true, 
+        timeout: 10000, 
+        maximumAge: 0 
+    };
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        // --- SUKSES DAPAT LOKASI ---
         const { latitude, longitude } = pos.coords;
         window.userLat = latitude;
         window.userLng = longitude;
 
-        // Koreksi jarak
+        // Hitung Jarak
         const distMeter = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
         window.userDist = distMeter;
 
-        // Update Badge Jangkauan
+        // Update Badge
         const dineBadge = document.getElementById('dineInBadge');
         const deliveryBadge = document.getElementById('deliveryBadge');
 
@@ -731,24 +747,28 @@ async function startApp() {
             deliveryBadge.style.opacity = 1;
         }
 
-        // Jalankan inisialisasi
+        // Jalankan Peta
         initMap(latitude, longitude);
         initBanner();
         
-        // SEMBUNYIKAN OVERLAY
-        overlay.style.display = 'none';
+        // Tunggu menu selesai loading (jika belum)
+        await menuPromise; 
         
-        await loadMenu();
+        // Buka Aplikasi
+        overlay.style.display = 'none';
         syncQueue();
         
-    }, () => {
-        alert("Gagal akses lokasi. Harap aktifkan GPS.");
-        // Tetap izinkan masuk jika GPS gagal (opsional)
+    }, async () => {
+        // --- GAGAL / TIMEOUT GPS ---
+        alert("Gagal mendeteksi lokasi atau GPS mati. Beberapa fitur mungkin dibatasi.");
+        
+        // Tetap load aplikasi meski tanpa GPS
+        initBanner();
+        await menuPromise; // Pastikan menu sudah ada
         overlay.style.display = 'none';
-        loadMenu();
-    }, { enableHighAccuracy: true });
-}
 
+    }, geoOptions);
+}
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
         if (km <= 1.5) return 3000;
