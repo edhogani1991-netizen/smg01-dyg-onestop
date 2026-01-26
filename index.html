@@ -690,7 +690,6 @@ mark {
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
         WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw8r4no1QS_l3NlSeV1wbYb76RBl5or18ayesRcBlMQwrztaxfeon6pIeZU8bfWCCb1Vg/exec',
@@ -727,7 +726,7 @@ mark {
             #boxMeja, #boxAlamat, #boxTanggal { margin-bottom: 4px !important; }
             .section-title { margin-top: 5px !important; margin-bottom: 5px !important; }
             #cat-tabs { margin-top: 0 !important; padding-top: 0 !important; }
-            .highlight { background-color: #2ecc71; color: white; padding: 0 2px; border-radius: 2px; }
+            .highlight { background-color: #2ecc71; color: white; border-radius: 2px; padding: 0 2px; }
         `;
         document.head.appendChild(style);
 
@@ -737,13 +736,25 @@ mark {
                 const { latitude, longitude } = pos.coords;
                 window.userLat = latitude; window.userLng = longitude;
                 window.userDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
+                updateStatusBadges(window.userDist);
                 initMap(latitude, longitude);
                 initBanner();
                 overlay.style.display = 'none';
                 await loadMenu();
                 syncQueue();
             } catch (err) { overlay.style.display = 'none'; }
-        }, () => { overlay.style.display = 'none'; loadMenu(); initBanner(); }, { enableHighAccuracy: true, timeout: 8000 });
+        }, (err) => {
+            overlay.style.display = 'none';
+            loadMenu();
+            initBanner();
+        }, { enableHighAccuracy: true, timeout: 8000 });
+    }
+
+    function updateStatusBadges(dist) {
+        const dBadge = document.getElementById('dineInBadge'), delBadge = document.getElementById('deliveryBadge');
+        const mDine = document.getElementById('mDine'), mDel = document.getElementById('mDelivery');
+        if (dist > CONFIG.RADIUS_DINE_IN) { if(mDine) mDine.classList.add('disabled'); if(dBadge) dBadge.innerText = "Luar Jangkauan"; }
+        if (dist < CONFIG.RADIUS_DELIVERY) { if(mDel) mDel.classList.add('disabled'); if(delBadge) delBadge.innerText = "Pakai Dine In"; }
     }
 
     function normalizeMenuName(name) { return name.toLowerCase().replace(/\s+/g, ' ').trim(); }
@@ -775,18 +786,19 @@ mark {
             const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
             const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
             
-            // Logika pengecualian LIK: Jika ada kata 'lik', jangan beri varian mie
+            // Aturan 1: Mie dengan kata LIK tidak dapat varian
             const isLik = nl.includes("lik");
             const isMieG = nl.includes("mie") && nl.includes("goreng") && !isLik;
             const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah")) && !isLik;
             
             const isDrink = kl.includes("drink") || kl.includes("minum") || kl.includes("beverage");
-            const allowSuhu = (isDrink || kl.includes("hemat")) && !NO_SUHU_MENUS.has(normalizeMenuName(m.nama));
+            const isPaketHemat = kl.includes("hemat");
+            const allowSuhu = (isDrink || isPaketHemat) && !NO_SUHU_MENUS.has(normalizeMenuName(m.nama));
 
             return `
-            <div class="menu-item" id="item-${m.id}">
+            <div class="menu-item">
                 <div class="menu-info">
-                    <h4 class="menu-name-label" data-full-name="${m.nama}">${m.nama}</h4>
+                    <h4 data-name="${m.nama}">${m.nama}</h4>
                     <div class="price">Rp ${m.harga.toLocaleString()}</div>
                     <div class="variant-area">
                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
@@ -804,21 +816,21 @@ mark {
         }).join('');
     }
 
+    // Aturan 2: Filter Menu dengan Stabilo Hijau
     function filterMenu() {
         const q = document.getElementById('searchMenu').value.toLowerCase();
         document.querySelectorAll('.menu-item').forEach(it => {
-            const label = it.querySelector('.menu-name-label');
-            const fullName = label.getAttribute('data-full-name');
-            const lowerName = fullName.toLowerCase();
-
-            if (lowerName.includes(q) && q !== "") {
+            const h4 = it.querySelector('h4');
+            const originalText = h4.getAttribute('data-name');
+            
+            if (originalText.toLowerCase().includes(q)) {
                 it.style.display = 'flex';
-                // Stabilo Hijau (Highlight)
-                const regex = new RegExp(`(${q})`, 'gi');
-                label.innerHTML = fullName.replace(regex, `<span class="highlight">$1</span>`);
-            } else if (q === "") {
-                it.style.display = 'flex';
-                label.innerHTML = fullName;
+                if (q.length > 0) {
+                    const regex = new RegExp(`(${q})`, 'gi');
+                    h4.innerHTML = originalText.replace(regex, `<span class="highlight">$1</span>`);
+                } else {
+                    h4.innerHTML = originalText;
+                }
             } else {
                 it.style.display = 'none';
             }
@@ -866,7 +878,7 @@ mark {
     }
 
     function calculateOngkir(dist) {
-        const km = (dist || 0) / 1000;
+        const km = dist / 1000;
         if (km <= 1.5) return 3000; if (km <= 3) return 5000; if (km <= 5) return 8000;
         return 8000 + (Math.ceil(km - 5) * 2000);
     }
@@ -904,6 +916,7 @@ mark {
         if (!currentMode) return alert("Pilih layanan!");
         const n = document.getElementById('custName').value;
         if (!n) return alert("Nama wajib diisi!");
+        
         const summary = {};
         cart.forEach(c => {
             let lbl = c.nama; let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
@@ -911,8 +924,10 @@ mark {
             if (!summary[lbl]) summary[lbl] = { qty: 0, p: c.price };
             summary[lbl].qty++;
         });
+
         const rows = Object.entries(summary).map(([k, v]) => `📍 *${v.qty}x* ${k} (Rp ${(v.qty*v.p).toLocaleString()})`);
         const msg = `Halo cloudkitchen.dyg++!\n\n🛵 *${currentMode}*\n👤 *Nama:* ${n}\n🔢 *ANTREAN: ${document.getElementById('noAntrean').innerText}*\n━━━━━━━━━━━━━━\n\n*PESANAN:*\n${rows.join('\n')}\n\n*TOTAL: Rp ${document.getElementById('miniPrice').innerText}*`;
+        
         sessionStorage.setItem('orderSubmitted', 'true');
         window.location.href = `https://wa.me/${currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN}?text=${encodeURIComponent(msg)}`;
     }
@@ -932,6 +947,7 @@ mark {
     }
 
     function toggleSummary(s) { document.getElementById('orderSummaryPanel').classList.toggle('active', s); document.getElementById('summaryOverlay').style.display = s ? 'block' : 'none'; }
+    
     function filterByTab(cat, el) { document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); renderMenu(cat); }
     async function syncQueue() {
         try { const r = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`); const n = await r.text(); if(n) document.getElementById('noAntrean').innerText = "#"+n; } catch(e){}
@@ -939,6 +955,7 @@ mark {
     }
 
     window.addEventListener('DOMContentLoaded', startApp);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && sessionStorage.getItem('orderSubmitted') === 'true') { sessionStorage.removeItem('orderSubmitted'); window.location.reload(); } });
 </script>
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
