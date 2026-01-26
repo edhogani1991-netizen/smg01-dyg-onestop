@@ -326,6 +326,60 @@ mark {
 /* Sembunyikan Ring untuk Baris 2 */
 .service-btn.secondary.active::after { display: none; }
 
+/* CONTAINER POSISI BADGE */
+.service-btn.disabled {
+    position: relative;
+}
+
+/* BADGE STYLE (DINE IN - Terlalu Jauh) */
+.service-btn.disabled.too-far::after {
+    content: "TERLALU JAUH";
+    position: absolute;
+    top: -5px;
+    background: #e74c3c; /* Merah */
+    color: white;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 3px 6px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
+    white-space: nowrap;
+    z-index: 10;
+    letter-spacing: 0.5px;
+    border: 1.5px solid white;
+}
+
+/* BADGE STYLE (DELIVERY - Terlalu Dekat) */
+.service-btn.disabled.too-close::after {
+    content: "TERLALU DEKAT";
+    position: absolute;
+    top: -5px;
+    background: #f39c12; /* Oranye/Kuning */
+    color: white;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 3px 6px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4);
+    white-space: nowrap;
+    z-index: 10;
+    letter-spacing: 0.5px;
+    border: 1.5px solid white;
+}
+
+/* Update sedikit di bagian ini agar badge center */
+.service-btn.disabled.too-far::after,
+.service-btn.disabled.too-close::after {
+    left: 50%;
+    transform: translateX(-50%);
+    /* properti lainnya tetap sama */
+}
+
+/* Update animasi agar tetap center saat pop-up */
+@keyframes badgePop {
+    0% { transform: translateX(-50%) scale(0) translateY(10px); opacity: 0; }
+    100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
+}
 
 /* === FORM EXTRA RINGKAS === */
 .form-group {
@@ -546,21 +600,26 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 userDist = straightLineDist * 1.45; 
 
 // SATPAM DINE IN: Terlalu Jauh = Disabled (Sesuai Radius di CONFIG)
+// 1. RESET: Hapus semua badge lama sebelum cek ulang posisi
+const dineBtn = document.getElementById('mDineIn');
+const deliBtn = document.getElementById('mDelivery');
+
+if(dineBtn) dineBtn.classList.remove('disabled', 'too-far');
+if(deliBtn) deliBtn.classList.remove('disabled', 'too-close');
+
+// 2. CEK ULANG JARAK (Kode Anda yang tadi)
+const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
+userDist = straightLineDist * 1.45; 
+
+// SATPAM DINE IN
 if (userDist > CONFIG.RADIUS_DINE_IN) {
-    const dineBtn = document.getElementById('mDineIn');
-    if(dineBtn) {
-        dineBtn.classList.add('disabled', 'too-far');
-    }
+    if(dineBtn) dineBtn.classList.add('disabled', 'too-far');
 }
 
-// SATPAM DELIVERY: Terlalu Dekat = Disabled (Minimal 200m)
+// SATPAM DELIVERY
 const MIN_DELIVERY_DIST = 200; 
 if (userDist < MIN_DELIVERY_DIST) {
-    const deliBtn = document.getElementById('mDelivery');
-    // Katering dihapus dari sini agar tidak ikut terkunci
-    if(deliBtn) {
-        deliBtn.classList.add('disabled', 'too-close');
-    }
+    if(deliBtn) deliBtn.classList.add('disabled', 'too-close');
 }
 
 // HASILNYA:
