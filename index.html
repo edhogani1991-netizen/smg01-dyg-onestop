@@ -603,10 +603,8 @@ mark {
     </div>
 </div>
 
-<div class="service-mode secondary-mode"><div class="service-btn katering" id="mKatering" onclick="changeMode('KATERING', this)">
-    <div class="icon-box">
-        <img src="katering3.png" class="service-icon-img">
-    </div>
+<div class="service-btn katering" id="mKatering" onclick="changeMode('KATERING', this)">
+    <div class="icon-box"><img src="katering3.png" class="service-icon-img"></div>
     <span>Katering</span>
 </div>
     <div class="service-btn secondary" onclick="openComingSoon()">
@@ -628,14 +626,19 @@ mark {
     </div>
     
     <div id="boxMeja"><div id="wrapMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="Contoh: 08"></div></div>
-    <div id="boxAlamat" style="display:none;"><div id="wrapAddr" class="input-card"><label>Alamat Pengiriman</label><textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea></div></div>
-<div id="boxTanggal" style="display:none;">
-    <div id="wrapDate" class="input-card">
-        <label>Tanggal Acara / Pengiriman</label>
-        <input type="date" id="eventDate">
+    <div id="boxAlamat" style="display:none;">
+    <div id="wrapAddr" class="input-card">
+        <label>Alamat Pengiriman</label>
+        <textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea>
     </div>
 </div>
 
+<div id="boxTanggal" style="display:none;">
+    <div class="input-card">
+        <label>Tanggal Acara (Minimal Besok)</label>
+        <input type="date" id="eventDate">
+    </div>
+</div>
     <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
     
     <div class="search-wrapper">
@@ -898,22 +901,6 @@ const allowSuhu = isDrink && !NO_SUHU_MENUS.has(menuNameClean);
     refreshUI();
 }
 
-function calculateOngkir(distMeter) {
-    const km = distMeter / 1000;
-    if (km <= 1.5) return 3000;
-    if (km <= 3) return 5000;
-    if (km <= 5) return 8000;
-    return 8000 + (Math.ceil(km - 5) * 2000);
-}
-
-function refreshUI() {
-    let subtotal = 0; 
-    const counts = {};
-    cart.forEach(c => { 
-        subtotal += (c.harga + (c.ex || 0)); 
-        counts[c.id] = (counts[c.id] || 0) + 1; 
-    });
-
     menuData.forEach(m => {
         const el = document.getElementById(`qty-${m.id}`);
         if(el) {
@@ -1135,30 +1122,109 @@ function refreshUI() {
         }
     }
 
-    function changeMode(m, el) {
-    // 1. Validasi jika tombol dalam keadaan disabled
+    // 1. Fungsi Batasan Tanggal (Dijalankan otomatis saat web dibuka)
+function setupDateLimit() {
+    const dateInput = document.getElementById('eventDate');
+    if (dateInput) {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1); // Set ke Besok
+
+        const yyyy = tomorrow.getFullYear();
+        const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const dd = String(tomorrow.getDate()).padStart(2, '0');
+        
+        const minDate = `${yyyy}-${mm}-${dd}`;
+        dateInput.setAttribute("min", minDate);
+    }
+}
+
+// Panggil fungsi pembatas tanggal saat halaman siap
+window.addEventListener('DOMContentLoaded', setupDateLimit);
+
+// 2. Fungsi Hitung Ongkir Realistis
+function calculateOngkir(distMeter) {
+    const km = distMeter / 1000;
+    if (km <= 1.5) return 3000;
+    if (km <= 3) return 5000;
+    if (km <= 5) return 8000;
+    return 8000 + (Math.ceil(km - 5) * 2000);
+}
+
+// 3. Fungsi Ganti Mode Layanan (Otomatis Ubah Kolom)
+function changeMode(m, el) {
     if (el.classList.contains('disabled')) return showOutOfRangeAlert();
 
     currentMode = m;
 
-    // 2. Update tampilan visual tombol aktif
-    document.querySelectorAll('.service-btn').forEach(o => {
-        o.classList.remove('active', 'pulse-attention');
-    });
+    // Visual tombol aktif
+    document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
     el.classList.add('active');
 
-    // 3. LOGIKA KOLOM OTOMATIS
-    // Dine In: Meja | Take Away: Hanya Nama | Delivery: Alamat | Katering: Alamat + Tanggal
+    // LOGIKA KOLOM OTOMATIS
+    // Dine In: Meja | Delivery: Alamat | Katering: Alamat + Tanggal
     document.getElementById('boxMeja').style.display = (m === 'DINE IN') ? 'block' : 'none';
     document.getElementById('boxAlamat').style.display = (m === 'DELIVERY' || m === 'KATERING') ? 'block' : 'none';
     
-    const boxTanggal = document.getElementById('boxTanggal');
-    if (boxTanggal) {
-        boxTanggal.style.display = (m === 'KATERING') ? 'block' : 'none';
+    const boxTgl = document.getElementById('boxTanggal');
+    if (boxTgl) {
+        boxTgl.style.display = (m === 'KATERING') ? 'block' : 'none';
     }
 
-    // 4. Update UI untuk menghitung ulang ongkir
     refreshUI();
+}
+
+// 4. Fungsi Refresh UI (Ongkir Otomatis Hanya Delivery)
+function refreshUI() {
+    let subtotal = 0; 
+    const counts = {};
+    cart.forEach(c => { 
+        subtotal += (c.harga + (c.ex || 0)); 
+        counts[c.id] = (counts[c.id] || 0) + 1; 
+    });
+
+    menuData.forEach(m => {
+        const el = document.getElementById(`qty-${m.id}`);
+        if(el) {
+            const val = counts[m.id] || 0;
+            el.innerText = val;
+            el.previousElementSibling.disabled = val === 0;
+        }
+    });
+
+    const sInd = document.getElementById('swipeInd');
+    const distEl = document.getElementById('dist-info');
+    const ongEl = document.getElementById('ongkir-label');
+    const priceEl = document.getElementById('miniPrice');
+
+    if (subtotal > 0) {
+        sInd.style.display = 'block';
+        let currentDist = window.userDist || 0;
+
+        if (currentMode === 'DELIVERY') {
+            let ongkir = calculateOngkir(currentDist);
+            priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+            distEl.style.display = 'block';
+            distEl.innerText = `Rute: ${(currentDist/1000).toFixed(1)} KM`;
+            ongEl.style.display = 'block';
+            ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+        } else {
+            // Mode selain delivery ongkir sembunyi
+            priceEl.innerText = subtotal.toLocaleString('id-ID');
+            distEl.style.display = 'none';
+            ongEl.style.display = 'none';
+        }
+        
+        document.getElementById('btnOrder').disabled = false;
+        document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
+    } else {
+        sInd.style.display = 'none';
+        distEl.style.display = 'none';
+        ongEl.style.display = 'none';
+        priceEl.innerText = "0";
+        document.getElementById('btnOrder').disabled = true;
+    }
+    updateOrderSummary();
 }
 
 
