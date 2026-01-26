@@ -1087,7 +1087,7 @@ async function submitOrder() {
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
+    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
     // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
