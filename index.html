@@ -1139,24 +1139,44 @@ async function submitOrder() {
     }
 
 function changeMode(m, el) {
+    // 1. Cek jika tombol tidak bisa diklik (di luar jangkauan)
     if (el.classList.contains('disabled')) return showOutOfRangeAlert();
 
+    // 2. Set Mode yang dipilih ke variabel global
     currentMode = m;
 
+    // 3. Reset Tampilan Tombol (Hapus warna hijau dari tombol lain)
     document.querySelectorAll('.service-btn').forEach(o => {
         o.classList.remove('active', 'pulse-attention');
     });
 
+    // 4. Aktifkan Tombol yang diklik
     el.classList.add('active');
 
-    // Mengatur kolom mana yang tampil secara otomatis
-    document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
-    document.getElementById('boxAlamat').style.display = m === 'DELIVERY' ? 'block' : 'none';
-    document.getElementById('boxTanggal').style.display = m === 'KATERING' ? 'block' : 'none';
+    // ============================================
+    // LOGIKA OTOMATIS GANTI KOLOM (DINE IN/TAKE AWAY/DLL)
+    // ============================================
+    
+    // Langkah A: Sembunyikan DULU semua kolom spesifik (Reset)
+    document.getElementById('boxMeja').style.display = 'none';
+    document.getElementById('boxAlamat').style.display = 'none';
+    document.getElementById('boxTanggal').style.display = 'none';
 
+    // Langkah B: Munculkan hanya yang dibutuhkan
+    if (m === 'DINE IN') {
+        document.getElementById('boxMeja').style.display = 'block'; // Muncul No Meja
+    } 
+    else if (m === 'DELIVERY') {
+        document.getElementById('boxAlamat').style.display = 'block'; // Muncul Alamat
+    } 
+    else if (m === 'KATERING') {
+        document.getElementById('boxTanggal').style.display = 'block'; // Muncul Tanggal
+    }
+    // Catatan: Untuk 'TAKE AWAY', karena tidak ada 'if' khusus, 
+    // maka semua kolom tetap tersembunyi (Langkah A), jadi hanya sisa "Nama".
+
+    // 5. Update UI (Harga & Total)
     refreshUI();
-}
-
 
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
