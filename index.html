@@ -543,17 +543,30 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
         window.userLng = longitude;
 
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-        userDist = straightLineDist * 1.45; 
+userDist = straightLineDist * 1.45; 
 
-        // SINKRONISASI RADIUS: Pastikan ID sesuai dengan HTML (mDineIn)
-        if (userDist > CONFIG.RADIUS_DINE_IN) {
-            const dineBtn = document.getElementById('mDineIn'); // ID disesuaikan
-            if(dineBtn) {
-                dineBtn.classList.add('disabled');
-                // Kita tidak perlu mengubah .onclick di sini karena 
-                // fungsi changeMode sudah menangani pengecekan class 'disabled'
-            }
-        }
+// SATPAM DINE IN: Terlalu Jauh = Disabled (Sesuai Radius di CONFIG)
+if (userDist > CONFIG.RADIUS_DINE_IN) {
+    const dineBtn = document.getElementById('mDineIn');
+    if(dineBtn) {
+        dineBtn.classList.add('disabled', 'too-far');
+    }
+}
+
+// SATPAM DELIVERY: Terlalu Dekat = Disabled (Minimal 200m)
+const MIN_DELIVERY_DIST = 200; 
+if (userDist < MIN_DELIVERY_DIST) {
+    const deliBtn = document.getElementById('mDelivery');
+    // Katering dihapus dari sini agar tidak ikut terkunci
+    if(deliBtn) {
+        deliBtn.classList.add('disabled', 'too-close');
+    }
+}
+
+// HASILNYA:
+// - Dine In: Dicek jarak maksimalnya.
+// - Delivery: Dicek jarak minimalnya (200m).
+// - Katering: Tidak dicek sama sekali, jadi selalu aktif.
         
         initMap(latitude, longitude);
         initBanner();
@@ -875,29 +888,32 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
     }
 
 function changeMode(m, el) {
-    // 1. CEK RADIUS: Jika tombol punya class 'disabled' (dari startApp), stop & alert!
-    if (el.classList.contains('disabled')) {
-        return showOutOfRangeAlert(); 
+    // PROTEKSI: Cek alasan tombol di-disable
+    if (el.classList.contains('too-far')) {
+        return alert("Jarak Anda terlalu jauh untuk layanan Dine-In.");
+    }
+    
+    if (el.classList.contains('too-close')) {
+        return alert("Jarak Anda sangat dekat (di bawah 200m). Silakan gunakan layanan Dine-In atau Take Away.");
     }
 
-    // 2. SET MODE AKTIF
+    // SET MODE AKTIF
     currentMode = m;
 
-    // 3. UI: Update status tombol (semua tombol baris 1 & 2)
+    // UI: Beri warna hijau pada tombol yang dipilih
     document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
     el.classList.add('active');
 
-    // 4. LOGIKA INPUT BOX (Meja, Alamat, Tanggal)
     const boxMeja = document.getElementById('boxMeja');
     const boxAlamat = document.getElementById('boxAlamat');
     const boxKatering = document.getElementById('boxKateringInfo');
 
-    // Sembunyikan semua dulu (Reset Default)
+    // Reset Box Input
     if(boxMeja) boxMeja.style.display = 'none';
     if(boxAlamat) boxAlamat.style.display = 'none';
     if(boxKatering) boxKatering.style.display = 'none';
 
-    // Tampilkan sesuai pilihan user
+    // Tampilkan Form sesuai Pilihan
     if (m === 'DINE IN') {
         if(boxMeja) boxMeja.style.display = 'block';
     } 
@@ -905,27 +921,23 @@ function changeMode(m, el) {
         if(boxAlamat) boxAlamat.style.display = 'block';
     } 
     else if (m === 'KATERING') {
-        if(boxAlamat) boxAlamat.style.display = 'block'; // Katering butuh alamat
+        if(boxAlamat) boxAlamat.style.display = 'block'; 
         if(boxKatering) {
             boxKatering.style.display = 'block'; 
             
-            // Set Tanggal H+1
+            // Set Tanggal Otomatis (H+1)
             const inputTgl = document.getElementById('tglKatering');
             if(inputTgl) {
                 const besok = new Date();
                 besok.setDate(besok.getDate() + 1);
-                const minDate = besok.toISOString().split('T')[0];
-                inputTgl.min = minDate;
-                inputTgl.value = minDate;
+                inputTgl.min = besok.toISOString().split('T')[0];
+                inputTgl.value = besok.toISOString().split('T')[0];
             }
         }
     }
-    // Jika TAKE AWAY dipilih, tidak ada box yang muncul (display none tetap)
 
-    // 5. REFRESH UI (Hitung ulang total belanja)
     if (typeof refreshUI === "function") refreshUI();
 }
-
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
