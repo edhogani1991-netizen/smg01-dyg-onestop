@@ -583,13 +583,6 @@ let memberPhone = "";
 let discountVoucher = 0;
 let isRedeem = false;
 
-async function handleMember() {
-    let p = prompt("Masukkan No WhatsApp (Contoh: 62812xxx):");
-    if(!p) return;
-    if(!p.startsWith('62')) return alert("Nomor harus diawali 62");
-
-    const res = await (await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&checkMember=${p}`)).json();
-
 // HAPUS BAGIAN handleMember YANG DOUBLE, GANTI DENGAN INI:
 
 async function handleMember() {
@@ -658,6 +651,7 @@ function resetPromo() {
     document.getElementById('vStatus').innerText = "";
     refreshUI();
 }
+
 // MODIFIKASI refreshUI() ASLI ANDA
 // Tambahkan baris ini di dalam fungsi refreshUI() Anda untuk menghitung diskon:
 // let diskonFinal = isRedeem ? 5000 : discountVoucher;
