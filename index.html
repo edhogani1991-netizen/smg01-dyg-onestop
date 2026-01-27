@@ -590,39 +590,44 @@ async function handleMember() {
 
     const res = await (await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&checkMember=${p}`)).json();
 
+// HAPUS BAGIAN handleMember YANG DOUBLE, GANTI DENGAN INI:
+
 async function handleMember() {
     let p = prompt("Masukkan No WhatsApp (Contoh: 62812xxx):");
     if(!p) return;
     if(!p.startsWith('62')) return alert("Nomor harus diawali 62");
 
-    const res = await (await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&checkMember=${p}`)).json();
+    try {
+        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&checkMember=${p}`);
+        const res = await resp.json();
 
-    if(res.status === "not_found") {
-        if(confirm("Nomor belum jadi member. Daftar Gratis sekarang?")) {
-            let n = prompt("Masukkan Nama Lengkap:");
-            let e = prompt("Masukkan Alamat Email (Untuk kirim voucher):"); // <--- TAMBAHKAN INI
+        if(res.status === "not_found") {
+            if(confirm("Nomor belum jadi member. Daftar Gratis sekarang?")) {
+                let n = prompt("Masukkan Nama Lengkap:");
+                let e = prompt("Masukkan Alamat Email (Untuk kirim voucher):");
+                
+                if(n && e) {
+                    await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&registerMember=true&namaMember=${encodeURIComponent(n)}&phoneMember=${p}&emailMember=${encodeURIComponent(e)}`);
+                    alert("Pendaftaran Berhasil! Silakan cek EMAIL Anda untuk kode voucher.");
+                }
+            }
+        } else {
+            memberPhone = p;
+            const info = document.getElementById('infoMember');
+            info.style.display = "block";
+            info.innerText = `Halo ${res.nama}! Poin Anda: ${res.poin}`;
             
-            if(n && e) {
-                // Tambahkan parameter emailMember ke URL fetch
-                await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&registerMember=true&namaMember=${encodeURIComponent(n)}&phoneMember=${p}&emailMember=${encodeURIComponent(e)}`);
-                alert("Pendaftaran Berhasil! Silakan cek EMAIL Anda untuk kode voucher.");
+            if(res.poin >= 5000) {
+                if(discountVoucher > 0) return alert("Voucher sedang digunakan. Batalkan voucher jika ingin tukar poin.");
+                if(confirm(`Tukar 5.000 poin dengan potongan Rp 5.000?`)) {
+                    isRedeem = true;
+                    alert("Poin Terpasang!");
+                    refreshUI();
+                }
             }
         }
-    } else {
-        // ... kode login member yang sudah ada ...
-        memberPhone = p;
-        const info = document.getElementById('infoMember');
-        info.style.display = "block";
-        info.innerText = `Halo ${res.nama}! Poin Anda: ${res.poin}`;
-        
-        if(res.poin >= 5000) {
-            if(discountVoucher > 0) return alert("Voucher sedang digunakan. Batalkan voucher jika ingin tukar poin.");
-            if(confirm(`Tukar 5.000 poin dengan potongan Rp 5.000?`)) {
-                isRedeem = true;
-                alert("Poin Terpasang!");
-                refreshUI();
-            }
-        }
+    } catch (err) {
+        alert("Gagal menghubungkan ke server member.");
     }
 }
 
@@ -631,13 +636,18 @@ async function applyVoucher() {
     let c = document.getElementById('vCode').value;
     if(!c) return;
     
-    const res = await (await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&checkVoucher=${c}`)).json();
-    if(res.status === "valid") {
-        discountVoucher = res.diskon;
-        document.getElementById('vStatus').innerHTML = `<b style="color:green">✅ Diskon Rp ${res.diskon.toLocaleString()} terpasang!</b> <span onclick="resetPromo()" style="color:red; text-decoration:underline; font-size:9px; cursor:pointer">Batal</span>`;
-        refreshUI();
-    } else {
-        alert("Voucher tidak valid atau sudah digunakan.");
+    try {
+        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&checkVoucher=${c}`);
+        const res = await resp.json();
+        if(res.status === "valid") {
+            discountVoucher = res.diskon;
+            document.getElementById('vStatus').innerHTML = `<b style="color:green">✅ Diskon Rp ${res.diskon.toLocaleString()} terpasang!</b> <span onclick="resetPromo()" style="color:red; text-decoration:underline; font-size:9px; cursor:pointer">Batal</span>`;
+            refreshUI();
+        } else {
+            alert("Voucher tidak valid atau sudah digunakan.");
+        }
+    } catch (err) {
+        alert("Gagal mengecek voucher.");
     }
 }
 
@@ -648,7 +658,6 @@ function resetPromo() {
     document.getElementById('vStatus').innerText = "";
     refreshUI();
 }
-
 // MODIFIKASI refreshUI() ASLI ANDA
 // Tambahkan baris ini di dalam fungsi refreshUI() Anda untuk menghitung diskon:
 // let diskonFinal = isRedeem ? 5000 : discountVoucher;
