@@ -528,8 +528,25 @@ mark {
     <div id="wrapName" class="input-card">
         <label>Nama Anda</label>
         <input type="text" id="custName" placeholder="Masukkan nama...">
-    </div>
-    
+    </div> 
+
+    <div style="background: white; padding: 15px; border-radius: 14px; margin-top: 15px; border: 1.2px solid #F0F0F0; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-weight: 800; font-size: 13px;">🪙 Loyalty Member</span>
+            <button onclick="handleMember()" id="btnMemberStatus" style="background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">Cek Poin</button>
+        </div>
+        
+        <div id="infoMember" style="display:none; font-size: 11px; color: var(--success); font-weight: 800; margin-bottom: 10px; background: #F0FFF4; padding: 8px; border-radius: 8px; border: 1px solid #C3E6CB;"></div>
+
+        <div style="border-top: 1px dashed #EEE; padding-top: 12px; margin-top: 5px;">
+            <label style="font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Punya Voucher GForm?</label>
+            <div style="display: flex; gap: 8px; margin-top: 5px;">
+                <input type="text" id="vCode" placeholder="Masukkan kode..." style="flex:1; background: #F9F9F9; border: 1px solid #DDD; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600;">
+                <button onclick="applyVoucher()" style="background: var(--accent); color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">PAKAI</button>
+            </div>
+            <div id="vStatus" style="font-size: 10px; margin-top: 4px; font-weight: 600;"></div>
+        </div>
+    </div>    
     <div id="boxMeja"><div id="wrapMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="Contoh: 08"></div></div>
     <div id="boxAlamat" style="display:none;"><div id="wrapAddr" class="input-card"><label>Alamat Pengiriman</label><textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea></div></div>
 <div id="boxKateringInfo" style="display: none; margin-bottom: 15px;">
@@ -585,8 +602,71 @@ mark {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+let memberPhone = "";
+let discountVoucher = 0;
+let isRedeem = false;
+
+async function handleMember() {
+    let p = prompt("Masukkan No WhatsApp (Contoh: 62812xxx):");
+    if(!p) return;
+    if(!p.startsWith('62')) return alert("Nomor harus diawali 62");
+
+    const res = await (await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&checkMember=${p}`)).json();
+
+    if(res.status === "not_found") {
+        if(confirm("Nomor belum jadi member. Daftar Gratis sekarang?")) {
+            let n = prompt("Masukkan Nama Lengkap:");
+            if(n) {
+                await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&registerMember=true&namaMember=${encodeURIComponent(n)}&phoneMember=${p}`);
+                alert("Pendaftaran Berhasil! Silakan cek poin kembali.");
+            }
+        }
+    } else {
+        memberPhone = p;
+        const info = document.getElementById('infoMember');
+        info.style.display = "block";
+        info.innerText = `Halo ${res.nama}! Poin Anda: ${res.poin}`;
+        
+        if(res.poin >= 5000) {
+            if(discountVoucher > 0) return alert("Voucher sedang digunakan. Batalkan voucher jika ingin tukar poin.");
+            if(confirm(`Tukar 5.000 poin dengan potongan Rp 5.000?`)) {
+                isRedeem = true;
+                alert("Poin Terpasang!");
+                refreshUI();
+            }
+        }
+    }
+}
+
+async function applyVoucher() {
+    if(isRedeem) return alert("Poin sudah digunakan. Batalkan poin untuk memakai voucher.");
+    let c = document.getElementById('vCode').value;
+    if(!c) return;
+    
+    const res = await (await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&checkVoucher=${c}`)).json();
+    if(res.status === "valid") {
+        discountVoucher = res.diskon;
+        document.getElementById('vStatus').innerHTML = `<b style="color:green">✅ Diskon Rp ${res.diskon.toLocaleString()} terpasang!</b> <span onclick="resetPromo()" style="color:red; text-decoration:underline; font-size:9px; cursor:pointer">Batal</span>`;
+        refreshUI();
+    } else {
+        alert("Voucher tidak valid atau sudah digunakan.");
+    }
+}
+
+function resetPromo() {
+    discountVoucher = 0;
+    isRedeem = false;
+    document.getElementById('vCode').value = "";
+    document.getElementById('vStatus').innerText = "";
+    refreshUI();
+}
+
+// MODIFIKASI refreshUI() ASLI ANDA
+// Tambahkan baris ini di dalam fungsi refreshUI() Anda untuk menghitung diskon:
+// let diskonFinal = isRedeem ? 5000 : discountVoucher;
+// let totalNet = (subtotal + ongkir) - diskonFinal;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwmsL1frpP-vnwymYKFpYKR-C4SyasJpgAmxmTIvK0eVbBLIQggRL9nl2k8UwLXYw-P7A/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw-ww1amxjHpzz-wMNwCXokH21PDpbGQqkinpK6EKlvA4VELoja2J3TLt2RM3LYjS6uCw/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -770,31 +850,38 @@ async function startApp() {
 
         if (subtotal > 0) {
             sInd.style.display = 'block';
+            
+            // --- LOGIKA POTONGAN BARU ---
+            // Cek mana yang aktif: Poin (5000) atau Voucher (sesuai input)
+            let diskonFinal = isRedeem ? 5000 : discountVoucher;
+            
             if (currentMode === 'DELIVERY') {
                 let ongkir = calculateOngkir(userDist);
-                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+                // Total = (Subtotal + Ongkir) - Diskon
+                let totalNet = (subtotal + ongkir) - diskonFinal;
+                priceEl.innerText = Math.max(0, totalNet).toLocaleString('id-ID');
+                
                 distEl.style.display = 'block';
                 distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
                 ongEl.style.display = 'block';
-                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+                
+                // Tambahkan info diskon di tampilan jika ada
+                let infoDiskon = diskonFinal > 0 ? ` (Diskon -${diskonFinal.toLocaleString()})` : "";
+                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}${infoDiskon}`;
             } else {
-                priceEl.innerText = subtotal.toLocaleString('id-ID');
+                // Total untuk Dine-in/Takeaway (tanpa ongkir)
+                let totalNet = subtotal - diskonFinal;
+                priceEl.innerText = Math.max(0, totalNet).toLocaleString('id-ID');
+                
                 distEl.style.display = 'none';
-                ongEl.style.display = 'none';
+                ongEl.style.display = diskonFinal > 0 ? 'block' : 'none';
+                if(diskonFinal > 0) ongEl.innerText = `Diskon Terpasang: -Rp ${diskonFinal.toLocaleString()}`;
             }
+            // --- AKHIR LOGIKA POTONGAN ---
+
             document.getElementById('btnOrder').disabled = false;
             document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
-        } else {
-            sInd.style.display = 'none';
-            distEl.style.display = 'none';
-            ongEl.style.display = 'none';
-            priceEl.innerText = "0";
-            document.getElementById('btnOrder').disabled = true;
-            document.getElementById('btnOrder').innerText = 'PILIH MENU';
-            toggleSummary(false); // Tutup rincian jika item habis
         }
-        updateOrderSummary();
-    }
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
@@ -843,10 +930,8 @@ async function startApp() {
         closeModal();
         alert("Mohon pilih layanan terlebih dahulu (Dine In, Take Away, atau Delivery)");
         
-        // Scroll ke atas agar tombol layanan terlihat
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
-        // Beri efek getar/pulse pada tombol layanan yang aktif/tersedia
         document.querySelectorAll('.service-btn:not(.disabled)').forEach(el => {
             el.classList.add('shake-ani');
             el.style.border = "2px solid var(--accent)";
@@ -863,8 +948,8 @@ async function startApp() {
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
-const noAntrean = document.getElementById('noAntrean').innerText;
-    const tglK = document.getElementById('tglKatering')?.value || ''; // Tambahkan ini
+    const noAntrean = document.getElementById('noAntrean').innerText;
+    const tglK = document.getElementById('tglKatering')?.value || '';
 
     // Validasi input kosong (Nama, Meja, atau Alamat)
     const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
@@ -873,8 +958,8 @@ const noAntrean = document.getElementById('noAntrean').innerText;
     let targetEl = null;
     if (!nI.value.trim()) targetEl = nI;
     else if (currentMode === 'DINE IN' && !tI.value.trim()) targetEl = tI;
-else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
-    else if (currentMode === 'KATERING' && !document.getElementById('tglKatering').value) targetEl = document.getElementById('tglKatering'); // Tambahkan ini
+    else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
+    else if (currentMode === 'KATERING' && !document.getElementById('tglKatering').value) targetEl = document.getElementById('tglKatering');
 
     if (targetEl) {
         const targetCard = targetEl.closest('.input-card');
@@ -908,12 +993,21 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `http://www.google.com/maps/place/${window.userLat},${window.userLng}`;
+    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
+
+    // --- LOGIKA PROMO UNTUK WHATSAPP ---
+    let promoText = "";
+    if (isRedeem) {
+        promoText = `\n🎁 *Potongan Poin:* -Rp 5.000`;
+    } else if (discountVoucher > 0) {
+        promoText = `\n🎟️ *Potongan Voucher:* -Rp ${discountVoucher.toLocaleString('id-ID')}`;
+    }
 
     // --- 4. Susun Format Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
+    if(memberPhone) msg += `🎖️ *Member ID:* ${memberPhone}\n`;
     msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
     msg += `━━━━━━━━━━━━━━\n`;
 
@@ -921,19 +1015,18 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
         msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
     } else {
         msg += `🏠 *Alamat:* ${aI.value}\n`;
-        // TAMBAHKAN KODE INI DI SINI
         if (currentMode === 'KATERING') {
             msg += `📅 *Tanggal Kirim:* ${tglK}\n`;
         }
-        // -------------------------
         msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
         msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
     }
 
     msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
+    msg += promoText; // Menambahkan baris promo ke WA
     
     const catatan = document.getElementById('orderNote').value || '-';
-    msg += `\n*CATATAN:* ${catatan}\n`;
+    msg += `\n\n*CATATAN:* ${catatan}\n`;
     msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
     
     msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
@@ -942,10 +1035,8 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
     msg += `Terimakasih!`;
 
     // --- 5. Animasi Feedback Tombol & Pengiriman ---
-    // Memicu getar halus saat klik
     if (navigator.vibrate) navigator.vibrate(50);
 
-    // Mengubah tombol menjadi loading
     const btnKirim = document.querySelector('#modalConfirm button:last-child');
     if (btnKirim) {
         btnKirim.innerHTML = "⌛ Menghubungkan...";
@@ -953,9 +1044,20 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
         btnKirim.style.pointerEvents = "none";
     }
 
-    // Kirim data ke database di latar belakang
+    // --- PENGIRIMAN DATABASE DENGAN DATA PROMO ---
     const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
+    const vCode = document.getElementById('vCode').value;
+    
+    const dbUrl = `${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}` +
+                  `&nama=${encodeURIComponent(nI.value)}` +
+                  `&pesanan=${encodeURIComponent(pesananTeks)}` +
+                  `&mode=${currentMode}` +
+                  `&total=${finalPrice.replace(/\./g, '')}` +
+                  `&phoneMember=${memberPhone}` +
+                  `&useRedeem=${isRedeem}` +
+                  `&voucherCode=${vCode}`;
+
+    fetch(dbUrl, { mode: 'no-cors' });
 
     // Tunggu animasi sebentar baru pindah ke WA
     setTimeout(() => {
