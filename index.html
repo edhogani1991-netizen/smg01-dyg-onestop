@@ -1021,15 +1021,48 @@ async function valdiateVoucher() {
         document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
     }
 
-    function changeMode(m, el) {
-        if (el.classList.contains('too-far')) return alert("Terlalu jauh.");
-        currentMode = m;
-        document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById('boxMeja').style.display = (m === 'DINE IN') ? 'block' : 'none';
-        document.getElementById('boxAlamat').style.display = (m === 'DELIVERY') ? 'block' : 'none';
-        refreshUI();
+function changeMode(mode, el) {
+    // Cegah klik jika disabled
+    if (el.classList.contains('disabled')) {
+        if (el.classList.contains('too-far')) {
+            alert("❌ Dine In hanya tersedia jika kamu berada dekat lokasi.");
+        }
+        if (el.classList.contains('too-close')) {
+            alert("❌ Delivery hanya tersedia jika jarak minimal 200 meter.");
+        }
+        return;
     }
+
+    // Reset semua tombol
+    document.querySelectorAll('.service-btn').forEach(b => {
+        b.classList.remove('active');
+    });
+
+    // Aktifkan tombol terpilih
+    el.classList.add('active');
+    currentMode = mode;
+
+    // Reset field opsional
+    document.getElementById('boxMeja').style.display = 'none';
+    document.getElementById('boxAlamat').style.display = 'none';
+    document.getElementById('boxKateringInfo').style.display = 'none';
+
+    // Mode spesifik
+    if (mode === 'DINE IN') {
+        document.getElementById('boxMeja').style.display = 'block';
+    }
+
+    if (mode === 'DELIVERY') {
+        document.getElementById('boxAlamat').style.display = 'block';
+    }
+
+    if (mode === 'KATERING') {
+        document.getElementById('boxAlamat').style.display = 'block';
+        document.getElementById('boxKateringInfo').style.display = 'block';
+    }
+
+    refreshUI();
+}
 
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
@@ -1084,39 +1117,35 @@ async function valdiateVoucher() {
     </div>
 </div>
 
-<div id="popupVoucher" class="modal">
-    <div class="modal-content">
-        <h3>🎟️ Gunakan Voucher</h3><hr>
-        <input type="text" id="inputVoucher" placeholder="MASUKKAN KODE" style="text-transform: uppercase;">
-        <div class="modal-footer" style="display: flex; gap: 10px; margin-top: 15px;">
-            <button onclick="closePopup('popupVoucher')" class="btn-secondary" style="flex:1;">BATAL</button>
-            <button onclick="valdiateVoucher()" class="btn-primary" style="flex:1;">GUNAKAN</button>
-        </div>
-    </div>
+<div id="popupVoucher" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>🎟️ Gunakan Voucher</h3>
+    <input id="inputVoucher" placeholder="Kode voucher">
+    <button class="btn-primary" onclick="valdiateVoucher()">Gunakan</button>
+    <br><br>
+    <button class="btn-secondary" onclick="closePopup('popupVoucher')">Tutup</button>
+  </div>
+</div>
+<div id="popupCekPoin" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>⭐ Cek Poin Member</h3>
+    <input id="inputNoHP" placeholder="628xxxxxxxxx">
+    <button class="btn-primary" onclick="checkMember()">Cek Poin</button>
+    <br><br>
+    <button class="btn-secondary" onclick="closePopup('popupCekPoin')">Tutup</button>
+  </div>
+</div>
+<div id="popupDaftar" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>🧾 Daftar Member</h3>
+    <input id="regNama" placeholder="Nama">
+    <input id="regNoHP" placeholder="628xxxxxxxxx">
+    <button class="btn-primary" onclick="registerMember()">Daftar</button>
+    <br><br>
+    <button class="btn-secondary" onclick="closePopup('popupDaftar')">Batal</button>
+  </div>
 </div>
 
-<div id="popupCekPoin" class="modal">
-    <div class="modal-content">
-        <h3>⭐ Cek Poin Member</h3><hr>
-        <input type="number" id="inputNoHP" placeholder="628XXXXXXXX">
-        <div class="modal-footer" style="display: flex; gap: 10px; margin-top: 15px;">
-            <button onclick="closePopup('popupCekPoin')" class="btn-secondary" style="flex:1;">BATAL</button>
-            <button onclick="checkMember()" class="btn-primary" style="flex:1;">CEK POIN</button>
-        </div>
-    </div>
-</div>
-
-<div id="popupDaftar" class="modal">
-    <div class="modal-content">
-        <h3>📝 Daftar Member</h3><hr>
-        <input type="text" id="regNama" placeholder="Nama Lengkap" style="margin-bottom:10px;">
-        <input type="text" id="regNoHP" readonly style="background:#eee;">
-        <div class="modal-footer" style="display: flex; gap: 10px; margin-top: 15px;">
-            <button onclick="closePopup('popupDaftar')" class="btn-secondary" style="flex:1;">BATAL</button>
-            <button onclick="registerMember()" class="btn-primary" style="flex:1;">SIMPAN</button>
-        </div>
-    </div>
-</div>
 
 </body>
 </html>
