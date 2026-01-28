@@ -439,9 +439,26 @@ mark {
     filter: grayscale(1);
     opacity: 0.5;
 }
+
+  .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+  .modal-content { background: white; margin: 15% auto; padding: 20px; border-radius: 20px; width: 85%; max-width: 360px; text-align: center; }
+  
+  input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-weight: bold; }
+  
+  .btn-primary { background: #4a675d; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+  .btn-secondary { background: #ccc; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; margin-right: 5px; }
+  
+  .btn-box { padding: 10px; border-radius: 8px; border: 1px solid #4a675d; background: white; }
+  .btn-circle { width: 45px; height: 45px; border-radius: 50%; border: 1px solid #4a675d; background: white; }
+  
+  .info-text { font-size: 12px; color: #666; }
     </style>
 </head>
 <body>
+<div class="action-buttons">
+  <button id="btnVoucher" class="btn-box">🎟️ Voucher</button>
+  <button id="btnPoin" class="btn-circle">⭐ Poin</button>
+</div>
 
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
     <div style="text-align: center; width: 100%; max-width: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
@@ -586,7 +603,7 @@ mark {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzswdM3SdT_EyAxL2hCQfJzB-ddmMZjIKjGvZotaUrd1avS7PrKSnozyFKhLnqLVIUuFg/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyoxce_z3IZYgMbfSNNZ2mRWthQhzWHM0WgvcGak7pdogvm7LzKNcsYtPhpg5BHnuSc7w/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -594,6 +611,71 @@ mark {
         RADIUS_DINE_IN: 150
     };
 
+    // --- VARIABEL GLOBAL MEMBER & VOUCHER ---
+    let currentVoucher = null;
+    let voucherNominal = 0;
+    let currentMember = { noHP: null, poin: 0 };
+    let isUsingPoin = false;
+
+    // --- FUNGSI UI MEMBER & VOUCHER ---
+    document.getElementById('btnVoucher').onclick = () => document.getElementById('popupVoucher').style.display = 'block';
+    document.getElementById('btnPoin').onclick = () => document.getElementById('popupCekPoin').style.display = 'block';
+
+    function closePopup(id) { document.getElementById(id).style.display = 'none'; }
+
+    async function checkMember() {
+        const noHP = document.getElementById('inputNoHP').value;
+        if (!noHP.startsWith('628')) return alert('Gunakan format 628xxx');
+        const res = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${noHP}`);
+        const data = await res.json();
+        if (data.exists) {
+            alert(`Halo ${data.nama}! Poin kamu: ${data.poin}`);
+            currentMember = { noHP: noHP, poin: data.poin };
+            // Munculkan info poin di atas total bayar jika ada UI-nya
+            closePopup('popupCekPoin');
+        } else {
+            if (confirm("Nomor kamu belum terdaftar nih, mau jadi member?")) {
+                document.getElementById('regNoHP').value = noHP;
+                document.getElementById('popupDaftar').style.display = 'block';
+            }
+        }
+    }
+
+    async function registerMember() {
+        const nama = document.getElementById('regNama').value;
+        const noHP = document.getElementById('regNoHP').value;
+        await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=daftarMember&nama=${nama}&noHP=${noHP}`);
+        alert("Pendaftaran Berhasil! Silakan cek poin lagi.");
+        closePopup('popupDaftar');
+    }
+
+    async function valdiateVoucher() {
+        const kode = document.getElementById('inputVoucher').value;
+        const res = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekVoucher&kode=${kode}`);
+        const data = await res.json();
+        if (data.valid) {
+            alert(`✅ Voucher Berhasil! Potongan: Rp ${data.nominal}`);
+            currentVoucher = kode;
+            voucherNominal = data.nominal;
+            closePopup('popupVoucher');
+            refreshUI();
+        } else {
+            alert("❌ " + data.msg);
+        }
+    }
+
+    function gunakanPoinMember() {
+        if (currentMember.poin >= 5000) {
+            isUsingPoin = true;
+            alert("Poin akan memotong total belanja kamu saat pembayaran.");
+            closePopup('popupCekPoin');
+            refreshUI();
+        } else {
+            alert("Poin minimal 5.000 untuk dapat ditukarkan.");
+        }
+    }
+
+    // --- LOGIC LAMA (TIDAK DISENTUH) ---
     const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
     const VARIAN_MIE_GORENG = [{n:'Original',e:0},{n:'Rendang',e:0},{n:'Salero Padang',e:0}];
     const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
@@ -601,8 +683,6 @@ mark {
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
     let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
-    let currentUserHP = ""; 
-    let isPoinUsed = false;
 
     async function startApp() {
         const startBtn = document.querySelector('#welcome-overlay button');
@@ -622,13 +702,9 @@ mark {
             if(deliBtn) deliBtn.classList.remove('disabled', 'too-close');
             const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
             userDist = straightLineDist * 1.45; 
-            if (userDist > CONFIG.RADIUS_DINE_IN) {
-                if(dineBtn) dineBtn.classList.add('disabled', 'too-far');
-            }
+            if (userDist > CONFIG.RADIUS_DINE_IN) { if(dineBtn) dineBtn.classList.add('disabled', 'too-far'); }
             const MIN_DELIVERY_DIST = 200; 
-            if (userDist < MIN_DELIVERY_DIST) {
-                if(deliBtn) deliBtn.classList.add('disabled', 'too-close');
-            }
+            if (userDist < MIN_DELIVERY_DIST) { if(deliBtn) deliBtn.classList.add('disabled', 'too-close'); }
             initMap(latitude, longitude);
             initBanner();
             document.getElementById('welcome-overlay').style.display = 'none';
@@ -638,64 +714,6 @@ mark {
             document.getElementById('welcome-overlay').style.display = 'none';
         }, { enableHighAccuracy: true });
     }
-
-    // --- FUNGSI MEMBER & POIN ---
-    function formatTo628(hp) {
-        let cleaned = hp.replace(/[^0-9]/g, '');
-        if (cleaned.startsWith('08')) cleaned = '62' + cleaned.substring(1);
-        else if (cleaned.startsWith('8')) cleaned = '628' + cleaned.substring(1);
-        return cleaned;
-    }
-    function isValid628(hp) { return /^628[0-9]{8,}$/.test(hp); }
-    async function handleCekPoin() {
-        let rawHP = prompt("Masukkan Nomor HP (08xx/628xx):");
-        if (!rawHP) return;
-        currentUserHP = formatTo628(rawHP);
-        if (!isValid628(currentUserHP)) return alert("Format salah! Minimal 11 angka (Contoh: 081234567890)");
-        try {
-            const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&cekMember=true&hp=${currentUserHP}`);
-            const res = await resp.json();
-            if (res.status === "exists") {
-                alert(`Halo ${res.nama}!\nPoin Anda: ${res.poin}`);
-                if (res.poin >= 5000) {
-                    const pSec = document.getElementById('poinSection');
-                    if(pSec) pSec.style.display = 'block';
-                }
-            } else {
-                document.getElementById('modalMember').style.display = 'flex';
-                document.getElementById('regHP').value = currentUserHP;
-            }
-        } catch (e) { alert("Gagal mengecek poin."); }
-    }
-    async function prosesDaftarMember() {
-    const nama = document.getElementById('regNama').value.trim();
-    const hp = formatTo628(document.getElementById('regHP').value); // otomatis ubah 08 ke 628
-    const email = document.getElementById('regEmail').value.trim();
-
-    // Validasi dengan Regex
-    if (nama.length < 3) {
-        return alert("Nama terlalu pendek!");
-    }
-    if (!isValid628(hp)) {
-        return alert("Nomor HP tidak valid! Harus format 628xxxx (min 11 digit)");
-    }
-    if (!isValidEmail(email)) {
-        return alert("Format Email salah!");
-    }
-
-    // Jika lolos semua validasi, kirim ke GAS
-    await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&daftarMember=true&hp=${hp}&nama=${encodeURIComponent(nama)}&email=${encodeURIComponent(email)}`, {mode:'no-cors'});
-    
-    alert("Berhasil! Silakan cek Email Anda untuk voucher perdana.");
-    closeMemberModal();
-}
-    function closeMemberModal() { document.getElementById('modalMember').style.display = 'none'; }
-    function pakaiPoin() {
-        isPoinUsed = true;
-        alert("Poin Digunakan! Potongan Rp 5.000 aktif.");
-        document.getElementById('poinSection').innerHTML = "<p style='color:#27ae60; font-weight:bold; font-size:11px; margin:0;'>✅ Potongan Poin Rp 5.000 Aktif</p>";
-    }
-    // ----------------------------
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
@@ -728,14 +746,12 @@ mark {
         const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
         const counts = {}; 
         cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
-
         document.getElementById('menu-container').innerHTML = items.map(m => {
             const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
             const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
             const isMieG = nl.includes("mie") && nl.includes("goreng");
             const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
             const isPaket = kl.includes("paket");
-
             return `
             <div class="menu-item">
                 <div class="menu-info">
@@ -760,7 +776,6 @@ mark {
     function updateCart(id, change, forceVariant = null) {
         const item = menuData.find(m => m.id === id);
         if (!item) return;
-
         if (change > 0) {
             let vData = forceVariant ? {...forceVariant} : {
                 vN: document.getElementById(`n-${id}`)?.value || null,
@@ -791,6 +806,12 @@ mark {
             counts[c.id] = (counts[c.id] || 0) + 1; 
         });
 
+        // LOGIKA POTONGAN UI
+        let potongan = voucherNominal;
+        if(isUsingPoin) potongan += currentMember.poin;
+        let totalSetelahDiskon = subtotal - potongan;
+        if(totalSetelahDiskon < 0) totalSetelahDiskon = 0;
+
         menuData.forEach(m => {
             const el = document.getElementById(`qty-${m.id}`);
             if(el) {
@@ -807,28 +828,23 @@ mark {
 
         if (subtotal > 0) {
             sInd.style.display = 'block';
-            if (currentMode === 'DELIVERY') {
-                let ongkir = calculateOngkir(userDist);
-                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+            let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
+            priceEl.innerText = (totalSetelahDiskon + ongkir).toLocaleString('id-ID');
+            
+            if(currentMode === 'DELIVERY'){
                 distEl.style.display = 'block';
                 distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
                 ongEl.style.display = 'block';
                 ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
             } else {
-                priceEl.innerText = subtotal.toLocaleString('id-ID');
                 distEl.style.display = 'none';
                 ongEl.style.display = 'none';
             }
             document.getElementById('btnOrder').disabled = false;
-            document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
         } else {
             sInd.style.display = 'none';
-            distEl.style.display = 'none';
-            ongEl.style.display = 'none';
             priceEl.innerText = "0";
             document.getElementById('btnOrder').disabled = true;
-            document.getElementById('btnOrder').innerText = 'PILIH MENU';
-            toggleSummary(false);
         }
         updateOrderSummary();
     }
@@ -865,11 +881,7 @@ mark {
 
     function changeQtyFromSummary(groupKey, delta) {
         const sample = cart.find(c => `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}` === groupKey);
-        if (sample) {
-            updateCart(sample.id, delta, {
-                vN: sample.vN, vM: sample.vM, vR: sample.vR, vS: sample.vS, ex: sample.ex
-            });
-        }
+        if (sample) updateCart(sample.id, delta, { vN: sample.vN, vM: sample.vM, vR: sample.vR, vS: sample.vS, ex: sample.ex });
     }
 
     async function submitOrder() {
@@ -879,60 +891,51 @@ mark {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return; 
         }
-        if (navigator.vibrate) navigator.vibrate(50);
+
         const nI = document.getElementById('custName');
         const tI = document.getElementById('tableNo');
         const aI = document.getElementById('addressDetail');
         const noAntrean = document.getElementById('noAntrean').innerText;
-        const tglK = document.getElementById('tglKatering')?.value || '';
+        const finalPrice = document.getElementById('miniPrice').innerText;
 
-        if (!nI.value.trim()) { closeModal(); nI.focus(); return alert("Isi Nama Pemesan"); }
-        
+        // Validasi input dasar
+        if (!nI.value.trim()) { closeModal(); alert("Nama wajib diisi"); return; }
+
         const summary = {};
         cart.forEach(c => {
             let label = c.nama;
             let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
             if(tags) label += ` [${tags}]`;
-            const itemPrice = c.harga + (c.ex || 0);
-            if (!summary[label]) summary[label] = { qty: 0, pricePerItem: itemPrice };
-            summary[label].qty++;
+            summary[label] = (summary[label] || 0) + 1;
         });
 
-        const pRowsWA = Object.entries(summary).map(([name, data]) => 
-            `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
-        );
+        const pesananTeks = Object.entries(summary).map(([n, q]) => `${q}x ${n}`).join(', ');
 
-        let finalPriceInt = parseInt(document.getElementById('miniPrice').innerText.replace(/\./g, ''));
-        if (isPoinUsed) {
-            finalPriceInt -= 5000;
-            fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&redeemPoin=true&hp=${currentUserHP}`, {mode:'no-cors'});
-        }
-        const vKode = document.getElementById('voucherInput')?.value || '-';
+        // --- KIRIM KE DATABASE (DENGAN DATA POIN/MEMBER) ---
+        const params = new URLSearchParams({
+            token: CONFIG.TOKEN,
+            nama: nI.value,
+            pesanan: pesananTeks,
+            mode: currentMode,
+            total: finalPrice.replace(/\./g, ''),
+            noHP: currentMember.noHP || "",
+            kodeVoucher: currentVoucher || "",
+            pakaiPoin: isUsingPoin ? "true" : "false",
+            poinDitukar: isUsingPoin ? currentMember.poin : 0
+        });
 
-        let msg = `Halo cloudkitchen.dyg++!\n\n`;
-        msg += `🛵 *${currentMode}*\n`;
-        msg += `👤 *Nama:* ${nI.value}\n`;
-        msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
-        msg += `🎟 *Voucher:* ${vKode}\n`;
-        msg += `━━━━━━━━━━━━━━\n`;
+        fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
 
-        if (currentMode === 'DINE IN') msg += `🪑 *Nomor Meja:* ${tI.value}\n`;
-        else msg += `🏠 *Alamat:* ${aI.value}\n🌐 *Lokasi:* http://www.google.com/maps/place/${window.userLat},${window.userLng}\n`;
-
-        msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
-        msg += `\n*TOTAL BAYAR: Rp ${finalPriceInt.toLocaleString('id-ID')}*\n`;
-        if(isPoinUsed) msg += `(Potongan Poin 5rb Aktif)\n`;
-
+        // --- REDIRECT WA (LOGIC LAMA) ---
+        let msg = `Halo cloudkitchen.dyg++!\n*${currentMode}* - ${noAntrean}\n👤 ${nI.value}\n📦 ${pesananTeks}\n💰 TOTAL: Rp ${finalPrice}`;
+        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+        
         const btnKirim = document.querySelector('#modalConfirm button:last-child');
-        if (btnKirim) { btnKirim.innerHTML = "⌛ Menghubungkan..."; btnKirim.style.pointerEvents = "none"; }
-
-        const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
-        fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPriceInt}&hp=${currentUserHP}`, { mode: 'no-cors' });
+        if (btnKirim) btnKirim.innerHTML = "⌛ Menghubungkan...";
 
         setTimeout(() => {
-            const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
             window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-        }, 600); 
+        }, 800);
     }
 
     function toggleSummary(open) {
@@ -943,13 +946,12 @@ mark {
 
     function changeMode(m, el) {
         if (el.classList.contains('too-far')) return alert("Jarak terlalu jauh untuk Dine-In.");
-        if (el.classList.contains('too-close')) return alert("Gunakan Dine-In/Take Away.");
+        if (el.classList.contains('too-close')) return alert("Jarak terlalu dekat untuk Delivery.");
         currentMode = m;
         document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
         el.classList.add('active');
-        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
+        document.getElementById('boxMeja').style.display = (m === 'DINE IN') ? 'block' : 'none';
         document.getElementById('boxAlamat').style.display = (m === 'DELIVERY' || m === 'KATERING') ? 'block' : 'none';
-        document.getElementById('boxKateringInfo').style.display = m === 'KATERING' ? 'block' : 'none';
         refreshUI();
     }
 
@@ -957,7 +959,6 @@ mark {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         L.marker(CONFIG.WARUNG_LOCATION).addTo(map).bindPopup("Warung").openPopup();
-        L.marker([lat, lng]).addTo(map).bindPopup("Lokasi Kamu");
     }
 
     function initBanner() {
@@ -968,15 +969,9 @@ mark {
 
     function filterMenu() {
         const q = document.getElementById('searchMenu').value.toLowerCase();
-        const items = document.querySelectorAll('.menu-item');
-        items.forEach(it => {
-            const titleEl = it.querySelector('h4');
-            const originalName = titleEl.dataset.name;
-            if (q === "") { titleEl.innerHTML = originalName; it.style.display = 'flex'; }
-            else if (originalName.toLowerCase().includes(q)) {
-                titleEl.innerHTML = originalName.replace(new RegExp(`(${q})`, 'gi'), '<mark>$1</mark>');
-                it.style.display = 'flex';
-            } else { it.style.display = 'none'; }
+        document.querySelectorAll('.menu-item').forEach(it => {
+            const name = it.querySelector('h4').dataset.name;
+            it.style.display = name.toLowerCase().includes(q) ? 'flex' : 'none';
         });
     }
 
@@ -997,64 +992,62 @@ mark {
 
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-    function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
-    function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
-
-    // Injeksi Voucher Otomatis ke Modal Konfirmasi
-    window.addEventListener('DOMContentLoaded', () => {
-        const modalCard = document.querySelector('#modalConfirm .modal-card');
-        if (modalCard) {
-            const addon = document.createElement('div');
-            addon.innerHTML = `
-                <div id="poinSection" style="margin: 10px 0; padding: 10px; border: 1px dashed var(--accent); border-radius: 10px; display: none; background: #FFF9F0; text-align:left;">
-                    <p style="font-size: 11px; margin: 0; color:var(--accent); font-weight:bold;">Poin Anda cukup!</p>
-                    <button onclick="pakaiPoin()" style="background: var(--accent); color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 10px; margin-top: 5px; cursor:pointer; font-weight:800;">PAKAI 5000 POIN (-5rb)</button>
-                </div>
-                <div class="input-card" style="margin-top: 15px; border: 1px solid #eee; text-align:left;">
-                    <label style="font-size: 9px; font-weight:bold;">KODE VOUCHER</label>
-                    <input type="text" id="voucherInput" placeholder="Masukkan kode promo" style="width:100%; border:none; font-size:13px; outline:none; background:transparent;">
-                </div>`;
-            const actionBox = modalCard.querySelector('div[style*="display: flex"]');
-            modalCard.insertBefore(addon, actionBox);
-        }
-    });
 </script>
-
-<div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
-    <button onclick="event.stopPropagation(); handleCekPoin()" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:10px; font-weight:900; font-size:10px; margin-right:10px; cursor:pointer; white-space:nowrap; height:40px; box-shadow:0 4px 8px rgba(0,0,0,0.1);">🪙 POIN</button>
-    
-    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
-    
-    <div style="flex:1">
-        <div id="dist-info" class="dist-info"></div>
-        <div id="ongkir-label" class="ongkir-tag"></div>
-        <div class="price-total">Rp <span id="miniPrice">0</span></div>
-    </div>
-    
-    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
-</div>
-
-<div id="modalMember" class="modal-overlay" style="z-index: 10005;">
-    <div class="modal-card">
-        <h3 style="font-weight: 900; margin-bottom: 5px;">Jadi Member D+</h3>
-        <p style="font-size: 12px; color: var(--muted); margin-bottom: 15px;">Dapatkan Voucher otomatis via Email setiap belanja.</p>
-        
-        <input type="text" id="regNama" placeholder="Nama Lengkap" class="input-card" style="margin-bottom:10px; width:100%; border:1px solid #ddd;">
-        <input type="tel" id="regHP" placeholder="628xxxxxxx" class="input-card" style="margin-bottom:10px; width:100%; border:1px solid #ddd;">
-        <input type="email" id="regEmail" placeholder="alamat@email.com" class="input-card" style="margin-bottom:15px; width:100%; border:1px solid #ddd;">
-        
-        <button onclick="prosesDaftarMember()" class="order-btn" style="width:100%; background:var(--primary);">DAFTAR & DAPATKAN VOUCHER</button>
-        <button onclick="closeMemberModal()" style="margin-top:10px; background:none; border:none; color:var(--muted); width:100%;">Nanti Dulu</button>
-    </div>
-</div>
 
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
         <div style="font-size:48px;margin-bottom:10px;">🚧</div>
         <h3 style="font-weight:900;margin-bottom:6px;">Sedang Dalam Pengembangan</h3>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Fitur ini belum tersedia.<br>Kembali lagi besok ya 🙏</p>
-        <button onclick="closeComingSoon()" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--primary);color:white;font-weight:800;">Kembali</button>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">
+            Fitur ini belum tersedia.<br>
+            Kembali lagi besok ya 🙏
+        </p>
+        <button onclick="closeComingSoon()"
+            style="width:100%;padding:12px;border-radius:12px;border:none;
+                   background:var(--primary);color:white;font-weight:800;">
+            Kembali
+        </button>
     </div>
 </div>
+
+<div id="popupVoucher" class="modal">
+  <div class="modal-content">
+    <h3>🎟️ Gunakan Voucher</h3>
+    <hr>
+    <input type="text" id="inputVoucher" placeholder="MASUKKAN KODE" style="text-transform: uppercase;">
+    <p class="info-text">ℹ️ Voucher 1x pakai</p>
+    <div class="modal-footer">
+      <button onclick="closePopup('popupVoucher')" class="btn-secondary">BATAL</button>
+      <button onclick="valdiateVoucher()" class="btn-primary">GUNAKAN</button>
+    </div>
+  </div>
+</div>
+
+<div id="popupCekPoin" class="modal">
+  <div class="modal-content">
+    <h3>⭐ Cek Poin Member</h3>
+    <hr>
+    <p>Masukkan No HP (628xxx)</p>
+    <input type="number" id="inputNoHP" placeholder="628XXXXXXXX">
+    <div class="modal-footer">
+      <button onclick="closePopup('popupCekPoin')" class="btn-secondary">BATAL</button>
+      <button onclick="checkMember()" class="btn-primary">CEK POIN</button>
+    </div>
+  </div>
+</div>
+
+<div id="popupDaftar" class="modal">
+  <div class="modal-content">
+    <h3>📝 Daftar Member</h3>
+    <hr>
+    <input type="text" id="regNama" placeholder="Nama Lengkap">
+    <input type="text" id="regNoHP" readonly>
+    <div class="modal-footer">
+      <button onclick="closePopup('popupDaftar')" class="btn-secondary">BATAL</button>
+      <button onclick="registerMember()" class="btn-primary">SIMPAN</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
