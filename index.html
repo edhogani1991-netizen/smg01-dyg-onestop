@@ -440,59 +440,73 @@ mark {
     opacity: 0.5;
 }
 
-/* --- VOUCHER PREMIUM REVAMP --- */
-.voucher-container {
-    background: #fdfdfd;
-    border: 1px solid #e8e8e8;
-    border-radius: 12px;
-    padding: 4px 8px 4px 12px; /* Ruang lebih luas di kiri */
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+/* === VOUCHER BUTTON === */
+.voucher-btn{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:linear-gradient(135deg,#FFF3CD,#FFE69C);
+    border:1px dashed #F1C40F;
+    cursor:pointer;
+    transition:all .2s ease;
 }
 
-.voucher-icon {
-    font-size: 14px;
-    margin-right: 8px;
-    filter: grayscale(0.5);
+/* ICON */
+.voucher-btn .voucher-icon{
+    font-size:24px;
+    flex-shrink:0;
 }
 
-.voucher-container input {
-    flex: 1;
-    border: none !important; /* Hapus border bawaan */
-    outline: none !important;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text);
-    background: transparent;
-    padding: 8px 0;
+/* TEXT */
+.voucher-btn .voucher-text{
+    flex:1;
+    display:flex;
+    flex-direction:column;
 }
 
-.voucher-container input::placeholder {
-    color: #bbb;
-    font-weight: 500;
+.voucher-btn .voucher-text h4{
+    font-size:13px;
+    font-weight:900;
+    margin:0;
+    color:#8A6D00;
 }
 
-/* Tombol Pakai yang lebih Estetik */
-.btn-apply-vouch {
-    background: var(--primary); /* Hijau gelap biar senada */
-    color: white;
-    border: none;
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 2px 6px rgba(27, 67, 50, 0.2);
+.voucher-btn .voucher-text p{
+    font-size:10px;
+    margin:2px 0 0;
+    color:#9A8700;
 }
 
-.btn-apply-vouch:active {
-    transform: scale(0.92);
-    filter: brightness(1.2);
+/* INPUT */
+.voucher-btn input#vouchCode{
+    flex:1;
+    padding:6px 8px;
+    border-radius:8px;
+    border:1px solid #F1C40F;
+    font-size:12px;
+}
+
+/* BUTTON PAKAI */
+.voucher-btn .btn-apply-vouch{
+    padding:6px 12px;
+    background:#F1C40F;
+    border:none;
+    border-radius:8px;
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    transition:all .2s ease;
+}
+
+.voucher-btn .btn-apply-vouch:hover{
+    background:#d4a70a;
+}
+
+.voucher-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 18px rgba(0,0,0,.12);
 }
 
 /* Merapikan area harga di bawah voucher */
@@ -629,10 +643,16 @@ mark {
     
     <div style="flex: 1; margin-right: 15px;">
         <div class="voucher-container" onclick="event.stopPropagation();">
-            <span class="voucher-icon">🎟️</span>
-            <input type="text" id="vouchCode" placeholder="Gunakan kode promo..." autocomplete="off">
-            <button class="btn-apply-vouch" onclick="applyVoucher()">PAKAI</button>
+    <div class="voucher-btn">
+        <div class="voucher-icon">🎟️</div>
+        <div class="voucher-text">
+            <h4>Pakai Voucher</h4>
+            <p>Gunakan kode promo</p>
         </div>
+        <input type="text" id="vouchCode" placeholder="Kode promo..." autocomplete="off">
+        <button class="btn-apply-vouch" onclick="applyVoucher()">PAKAI</button>
+    </div>
+</div>
 
         <div class="price-total-row">
             <div id="dist-info" class="dist-info"></div>
