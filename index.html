@@ -236,153 +236,149 @@ mark {
     background: #FFFDE7 !important;
 }
 
-/* === GOJEK STYLE SERVICE BUTTON === */
+/* === SUPER-APP GRID STYLE (4 Tombol per Baris) === */
 .service-mode {
-    display: flex;
-    justify-content: space-around;
-    padding: 8px 18px 14px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Otomatis membagi 4 kolom sama besar */
+    gap: 12px;
+    padding: 15px 12px;
+    justify-items: center;
 }
 
 .service-btn {
-    width: 82px;
-    height: 82px;
-    background: white;
-    border-radius: 50%;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    width: 100%;
+    max-width: 80px; /* Lebar maksimal tombol agar tidak kebesaran */
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
     cursor: pointer;
-    position: relative;
-    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* Efek membal (bouncy) */
 }
 
-.service-btn span {
-    position: relative; /* Ubah dari absolute ke relative */
-    display: block;    /* Pastikan teks mengambil baris baru */
-    margin-top: 4px;   /* Jarak antara ikon dan teks */
-    font-size: 11px;
-    font-weight: 900;
-    color: var(--text);
-    text-align: center;
-    line-height: 1;
-    width: 100%;
-    pointer-events: none;
-    z-index: 2;
-    opacity: 1; /* Ubah dari 0.3 ke 1 agar tulisan terlihat jelas */
-    transform: none; /* Hapus transform translate yang membuatnya ke tengah */
-    left: auto;      /* Reset posisi */
-    top: auto;       /* Reset posisi */
-}
-
-/* ICON */
+/* CONTAINER ICON */
 .service-btn .icon {
-    width: 70px;  /* Perkecil dari 90px agar ada ruang untuk teks di bawah */
-    height: 70px; /* Perkecil dari 90px */
+    width: 65px;  /* Ukuran icon besar ala Gojek */
+    height: 65px;
+    background: #FFFFFF;
+    border-radius: 20px; /* Rounded corner modern, bukan bulat sempurna */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.06);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 2px;
-    animation: floatIcon 2.8s ease-in-out infinite;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: visible;
+    transition: all 0.3s ease;
+    animation: floatIcon 3s ease-in-out infinite;
 }
 
-/* AKTIF */
-.service-btn.active {
-    background: linear-gradient(145deg, #1B4332, #2D6A4F);
-    color: white;
-    transform: translateY(-6px) scale(1.05);
-    box-shadow: 0 14px 30px rgba(27,67,50,0.45);
+.service-icon-img {
+    width: 75%;  /* Gambar besar dan jelas */
+    height: 75%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+/* TEKS DI BAWAH ICON */
+.service-btn span {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text);
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: -0.2px;
+}
+
+/* === EFEK AKTIF (STATE TERPILIH) === */
+.service-btn.active .icon {
+    background: linear-gradient(135deg, #1B4332, #2D6A4F);
+    box-shadow: 0 15px 25px rgba(27,67,50,0.3);
+    transform: scale(1.1) translateY(-5px);
+}
+
+.service-btn.active .service-icon-img {
+    filter: brightness(0) invert(1); /* Ikon jadi putih saat aktif agar mewah */
+    transform: scale(1.1);
 }
 
 .service-btn.active span {
-    color: white;
-}
-
-/* RING */
-.service-btn.active::after {
-    content: "";
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 2px solid rgba(27,67,50,0.5);
-    animation: pulseRing 1.4s infinite;
-}
-
-/* DISABLED */
-.service-btn.disabled {
-    opacity: 0.4;
-    filter: grayscale(1);
-}
-
-/* ANIMASI ICON */
-@keyframes floatIcon {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
-}
-
-/* RING PULSE */
-@keyframes pulseRing {
-    0% { transform: scale(0.9); opacity: 0.8; }
-    100% { transform: scale(1.2); opacity: 0; }
-}
-/* === SECONDARY GOJEK STYLE === */
-.secondary-mode {
-    margin-top: 5px; /* Memberi sedikit jarak antar baris */
-    opacity: 1;
-}
-
-.service-btn.secondary {
-    width: 82px;      /* Samakan dengan baris 1 */
-    height: 82px;     /* Samakan dengan baris 1 */
-    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-    background: white;
-    filter: none !important; /* Memaksa warna asli muncul */
-    opacity: 1 !important;
-}
-
-/* Ukuran Icon - Samakan dengan baris 1 */
-.service-btn.secondary .icon {
-    width: 60px; 
-    height: 60px;
-}
-
-/* INI KODE YANG TADI TIDAK ADA, MASUKKAN SEKARANG */
-.service-btn.secondary .service-icon-img {
-    filter: none !important;
-    opacity: 1 !important;
-    width: 90%;
-    height: 90%;
-    object-fit: contain;
-}
-
-.service-btn.secondary span {
-    position: relative;
-    top: auto;
-    left: auto;
-    transform: none;
-    font-size: 11px;
+    color: var(--primary);
     font-weight: 900;
-    color: var(--text);
-    opacity: 1;
 }
 
-/* jangan pakai ring hijau */
-.service-btn.secondary.active::after {
-    display: none;
+/* === EFEK UNTUK BARIS KE-2 (SECONDARY) === */
+.service-btn.secondary .icon {
+    animation: none; /* Baris bawah tenang, tidak melayang */
+    background: #fdfdfd;
 }
 
-/* animasi lebih lembut */
-@keyframes floatIconSoft {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-2px); }
+/* EFEK HOVER/TAP (MOBILE FRIENDLY) */
+.service-btn:active {
+    transform: scale(0.9);
 }
 
-/* efek tap */
-.service-btn.secondary:active {
-    transform: scale(0.92);
-    background: #EFEFEF;
+/* ANIMASI MELAYANG HALUS */
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* Sembunyikan Ring untuk Baris 2 */
+.service-btn.secondary.active::after { display: none; }
+
+/* CONTAINER POSISI BADGE */
+.service-btn.disabled {
+    position: relative;
+}
+
+/* BADGE STYLE (DINE IN - Terlalu Jauh) */
+.service-btn.disabled.too-far::after {
+    content: "TERLALU JAUH";
+    position: absolute;
+    top: -5px;
+    background: #e74c3c; /* Merah */
+    color: white;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 3px 6px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
+    white-space: nowrap;
+    z-index: 10;
+    letter-spacing: 0.5px;
+    border: 1.5px solid white;
+}
+
+/* BADGE STYLE (DELIVERY - Terlalu Dekat) */
+.service-btn.disabled.too-close::after {
+    content: "TERLALU DEKAT";
+    position: absolute;
+    top: -5px;
+    background: #f39c12; /* Oranye/Kuning */
+    color: white;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 3px 6px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4);
+    white-space: nowrap;
+    z-index: 10;
+    letter-spacing: 0.5px;
+    border: 1.5px solid white;
+}
+
+/* Update sedikit di bagian ini agar badge center */
+.service-btn.disabled.too-far::after,
+.service-btn.disabled.too-close::after {
+    left: 50%;
+    transform: translateX(-50%);
+    /* properti lainnya tetap sama */
+}
+
+/* Update animasi agar tetap center saat pop-up */
+@keyframes badgePop {
+    0% { transform: translateX(-50%) scale(0) translateY(10px); opacity: 0; }
+    100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
 }
 
 /* === FORM EXTRA RINGKAS === */
@@ -448,16 +444,28 @@ mark {
 <body>
 
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
-    <div style="text-align: center; width: 100%; position: relative; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+    <div style="text-align: center; width: 100%; max-width: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
         
-        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
-            <div style="font-size: 60px; margin-bottom: 15px;">📍</div>
-            <h2 style="font-weight: 900; font-size: 20px;">Hei..Senang bisa mengenalmu</h2>
-            <p style="color: var(--muted); font-size: 13px; margin-bottom: 25px;">Klik Mulai Sekarang Untuk Memulai Pengalamanmu Berbelanja disini.</p>
-            <button onclick="startApp()" class="order-btn" style="width: 100%;">MULAI SEKARANG</button>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+            
+            <div style="width: 280px; height: 280px; margin-bottom: 30px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                <img src="welcome4.png" alt="Welcome" 
+                     style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            
+            <h2 style="font-weight: 900; font-size: 24px; margin-bottom: 10px; color: #333;">Hei..Aku Siap Kasih yang Terbaik</h2>
+            
+            <p style="color: #666; font-size: 14px; margin-bottom: 35px; line-height: 1.6; padding: 0 10px;">
+                Izinkan lokasi biar aku bisa kasih yang terbaik. <br>
+                Klik mulai sekarang untuk pengalaman berbelanjamu disini.
+            </p>
+            
+            <button onclick="startApp()" class="order-btn" style="width: 100%; padding: 18px; font-weight: 800; border-radius: 12px; font-size: 16px;">
+                MULAI SEKARANG
+            </button>
         </div>
 
-        <div style="font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 20px;">
+        <div style="font-size: 10px; color: #999; letter-spacing: 1px; margin-top: 30px;">
             powered by <b>cloudkitchen.dyg++</b>
         </div>
         
@@ -475,39 +483,42 @@ mark {
     <div id="banner-track"></div>
 </div>
 
-<!-- BARIS 1 : MODE ORDER -->
 <div class="service-mode">
-    <div id="mDine" class="service-btn" onclick="changeMode('DINE IN', this)">
+    <div id="mDineIn" class="service-btn active" onclick="changeMode('DINE IN', this)">
         <div class="icon"><img src="dine-in3.png" class="service-icon-img"></div>
         <span>Dine In</span>
     </div>
-
-    <div id="mTake" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
+    <div id="mTakeAway" class="service-btn" onclick="changeMode('TAKE AWAY', this)">
         <div class="icon"><img src="take-away3.png" class="service-icon-img"></div>
         <span>Take Away</span>
     </div>
-
-    <div id="mDeliv" class="service-btn" onclick="changeMode('DELIVERY', this)">
+    <div id="mDelivery" class="service-btn" onclick="changeMode('DELIVERY', this)">
         <div class="icon"><img src="delivery3.png" class="service-icon-img"></div>
         <span>Delivery</span>
     </div>
+    <div id="mKatering" class="service-btn" onclick="changeMode('KATERING', this)">
+        <div class="icon"><img src="katering3.png" class="service-icon-img"></div>
+        <span>Katering</span>
+    </div>
 </div>
 
-
-<div class="service-mode secondary-mode">
-    <div id="mKatering" class="service-btn secondary" onclick="changeMode('KATERING', this)">
-    <div class="icon"><img src="katering3.png" class="service-icon-img"></div>
-    <span>Katering</span>
-</div>
+<div class="service-mode secondary-mode" style="margin-top: -15px;">
+    <div class="service-btn secondary" onclick="window.open('https://whatsapp.com/channel/0029ValssX69Bb60shR04A1G', '_blank')">
+        <div class="icon"><img src="member3.png" class="service-icon-img"></div>
+        <span>Info Promo</span>
+    </div>
 
     <div class="service-btn secondary" onclick="openComingSoon()">
         <div class="icon"><img src="jadi-mitra3.png" class="service-icon-img"></div>
         <span>Jadi Mitra</span>
     </div>
-
     <div class="service-btn secondary" onclick="openComingSoon()">
         <div class="icon"><img src="ngiklan3.png" class="service-icon-img"></div>
         <span>NgIKLAN</span>
+    </div>
+    <div class="service-btn secondary" onclick="openComingSoon()">
+        <div class="icon"><img src="games3.png" class="service-icon-img"></div>
+        <span>Games</span>
     </div>
 </div>
 
@@ -575,7 +586,7 @@ mark {
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyPKJ8Q9u-upqGFQDFxSC7kHGpPe4EECUKDBlU704DyLMfyXUwUJhHSVeYa1FbNockFyA/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwmsL1frpP-vnwymYKFpYKR-C4SyasJpgAmxmTIvK0eVbBLIQggRL9nl2k8UwLXYw-P7A/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -592,30 +603,53 @@ mark {
     // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 
-    async function startApp() {
+async function startApp() {
+    // 1. Langsung ganti tombol ke Loading Jam Pasir
+    const startBtn = document.querySelector('#welcome-overlay button');
+    if (startBtn) {
+        startBtn.innerHTML = "⌛ Menyiapkan...";
+        startBtn.style.opacity = "0.7";
+        startBtn.style.pointerEvents = "none";
+    }
+
+    // 2. JALANKAN LOAD MENU SEKARANG (Jangan pakai await di sini agar tidak menunggu)
+    // Dengan begini, menu didownload sambil GPS bekerja
+    loadMenu();
+
+    // 3. BARU JALANKAN GPS
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
         window.userLat = latitude;
         window.userLng = longitude;
 
+        const dineBtn = document.getElementById('mDineIn');
+        const deliBtn = document.getElementById('mDelivery');
+
+        if(dineBtn) dineBtn.classList.remove('disabled', 'too-far');
+        if(deliBtn) deliBtn.classList.remove('disabled', 'too-close');
+
         const straightLineDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
         userDist = straightLineDist * 1.45; 
 
-        // Cek jangkauan Dine In saja, tapi jangan otomatis klik Delivery
         if (userDist > CONFIG.RADIUS_DINE_IN) {
-            const dineBtn = document.getElementById('mDine');
-            if(dineBtn) {
-                dineBtn.classList.add('disabled');
-                dineBtn.onclick = () => showOutOfRangeAlert();
-            }
+            if(dineBtn) dineBtn.classList.add('disabled', 'too-far');
         }
-        
+
+        const MIN_DELIVERY_DIST = 200; 
+        if (userDist < MIN_DELIVERY_DIST) {
+            if(deliBtn) deliBtn.classList.add('disabled', 'too-close');
+        }
+
+        // 4. FINISH: Hapus overlay dan tampilkan sisanya
         initMap(latitude, longitude);
         initBanner();
         document.getElementById('welcome-overlay').style.display = 'none';
-        await loadMenu();
         syncQueue();
-    }, () => alert("Gagal akses lokasi. Harap aktifkan GPS."), { enableHighAccuracy: true });
+
+    }, (err) => {
+        alert("Gagal akses lokasi. Harap aktifkan GPS untuk pengalaman terbaik.");
+        document.getElementById('welcome-overlay').style.display = 'none';
+    }, { enableHighAccuracy: true });
 }
 
     function calculateOngkir(distMeter) {
@@ -930,48 +964,56 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
     }
 
 function changeMode(m, el) {
-    if (el.classList.contains('disabled')) return showOutOfRangeAlert();
+    // PROTEKSI: Cek alasan tombol di-disable
+    if (el.classList.contains('too-far')) {
+        return alert("Jarak Anda terlalu jauh untuk layanan Dine-In.");
+    }
+    
+    if (el.classList.contains('too-close')) {
+        return alert("Jarak Anda sangat dekat (di bawah 200m). Silakan gunakan layanan Dine-In atau Take Away.");
+    }
+
+    // SET MODE AKTIF
     currentMode = m;
 
+    // UI: Beri warna hijau pada tombol yang dipilih
     document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
     el.classList.add('active');
 
-    // Kontrol visibilitas box
     const boxMeja = document.getElementById('boxMeja');
     const boxAlamat = document.getElementById('boxAlamat');
     const boxKatering = document.getElementById('boxKateringInfo');
 
-    // Reset view
-    boxMeja.style.display = 'none';
-    boxAlamat.style.display = 'none';
-    boxKatering.style.display = 'none';
+    // Reset Box Input
+    if(boxMeja) boxMeja.style.display = 'none';
+    if(boxAlamat) boxAlamat.style.display = 'none';
+    if(boxKatering) boxKatering.style.display = 'none';
 
+    // Tampilkan Form sesuai Pilihan
     if (m === 'DINE IN') {
-        boxMeja.style.display = 'block';
-    } else if (m === 'DELIVERY') {
-        boxAlamat.style.display = 'block';
-    } else if (m === 'KATERING') {
-        boxAlamat.style.display = 'block'; // Katering butuh alamat
-        boxKatering.style.display = 'block'; // Munculkan kalender
-        
-        // LOGIKA MINIMAL H+1 (Besok)
-        const inputTgl = document.getElementById('tglKatering');
-        const besok = new Date();
-        besok.setDate(besok.getDate() + 1); // Tambah 1 hari dari hari ini
-        
-        const yyyy = besok.getFullYear();
-        const mm = String(besok.getMonth() + 1).padStart(2, '0');
-        const dd = String(besok.getDate()).padStart(2, '0');
-        
-        const minDate = `${yyyy}-${mm}-${dd}`;
-        inputTgl.min = minDate; // Set minimal tanggal di kalender
-        inputTgl.value = minDate; // Set default ke besok
+        if(boxMeja) boxMeja.style.display = 'block';
+    } 
+    else if (m === 'DELIVERY') {
+        if(boxAlamat) boxAlamat.style.display = 'block';
+    } 
+    else if (m === 'KATERING') {
+        if(boxAlamat) boxAlamat.style.display = 'block'; 
+        if(boxKatering) {
+            boxKatering.style.display = 'block'; 
+            
+            // Set Tanggal Otomatis (H+1)
+            const inputTgl = document.getElementById('tglKatering');
+            if(inputTgl) {
+                const besok = new Date();
+                besok.setDate(besok.getDate() + 1);
+                inputTgl.min = besok.toISOString().split('T')[0];
+                inputTgl.value = besok.toISOString().split('T')[0];
+            }
+        }
     }
 
-    refreshUI();
+    if (typeof refreshUI === "function") refreshUI();
 }
-
-
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
