@@ -176,120 +176,259 @@
 
         #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
-/* === BOTTOM BAR (RE-DESIGNED & CLEAN) === */
+/* === BOTTOM BAR === */
 .bottom-bar { 
     position: fixed;
     bottom: 0; left: 0; right: 0;
     background: white;
-    padding: 15px 20px 30px; 
-    border-radius: 28px 28px 0 0;
-    box-shadow: 0 -12px 35px rgba(0,0,0,0.08);
+    padding: 12px 20px 25px;
+    border-radius: 25px 25px 0 0;
+    box-shadow: 0 -8px 25px rgba(0,0,0,0.08);
     z-index: 1000;
-    display: flex;
-    flex-direction: column; /* Membuat voucher & harga bertumpuk rapi */
-    gap: 15px;
-}
-
-/* === VOUCHER CONTAINER (MODERN & MINIMALIST) === */
-.voucher-container {
-    display: flex;
-    align-items: center;
-    background: #F8F9FA; 
-    border: 1px solid #E9ECEF;
-    border-radius: 12px;
-    padding: 4px 6px 4px 12px;
-    width: 100%;
-    transition: all 0.3s ease;
-}
-
-.voucher-container:focus-within {
-    border-color: var(--primary);
-    background: #FFFFFF;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.voucher-icon {
-    font-size: 16px;
-    margin-right: 10px;
-    opacity: 0.6;
-}
-
-input#vouchCode {
-    flex: 1;
-    border: none !important;
-    background: transparent !important;
-    font-size: 12px !important;
-    font-weight: 700;
-    color: var(--text);
-    padding: 8px 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.btn-apply-vouch {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 9px;
-    font-size: 11px;
-    font-weight: 800;
-    cursor: pointer;
-}
-
-/* === HARGA & TOMBOL (ROW BAWAH) === */
-.bottom-main-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
+    gap: 10px;
 }
 
-.price-total-row {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
+/* Swipe hint */
+.swipe-hint {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 9px;
+    font-weight: 700;
+    display: none;
 }
 
-.price-total { 
-    font-size: 22px; 
-    font-weight: 900; 
-    color: var(--primary); 
-    letter-spacing: -0.5px;
-}
+/* Price & info */
+.price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
+.dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
+.ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
 
-.dist-info { font-size: 9px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
-.ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; }
-
+/* === ORDER BUTTON === */
 .order-btn {
     background: var(--primary);
     color: white;
     border: none;
-    padding: 14px 25px;
-    border-radius: 14px;
+    padding: 12px 20px;
+    border-radius: 12px;
     font-weight: 800;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
-    box-shadow: 0 6px 15px rgba(27, 67, 50, 0.2);
-    transition: transform 0.2s;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.order-btn:disabled { opacity: 0.5; }
+.order-btn:active { transform: scale(0.92); filter: brightness(1.2); transition: transform 0.1s ease; }
+
+/* === MODAL === */
+.modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10001;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal-card {
+    background: white;
+    width: 100%;
+    max-width: 360px;
+    padding: 25px;
+    border-radius: 20px;
+    text-align: center;
 }
 
-.order-btn:active { transform: scale(0.95); }
+/* Summary animation */
+.summary-item.removing {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.25s ease;
+}
 
-/* Swipe hint modern */
-.swipe-hint {
+/* Highlight teks */
+mark {
+    background-color: #FFEB3B;
+    color: black;
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: 800;
+}
+
+/* === SERVICE BUTTONS (SUPER-APP GRID STYLE) === */
+.service-mode {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 15px 12px;
+    justify-items: center;
+}
+.service-btn {
+    width: 100%;
+    max-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.service-btn .icon {
+    width: 65px;
+    height: 65px;
+    background: #FFFFFF;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: visible;
+    transition: all 0.3s ease;
+    animation: floatIcon 3s ease-in-out infinite;
+}
+.service-icon-img {
+    width: 75%;
+    height: 75%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+.service-btn span {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text);
+    text-align: center;
+    white-space: nowrap;
+    letter-spacing: -0.2px;
+}
+
+/* Active state */
+.service-btn.active .icon {
+    background: linear-gradient(135deg, #1B4332, #2D6A4F);
+    box-shadow: 0 15px 25px rgba(27,67,50,0.3);
+    transform: scale(1.1) translateY(-5px);
+}
+.service-btn.active .service-icon-img { filter: brightness(0) invert(1); transform: scale(1.1); }
+.service-btn.active span { color: var(--primary); font-weight: 900; }
+
+/* Secondary row (no float) */
+.service-btn.secondary .icon { animation: none; background: #fdfdfd; }
+.service-btn:active { transform: scale(0.9); }
+@keyframes floatIcon { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+/* Disabled badges */
+.service-btn.disabled.too-far::after,
+.service-btn.disabled.too-close::after {
     position: absolute;
-    top: -12px;
+    top: -5px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--accent);
-    color: white;
-    padding: 3px 12px;
-    border-radius: 20px;
-    font-size: 9px;
-    font-weight: 800;
+    font-size: 7px;
+    font-weight: 900;
+    padding: 3px 6px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
     white-space: nowrap;
+    z-index: 10;
+    border: 1.5px solid white;
 }
+.service-btn.disabled.too-far::after { content: "TERLALU JAUH"; background: #e74c3c; color: white; box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4); }
+.service-btn.disabled.too-close::after { content: "TERLALU DEKAT"; background: #f39c12; color: white; box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4); }
+
+/* Badge pop animation */
+@keyframes badgePop { 0% { transform: translateX(-50%) scale(0) translateY(10px); opacity:0; } 100% { transform: translateX(-50%) scale(1) translateY(0); opacity:1; } }
+
+/* === FORM === */
+.form-group { margin-bottom: 8px; }
+.form-group label { font-size: 10px; font-weight: 700; margin-bottom: 3px; display: block; color: #777; }
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 7px 9px;
+    font-size: 12.5px;
+    border-radius: 8px;
+    border: 1px solid #E2E2E2;
+    background: #FFFFFF;
+}
+.form-group textarea { resize: none; }
+.form-group input:focus,
+.form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15); }
+
+/* === VOUCHER CONTAINER (MODERN & SLEEK VERSION) === */
+.voucher-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 6px 5px 12px; /* Lebih ramping tinggi-nya */
+    border-radius: 12px;
+    background: #fdfdfd; /* Warna putih bersih */
+    border: 1px solid #e0e0e0; /* Border tipis halus */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04); /* Shadow sangat lembut */
+    width: 100%;
+    margin-bottom: 12px; /* Jarak ke elemen di bawahnya */
+    transition: all 0.3s ease;
+}
+
+/* Efek saat input diklik */
+.voucher-container:focus-within {
+    border-color: var(--accent);
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.12);
+}
+
+.voucher-container .voucher-icon { 
+    font-size: 16px; 
+    filter: grayscale(0.5); /* Icon tidak terlalu mencolok */
+}
+
+.voucher-container input#vouchCode {
+    flex: 1;
+    padding: 6px 0;
+    border: none; /* Hilangkan border internal input */
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    text-transform: uppercase; /* Otomatis huruf besar agar rapi */
+}
+
+.voucher-container input#vouchCode::placeholder { 
+    color: #bbb; 
+    text-transform: none; /* Placeholder tetap huruf kecil/normal */
+    font-weight: 400;
+    font-style: italic;
+}
+
+.voucher-container .btn-apply-vouch {
+    padding: 7px 15px;
+    border: none;
+    border-radius: 9px;
+    background: var(--primary); /* Mengikuti warna utama aplikasi */
+    color: #fff;
+    font-weight: 800;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.voucher-container .btn-apply-vouch:hover { 
+    filter: brightness(1.2);
+}
+
+.voucher-container .btn-apply-vouch:active {
+    transform: scale(0.95); /* Efek klik membal */
+}
+
+/* Price total row */
+.price-total-row { display: flex; flex-direction: column; padding-left: 2px; }
 
     </style>
 </head>
@@ -414,26 +553,26 @@ input#vouchCode {
     <div class="summary-scroll" id="summaryItems"></div>
 </div>
 
-<div class="bottom-bar">
-    <div class="swipe-hint" id="swipeInd" style="display:none;">ORDERAN SIAP DIKIRIM!</div>
-    
-    <div class="voucher-container">
-        <span class="voucher-icon">🎟️</span>
-        <input type="text" id="vouchCode" placeholder="Punya kode promo?" autocomplete="off">
-        <button class="btn-apply-vouch" onclick="applyVoucher()">KLAIM</button>
-    </div>
+<div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
+    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
 
-    <div class="bottom-main-row">
+    <div class="bottom-content" onclick="event.stopPropagation();">
+        <div class="voucher-container">
+            <span class="voucher-icon">🎟️</span>
+            <input type="text" id="vouchCode" placeholder="Gunakan kode promo..." autocomplete="off">
+            <button class="btn-apply-vouch" onclick="applyVoucher()">PAKAI</button>
+        </div>
+
         <div class="price-total-row">
-            <div id="dist-info" class="dist-info" style="display:none;"></div>
-            <div id="ongkir-label" class="ongkir-tag" style="display:none;"></div>
+            <div id="dist-info" class="dist-info"></div>
+            <div id="ongkir-label" class="ongkir-tag"></div>
             <div class="price-total">Rp <span id="miniPrice">0</span></div>
         </div>
-        
-        <button class="order-btn" id="btnOrder" onclick="openModal()" disabled>
-            PILIH MENU
-        </button>
     </div>
+
+    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>
+        PESAN
+    </button>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
