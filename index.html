@@ -592,7 +592,7 @@ mark {
 </div>
 
 <div class="bottom-bar" id="bottomBarTrigger">
-    <div class="swipe-hint">PESANAN ANDA</div>
+    <div class="swipe-hint" id="swipeInd">PESANAN ANDA</div>
     
     <div class="price-section" onclick="toggleSummary(true)">
         <div>
@@ -600,7 +600,9 @@ mark {
             <div id="ongkir-label" class="ongkir-tag"></div>
             <div class="price-total">Rp <span id="miniPrice">0</span></div>
         </div>
-        <div style="font-size: 9px; font-weight: 800; color: var(--primary);">RINCIAN ↑</div>
+        <div style="font-size: 9px; font-weight: 800; color: var(--primary); background: #E8F5E9; padding: 4px 10px; border-radius: 20px;">
+            RINCIAN ↑
+        </div>
     </div>
 
     <div class="action-section">
@@ -619,7 +621,6 @@ mark {
         </button>
     </div>
 </div>
-
 <div id="modalConfirm" class="modal-overlay">
     <div class="modal-card">
         <h3 style="font-weight: 900; margin-bottom: 8px; font-size: 18px;">Kirim Pesanan?</h3>
@@ -716,55 +717,72 @@ mark {
 
     // --- LOGIKA MEMBER & VOUCHER ---
     async function checkMember() {
-        const noHP = document.getElementById('inputNoHP').value;
-        if (!noHP.startsWith('628')) return alert('Gunakan format 628xxx');
-        
-        try {
-            const res = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${noHP}`);
-            const data = await res.json();
-            if (data.exists) {
-                alert(`Halo ${data.nama}! Poin kamu: ${data.poin}`);
-                currentMember = { noHP: noHP, poin: data.poin, nama: data.nama };
-                closePopup('popupCekPoin');
-                document.getElementById('btnPoin').innerText = `🪙 ${data.poin} POIN`;
-                refreshUI();
-            } else {
-                if (confirm("Nomor belum terdaftar. Daftar member sekarang?")) {
-                    document.getElementById('regNoHP').value = noHP;
-                    openPopup('popupDaftar');
-                }
+    const noHP = document.getElementById('inputNoHP').value;
+    if (!noHP.startsWith('628')) return alert('Gunakan format 628xxx');
+    
+    try {
+        const res = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${noHP}`);
+        const data = await res.json();
+        if (data.exists) {
+            alert(`Halo ${data.nama}! Poin kamu: ${data.poin}`);
+            currentMember = { noHP: noHP, poin: data.poin, nama: data.nama };
+            closePopup('popupCekPoin');
+            
+            // PERBAIKAN DI SINI: Ganti ke ID baru 'labelPoin'
+            const labelPoin = document.getElementById('labelPoin');
+            if(labelPoin) {
+                labelPoin.innerText = `${data.poin} PTS`;
+                labelPoin.parentElement.style.borderColor = "var(--accent)"; // Memberi tanda aktif
+                labelPoin.parentElement.style.background = "#FFFDE7";
             }
-        } catch(e) { alert("Gagal mengecek member."); }
-    }
-
-    async function registerMember() {
-        const nama = document.getElementById('regNama').value;
-        const noHP = document.getElementById('regNoHP').value;
-        if(!nama) return alert("Nama wajib diisi");
-        try {
-            await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=daftarMember&nama=${nama}&noHP=${noHP}`, { mode: 'no-cors' });
-            alert("Pendaftaran Berhasil! Silakan cek poin kembali.");
-            closePopup('popupDaftar');
-        } catch(e) { alert("Gagal mendaftar."); }
-    }
-
-    async function valdiateVoucher() {
-        const kode = document.getElementById('inputVoucher').value.toUpperCase();
-        if(!kode) return alert("Masukkan kode voucher");
-        try {
-            const res = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekVoucher&kode=${kode}`);
-            const data = await res.json();
-            if (data.valid) {
-                alert(`✅ Voucher Berhasil! Potongan: Rp ${data.nominal}`);
-                currentVoucher = kode;
-                voucherNominal = data.nominal;
-                closePopup('popupVoucher');
-                refreshUI();
-            } else {
-                alert("❌ " + (data.msg || "Voucher tidak valid"));
+            
+            refreshUI();
+        } else {
+            if (confirm("Nomor belum terdaftar. Daftar member sekarang?")) {
+                document.getElementById('regNoHP').value = noHP;
+                openPopup('popupDaftar');
             }
-        } catch(e) { alert("Gagal validasi voucher."); }
-    }
+        }
+    } catch(e) { alert("Gagal mengecek member."); }
+}
+
+async function registerMember() {
+    const nama = document.getElementById('regNama').value;
+    const noHP = document.getElementById('regNoHP').value;
+    if(!nama) return alert("Nama wajib diisi");
+    try {
+        // Mode no-cors digunakan jika Apps Script tidak memberikan return JSON yang benar saat POST
+        await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=daftarMember&nama=${nama}&noHP=${noHP}`, { mode: 'no-cors' });
+        alert("Pendaftaran Berhasil! Silakan cek poin kembali.");
+        closePopup('popupDaftar');
+    } catch(e) { alert("Gagal mendaftar."); }
+}
+
+async function valdiateVoucher() {
+    const kode = document.getElementById('inputVoucher').value.toUpperCase();
+    if(!kode) return alert("Masukkan kode voucher");
+    try {
+        const res = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekVoucher&kode=${kode}`);
+        const data = await res.json();
+        if (data.valid) {
+            alert(`✅ Voucher Berhasil! Potongan: Rp ${data.nominal}`);
+            currentVoucher = kode;
+            voucherNominal = data.nominal;
+            closePopup('popupVoucher');
+            
+            // Tambahkan feedback visual pada tombol voucher
+            const btnVoucher = document.querySelector('.util-btn[onclick*="popupVoucher"]');
+            if(btnVoucher) {
+                btnVoucher.style.borderColor = "var(--accent)";
+                btnVoucher.style.background = "#FFFDE7";
+            }
+            
+            refreshUI();
+        } else {
+            alert("❌ " + (data.msg || "Voucher tidak valid"));
+        }
+    } catch(e) { alert("Gagal validasi voucher."); }
+}
 
     // --- LOGIKA MENU & FILTER VARIANT (DIJAGA AGAR TIDAK RUSAK) ---
     async function loadMenu() {
@@ -851,49 +869,69 @@ mark {
     }
 
     function refreshUI() {
-        let subtotal = 0; 
-        const counts = {};
-        cart.forEach(c => { 
-            subtotal += (c.harga + (c.ex || 0)); 
-            counts[c.id] = (counts[c.id] || 0) + 1; 
-        });
+    let subtotal = 0; 
+    const counts = {};
+    cart.forEach(c => { 
+        subtotal += (c.harga + (c.ex || 0)); 
+        counts[c.id] = (counts[c.id] || 0) + 1; 
+    });
 
-        let potongan = voucherNominal;
-        if(isUsingPoin) potongan += currentMember.poin;
-        let totalSetelahDiskon = Math.max(0, subtotal - potongan);
+    let potongan = voucherNominal;
+    // Cek jika member ada dan menggunakan poin
+    if(isUsingPoin && currentMember) potongan += currentMember.poin;
+    let totalSetelahDiskon = Math.max(0, subtotal - potongan);
 
-        menuData.forEach(m => {
-            const el = document.getElementById(`qty-${m.id}`);
-            if(el) {
-                const val = counts[m.id] || 0;
-                el.innerText = val;
-                el.previousElementSibling.disabled = val === 0;
-            }
-        });
-
-        const priceEl = document.getElementById('miniPrice');
-        if (subtotal > 0) {
-            document.getElementById('swipeInd').style.display = 'block';
-            let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
-            priceEl.innerText = (totalSetelahDiskon + ongkir).toLocaleString('id-ID');
-            
-            if(currentMode === 'DELIVERY'){
-                document.getElementById('dist-info').style.display = 'block';
-                document.getElementById('dist-info').innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
-                document.getElementById('ongkir-label').style.display = 'block';
-                document.getElementById('ongkir-label').innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
-            } else {
-                document.getElementById('dist-info').style.display = 'none';
-                document.getElementById('ongkir-label').style.display = 'none';
-            }
-            document.getElementById('btnOrder').disabled = false;
-        } else {
-            document.getElementById('swipeInd').style.display = 'none';
-            priceEl.innerText = "0";
-            document.getElementById('btnOrder').disabled = true;
+    // Update angka qty di menu
+    menuData.forEach(m => {
+        const el = document.getElementById(`qty-${m.id}`);
+        if(el) {
+            const val = counts[m.id] || 0;
+            el.innerText = val;
+            const btnMinus = el.previousElementSibling;
+            if(btnMinus) btnMinus.disabled = val === 0;
         }
-        updateOrderSummary();
+    });
+
+    // Ambil elemen UI baru
+    const priceEl = document.getElementById('miniPrice');
+    const orderBtn = document.getElementById('btnOrder');
+    const swipeInd = document.getElementById('swipeInd');
+    
+    if (subtotal > 0) {
+        if(swipeInd) swipeInd.style.display = 'block';
+        let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
+        
+        // Update harga ke layar (ID miniPrice)
+        if(priceEl) priceEl.innerText = (totalSetelahDiskon + ongkir).toLocaleString('id-ID');
+        
+        // Info Jarak & Ongkir
+        const distInfo = document.getElementById('dist-info');
+        const ongkirLabel = document.getElementById('ongkir-label');
+        
+        if(currentMode === 'DELIVERY'){
+            if(distInfo) {
+                distInfo.style.display = 'block';
+                distInfo.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+            }
+            if(ongkirLabel) {
+                ongkirLabel.style.display = 'block';
+                ongkirLabel.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+            }
+        } else {
+            if(distInfo) distInfo.style.display = 'none';
+            if(ongkirLabel) ongkirLabel.style.display = 'none';
+        }
+        
+        orderBtn.disabled = false;
+        orderBtn.innerText = "PESAN SEKARANG";
+    } else {
+        if(swipeInd) swipeInd.style.display = 'none';
+        if(priceEl) priceEl.innerText = "0";
+        orderBtn.disabled = true;
+        orderBtn.innerText = "PILIH MENU";
     }
+    updateOrderSummary();
+}
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
@@ -931,31 +969,48 @@ mark {
     }
 
     async function submitOrder() {
-        if (!currentMode) { closeModal(); alert("Pilih layanan!"); return; }
-        const nI = document.getElementById('custName');
-        const finalPrice = document.getElementById('miniPrice').innerText;
-        if (!nI.value.trim()) { closeModal(); alert("Nama wajib diisi"); return; }
+    if (!currentMode) { closeModal(); alert("Pilih layanan (Dine In / Delivery)!"); return; }
+    
+    const nI = document.getElementById('custName');
+    // Ambil harga dari miniPrice yang baru
+    const priceEl = document.getElementById('miniPrice');
+    const finalPrice = priceEl ? priceEl.innerText : "0";
+    
+    if (!nI.value.trim()) { closeModal(); alert("Nama wajib diisi"); return; }
 
-        const summary = {};
-        cart.forEach(c => {
-            let label = c.nama;
-            let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-            if(tags) label += ` [${tags}]`;
-            summary[label] = (summary[label] || 0) + 1;
-        });
-        const pesananTeks = Object.entries(summary).map(([n, q]) => `${q}x ${n}`).join(', ');
+    const summary = {};
+    cart.forEach(c => {
+        let label = c.nama;
+        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+        if(tags) label += ` [${tags}]`;
+        summary[label] = (summary[label] || 0) + 1;
+    });
+    const pesananTeks = Object.entries(summary).map(([n, q]) => `${q}x ${n}`).join(', ');
 
-        const params = new URLSearchParams({
-            token: CONFIG.TOKEN, nama: nI.value, pesanan: pesananTeks, mode: currentMode,
-            total: finalPrice.replace(/\./g, ''), noHP: currentMember.noHP || "",
-            kodeVoucher: currentVoucher || "", pakaiPoin: isUsingPoin ? "true" : "false"
-        });
+    // Kirim data ke Google Sheets
+    const params = new URLSearchParams({
+        token: CONFIG.TOKEN, 
+        nama: nI.value, 
+        pesanan: pesananTeks, 
+        mode: currentMode,
+        total: finalPrice.replace(/\./g, ''), 
+        noHP: currentMember.noHP || "",
+        kodeVoucher: currentVoucher || "", 
+        pakaiPoin: isUsingPoin ? "true" : "false"
+    });
+    
+    try {
         fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
+    } catch(e) { console.log("Silent error reporting"); }
 
-        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        let msg = `Halo cloudkitchen.dyg++!\n*${currentMode}*\n👤 ${nI.value}\n📦 ${pesananTeks}\n💰 TOTAL: Rp ${finalPrice}`;
-        setTimeout(() => { window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`; }, 800);
-    }
+    // Arahkan ke WhatsApp
+    const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+    let msg = `Halo cloudkitchen.dyg++!\n*${currentMode}*\n👤 ${nI.value}\n📦 ${pesananTeks}\n💰 TOTAL: Rp ${finalPrice}`;
+    
+    setTimeout(() => { 
+        window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`; 
+    }, 500);
+}
 
     function toggleSummary(open) {
         if (cart.length === 0 && open) return;
