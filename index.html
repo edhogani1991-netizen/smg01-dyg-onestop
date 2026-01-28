@@ -652,10 +652,6 @@ mark {
     let currentMember = { noHP: null, poin: 0 };
     let isUsingPoin = false;
 
-    // --- FUNGSI UI MEMBER & VOUCHER ---
-    document.getElementById('btnVoucher').onclick = () => document.getElementById('popupVoucher').style.display = 'block';
-    document.getElementById('btnPoin').onclick = () => document.getElementById('popupCekPoin').style.display = 'block';
-
     function closePopup(id) { document.getElementById(id).style.display = 'none'; }
 
     async function checkMember() {
@@ -1047,6 +1043,11 @@ mark {
                 event.target.style.display = 'none';
             }
         }
+
+function openComingSoon() {
+    const modal = document.getElementById('modalComingSoon');
+    if (modal) modal.style.display = 'flex';
+}
     </script>
 
     <div id="modalComingSoon" class="modal-overlay">
