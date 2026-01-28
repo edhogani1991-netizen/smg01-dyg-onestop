@@ -440,43 +440,57 @@ mark {
     opacity: 0.5;
 }
 
-/* --- VOUCHER STYLING --- */
-.voucher-wrapper {
-    background: #FFF9F0;
-    border: 1px dashed var(--accent);
-    border-radius: 10px;
-    padding: 6px 12px;
-    margin-bottom: 8px;
+/* --- VOUCHER PREMIUM STYLE --- */
+.voucher-container {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 6px 10px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-.voucher-wrapper input {
+.voucher-icon {
+    font-size: 16px;
+    color: var(--accent);
+}
+
+.voucher-container input {
     flex: 1;
-    background: transparent;
     border: none;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--text);
     text-transform: uppercase;
+    background: transparent;
 }
 
-.voucher-wrapper input::placeholder {
-    color: #CCA066;
+.voucher-container input::placeholder {
+    color: #b0b0b0;
     text-transform: none;
-    font-weight: 400;
+    font-weight: 500;
 }
 
 .btn-apply-vouch {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 4px 10px;
-    border-radius: 6px;
+    background: #FFF9F0;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 5px 12px;
+    border-radius: 8px;
     font-size: 10px;
     font-weight: 800;
+    transition: all 0.2s;
 }
+
+.btn-apply-vouch:active {
+    background: var(--accent);
+    color: white;
+    transform: scale(0.95);
+}
+
     </style>
 </head>
 <body>
@@ -603,18 +617,23 @@ mark {
 <div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
     <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
     
-    <div style="flex: 1; margin-right: 15px;">
-        <div class="voucher-wrapper" onclick="event.stopPropagation();">
-            <input type="text" id="vouchCode" placeholder="Punya kode promo?">
+    <div style="flex: 1; margin-right: 12px;">
+        <div class="voucher-container" onclick="event.stopPropagation();">
+            <span class="voucher-icon">🎫</span>
+            <input type="text" id="vouchCode" placeholder="Ada kode promo?">
             <button class="btn-apply-vouch" onclick="applyVoucher()">PAKAI</button>
         </div>
 
-        <div id="dist-info" class="dist-info"></div>
-        <div id="ongkir-label" class="ongkir-tag"></div>
-        <div class="price-total">Rp <span id="miniPrice">0</span></div>
+        <div style="padding-left: 4px;">
+            <div id="dist-info" class="dist-info"></div>
+            <div id="ongkir-label" class="ongkir-tag"></div>
+            <div class="price-total" style="line-height: 1;">Rp <span id="miniPrice">0</span></div>
+        </div>
     </div>
     
-    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
+    <button id="btnOrder" class="order-btn" style="height: 50px; min-width: 120px;" onclick="event.stopPropagation(); openModal()" disabled>
+        PESAN
+    </button>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
