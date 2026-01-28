@@ -440,57 +440,67 @@ mark {
     opacity: 0.5;
 }
 
-/* --- VOUCHER PREMIUM STYLE --- */
+/* --- VOUCHER PREMIUM REVAMP --- */
 .voucher-container {
-    background: #ffffff;
-    border: 1px solid #e0e0e0;
+    background: #fdfdfd;
+    border: 1px solid #e8e8e8;
     border-radius: 12px;
-    padding: 6px 10px;
-    margin-bottom: 10px;
+    padding: 4px 8px 4px 12px; /* Ruang lebih luas di kiri */
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
 .voucher-icon {
-    font-size: 16px;
-    color: var(--accent);
+    font-size: 14px;
+    margin-right: 8px;
+    filter: grayscale(0.5);
 }
 
 .voucher-container input {
     flex: 1;
-    border: none;
+    border: none !important; /* Hapus border bawaan */
+    outline: none !important;
     font-size: 12px;
     font-weight: 700;
     color: var(--text);
-    text-transform: uppercase;
     background: transparent;
+    padding: 8px 0;
 }
 
 .voucher-container input::placeholder {
-    color: #b0b0b0;
-    text-transform: none;
+    color: #bbb;
     font-weight: 500;
 }
 
+/* Tombol Pakai yang lebih Estetik */
 .btn-apply-vouch {
-    background: #FFF9F0;
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    padding: 5px 12px;
+    background: var(--primary); /* Hijau gelap biar senada */
+    color: white;
+    border: none;
+    padding: 6px 14px;
     border-radius: 8px;
     font-size: 10px;
     font-weight: 800;
+    letter-spacing: 0.5px;
+    cursor: pointer;
     transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(27, 67, 50, 0.2);
 }
 
 .btn-apply-vouch:active {
-    background: var(--accent);
-    color: white;
-    transform: scale(0.95);
+    transform: scale(0.92);
+    filter: brightness(1.2);
 }
 
+/* Merapikan area harga di bawah voucher */
+.price-total-row {
+    display: flex;
+    flex-direction: column;
+    padding-left: 2px;
+}
     </style>
 </head>
 <body>
@@ -617,21 +627,21 @@ mark {
 <div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
     <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
     
-    <div style="flex: 1; margin-right: 12px;">
+    <div style="flex: 1; margin-right: 15px;">
         <div class="voucher-container" onclick="event.stopPropagation();">
-            <span class="voucher-icon">🎫</span>
-            <input type="text" id="vouchCode" placeholder="Ada kode promo?">
+            <span class="voucher-icon">🎟️</span>
+            <input type="text" id="vouchCode" placeholder="Gunakan kode promo..." autocomplete="off">
             <button class="btn-apply-vouch" onclick="applyVoucher()">PAKAI</button>
         </div>
 
-        <div style="padding-left: 4px;">
+        <div class="price-total-row">
             <div id="dist-info" class="dist-info"></div>
             <div id="ongkir-label" class="ongkir-tag"></div>
-            <div class="price-total" style="line-height: 1;">Rp <span id="miniPrice">0</span></div>
+            <div class="price-total">Rp <span id="miniPrice">0</span></div>
         </div>
     </div>
     
-    <button id="btnOrder" class="order-btn" style="height: 50px; min-width: 120px;" onclick="event.stopPropagation(); openModal()" disabled>
+    <button id="btnOrder" class="order-btn" style="height: 54px; min-width: 100px; box-shadow: 0 4px 15px rgba(27,67,50,0.3);" onclick="event.stopPropagation(); openModal()" disabled>
         PESAN
     </button>
 </div>
