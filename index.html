@@ -679,17 +679,32 @@ async function startApp() {
             cats.map(c => `<div class="tab" onclick="filterByTab('${c}', this)">${c}</div>`).join('');
     }
 
-    function renderMenu(filterKat = 'ALL') {
+function renderMenu(filterKat = 'ALL') {
         const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
         const counts = {}; 
         cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
+        // Daftar menu yang tidak boleh ada pilihan Suhu (Es/Panas)
+        const noSuhuList = [
+            "Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", 
+            "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", 
+            "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", 
+            "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", 
+            "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api"
+        ];
+
         document.getElementById('menu-container').innerHTML = items.map(m => {
             const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
+            
+            // Logika Varian Nasi
             const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
-            const isMieG = nl.includes("mie") && nl.includes("goreng");
-            const isMieR = nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"));
-            const isPaket = kl.includes("paket");
+            
+            // Logika Varian Mie (Dikecualikan untuk kategori 'mie lik')
+            const isMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik");
+            const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik");
+            
+            // Logika Varian Suhu (Hanya Paket Hemat & Drink, kecuali daftar spesifik)
+            const isSuhu = (kl.includes("paket hemat") || kl.includes("drink")) && !noSuhuList.includes(m.nama);
 
             return `
             <div class="menu-item">
@@ -700,7 +715,7 @@ async function startApp() {
                         ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
                         ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                         ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isPaket ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
+                        ${isSuhu ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
                     </div>
                 </div>
                 <div class="qty-box">
