@@ -176,32 +176,47 @@
 
         #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; backdrop-filter: blur(2px); }
 
-        .bottom-bar { 
+.bottom-bar { 
             position: fixed; bottom: 0; left: 0; right: 0; background: white; 
-            padding: 12px 20px 25px; border-radius: 25px 25px 0 0; 
+            padding: 12px 18px 25px; border-radius: 25px 25px 0 0; 
             box-shadow: 0 -8px 25px rgba(0,0,0,0.08); z-index: 1000; 
-            display: flex; justify-content: space-between; align-items: center; 
+            display: flex; flex-direction: column; gap: 10px; /* Diubah jadi kolom untuk menampung 2 baris */
         }
         
+        /* Baris Atas: Info Harga */
+        .price-section {
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+
+        /* Baris Bawah: Grup Tombol */
+        .action-section {
+            display: flex; gap: 8px; width: 100%;
+        }
+
+        /* Tombol Voucher & Poin Baru */
+        .util-btn {
+            flex: 0.6; height: 45px; border-radius: 12px; border: 1.5px solid #F0F0F0;
+            background: #FAFAFA; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; cursor: pointer;
+        }
+        .util-btn span { font-size: 8px; font-weight: 800; color: #888; margin-top: 2px; }
+
+        .price-total { font-size: 20px; font-weight: 900; color: var(--primary); }
+        .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
+        .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
+        
+        /* Tombol Pesan Sekarang (Disesuaikan) */
+        .order-btn { 
+            flex: 2; background: var(--primary); color: white; border: none; 
+            height: 45px; border-radius: 12px; font-weight: 800; font-size: 13px; 
+        }
+        .order-btn:disabled { opacity: 0.5; }
+
         .swipe-hint {
             position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
             background: var(--primary); color: white; padding: 3px 10px; border-radius: 15px;
             font-size: 9px; font-weight: 700; display: none;
         }
-
-        .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
-        .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
-        .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
-        .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
-        .order-btn:disabled { opacity: 0.5; }
-        
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
-.summary-item.removing {
-    opacity: 0;
-    transform: translateX(-20px);
-    transition: all 0.25s ease;
-}
 
 /* Efek stabilo kuning untuk teks yang cocok dengan pencarian */
 mark {
@@ -453,44 +468,6 @@ mark {
   
   .info-text { font-size: 12px; color: #666; }
 
-/* Container untuk tombol agar rapi di kanan bawah */
-.action-buttons {
-    position: fixed;
-    bottom: 90px; /* Di atas bar 'Pilih Menu' */
-    right: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    z-index: 9999;
-}
-
-/* Mengubah lingkaran kosong menjadi tombol icon */
-#btnVoucher {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    background: #ffffff;
-    border: 2px solid #2e4d44;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    cursor: pointer;
-    font-size: 20px;
-}
-
-/* Mengubah kotak kosong menjadi tombol teks */
-#btnPoin {
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: #2e4d44;
-    color: white;
-    border: none;
-    font-size: 12px;
-    font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    cursor: pointer;
-}
     </style>
 </head>
 <body>
@@ -614,14 +591,33 @@ mark {
     <div class="summary-scroll" id="summaryItems"></div>
 </div>
 
-<div class="bottom-bar" id="bottomBarTrigger" onclick="toggleSummary(true)">
-    <div class="swipe-hint" id="swipeInd">LIHAT RINCIAN</div>
-    <div>
-        <div id="dist-info" class="dist-info"></div>
-        <div id="ongkir-label" class="ongkir-tag"></div>
-        <div class="price-total">Rp <span id="miniPrice">0</span></div>
+<div class="bottom-bar" id="bottomBarTrigger">
+    <div class="swipe-hint">PESANAN ANDA</div>
+    
+    <div class="price-section" onclick="toggleSummary(true)">
+        <div>
+            <div id="dist-info" class="dist-info"></div>
+            <div id="ongkir-label" class="ongkir-tag"></div>
+            <div class="price-total">Rp <span id="miniPrice">0</span></div>
+        </div>
+        <div style="font-size: 9px; font-weight: 800; color: var(--primary);">RINCIAN ↑</div>
     </div>
-    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
+
+    <div class="action-section">
+        <div class="util-btn" onclick="openPopup('popupVoucher')">
+            <div style="font-size: 16px;">🎟️</div>
+            <span>VOUCHER</span>
+        </div>
+        
+        <div class="util-btn" onclick="openPopup('popupCekPoin')">
+            <div style="font-size: 16px;">⭐</div>
+            <span id="labelPoin">POIN</span>
+        </div>
+
+        <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>
+            PILIH MENU
+        </button>
+    </div>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
@@ -1064,9 +1060,5 @@ mark {
     </div>
 </div>
 
-<div class="action-buttons">
-    <div id="btnVoucher" onclick="openPopup('popupVoucher')">🎟️</div>
-    <button id="btnPoin" onclick="openPopup('popupCekPoin')">🪙 CEK POIN</button>
-</div>
 </body>
 </html>
