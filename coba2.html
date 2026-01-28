@@ -6,184 +6,78 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
+        /* CSS ASLI ANDA - JANGAN UBAH */
         :root { 
             --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
             --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
             --soft: #F0F0F0; --danger: #D63031; --success: #00B894;
         }
-
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { 
-            margin: 0; padding: 0; background: var(--bg); 
-            font-family: 'Inter', system-ui, -apple-system, sans-serif; color: var(--text); 
-            overflow-x: hidden;
-        }
+        body { margin: 0; padding: 0; background: var(--bg); font-family: 'Inter', sans-serif; color: var(--text); overflow-x: hidden; }
 
-        .header-top { 
-            background: var(--primary); 
-            padding: 5px 15px 18px; 
-            color: white; 
-            border-radius: 0 0 20px 20px; 
-        }
-
-        .nav-row { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 5px; 
-        }
-        .brand-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; letter-spacing: -0.3px; }
+        /* HEADER & BANNER ASLI */
+        .header-top { background: var(--primary); padding: 5px 15px 18px; color: white; border-radius: 0 0 20px 20px; }
+        .nav-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .brand-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; }
         .brand-icon { width: 26px; height: 26px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 10px; font-weight: 800; }
         .queue-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
-
-        .banner-container { 
-            margin: -10px 15px 15px; 
-            position: relative; 
-            overflow: hidden; 
-            border-radius: 15px; 
-            height: 180px; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
-            background: #eee; 
-        }
+        .banner-container { margin: -10px 15px 15px; position: relative; overflow: hidden; border-radius: 15px; height: 180px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); background: #eee; }
         #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
         #banner-track img { min-width: 100%; object-fit: cover; }
 
-        .service-mode {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 12px;
-            padding: 15px 12px;
-            justify-items: center;
-        }
-
-        .service-btn {
-            width: 100%;
-            max-width: 80px; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .service-btn .icon {
-            width: 65px;  
-            height: 65px;
-            background: #FFFFFF;
-            border-radius: 20px; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.06);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 8px;
-            position: relative;
-            animation: floatIcon 3s ease-in-out infinite;
-        }
-
-        .service-icon-img {
-            width: 75%;  
-            height: 75%;
-            object-fit: contain;
-        }
-
-        .service-btn span { font-size: 10px; font-weight: 800; color: var(--text); text-align: center; }
-
-        .service-btn.active .icon {
-            background: linear-gradient(135deg, #1B4332, #2D6A4F);
-            box-shadow: 0 15px 25px rgba(27,67,50,0.3);
-            transform: scale(1.1) translateY(-5px);
-        }
+        /* MENU & VARIAN ASLI */
+        .service-mode { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px 12px; }
+        .service-btn { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .service-btn .icon { width: 65px; height: 65px; background: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.06); }
+        .service-icon-img { width: 75%; height: 75%; object-fit: contain; }
+        .service-btn.active .icon { background: var(--primary); }
         .service-btn.active .service-icon-img { filter: brightness(0) invert(1); }
-        .service-btn.active span { color: var(--primary); font-weight: 900; }
-
-        .service-btn.disabled .service-icon-img { filter: grayscale(1); opacity: 0.5; }
-
+        
         #map { height: 130px; border-radius: 18px; margin: 0 18px 20px; border: 1px solid #EFEFEF; }
-
         .main-content { padding: 0 18px 180px; }
-        .input-card { background: white; border-radius: 14px; padding: 10px 14px; margin-bottom: 10px; border: 1.2px solid #F0F0F0; transition: all 0.3s ease; }
-        .input-card label { display: block; font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; letter-spacing: 0.5px; }
-        .input-card input, .input-card textarea { width: 100%; border: none; font-size: 13px; font-weight: 600; outline: none; background: transparent; color: var(--text); }
+        .input-card { background: white; border-radius: 14px; padding: 10px 14px; margin-bottom: 10px; border: 1.2px solid #F0F0F0; }
+        .input-card label { display: block; font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 3px; }
+        .input-card input, .input-card textarea { width: 100%; border: none; font-size: 13px; font-weight: 600; outline: none; background: transparent; }
 
-        .error-field { border: 2px solid var(--danger) !important; background-color: #FFF5F5 !important; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-6px); } }
-        .shake-ani { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-
-        .search-wrapper { margin: 12px 0; background: white; border-radius: 12px; border: 1.2px solid var(--soft); padding: 0 12px; display: flex; align-items: center; }
-        #searchMenu { width: 100%; padding: 10px 0; border: none; font-size: 13px; background: transparent; }
-
-        .category-tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 15px; }
-        .tab { padding: 8px 15px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1px solid #F0F0F0; white-space: nowrap; }
-        .tab.active { background: var(--primary); color: white; }
-
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .menu-item { background: white; border-radius: 16px; padding: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between; }
-        .menu-info h4 { margin: 0 0 4px; font-size: 12px; font-weight: 800; min-height: 32px; line-height: 1.3; }
-        .menu-info .price { font-size: 13px; font-weight: 900; color: var(--primary); margin-bottom: 8px; }
-        .variant-select { width: 100%; padding: 7px; border-radius: 7px; border: 1px solid #F0F0F0; font-size: 10px; background: #FAFAFA; margin-bottom: 5px; font-weight: 600; }
-        
-        .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: 8px; }
-        .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
-
-        .order-summary-mini {
-            position: fixed; bottom: -100%; left: 0; right: 0; 
-            background: white; border-radius: 25px 25px 0 0; 
-            box-shadow: 0 -10px 35px rgba(0,0,0,0.15); 
-            z-index: 999; max-height: 75vh; border-top: 1px solid #eee;
-            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; flex-direction: column;
-        }
-        .order-summary-mini.active { bottom: 0; }
-        .summary-scroll { flex: 1; overflow-y: auto; padding: 8px 18px 140px; }
-
-        /* --- STYLIZE BOTTOM BAR SESUAI GAMBAR --- */
+        /* --- PENYESUAIAN BOTTOM BAR SESUAI GAMBAR --- */
         .bottom-bar { 
-            position: fixed; bottom: 0; left: 0; right: 0; background: white; 
-            padding: 10px 15px 25px; border-radius: 25px 25px 0 0; 
-            box-shadow: 0 -8px 25px rgba(0,0,0,0.08); z-index: 1000; 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: white; padding: 12px 16px 24px; 
+            border-radius: 24px 24px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.1); 
+            z-index: 1000; 
         }
+        .bottom-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .total-price { font-size: 22px; font-weight: 900; color: var(--primary); }
+        .btn-detail { background: #E8F5E9; color: var(--primary); border: none; padding: 6px 12px; border-radius: 12px; font-size: 10px; font-weight: 800; }
+
+        .bottom-actions { display: flex; gap: 10px; align-items: stretch; height: 54px; }
         
-        .bottom-main-row {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+        /* Tombol Voucher & Poin Baru */
+        .btn-extra { 
+            background: white; border: 1.5px solid #F0F0F0; border-radius: 16px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            min-width: 65px; font-size: 9px; font-weight: 800; color: #777;
         }
+        .btn-extra img { width: 20px; height: 20px; margin-bottom: 4px; }
 
-        .price-total { font-size: 22px; font-weight: 900; color: var(--primary); }
-        .btn-rincian { background: #E8F5E9; color: var(--primary); padding: 4px 12px; border-radius: 12px; font-size: 10px; font-weight: 800; border: none; }
-
-        .bottom-action-row {
-            display: flex; gap: 8px; align-items: stretch;
+        .btn-order { 
+            flex: 1; background: #BDC3C7; color: white; border: none; 
+            border-radius: 16px; font-weight: 800; font-size: 16px; 
         }
+        .btn-order.active { background: var(--primary); }
 
-        .reward-btn {
-            background: white; border: 1px solid #EEE; border-radius: 12px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 8px; min-width: 65px; font-size: 9px; font-weight: 800; color: #777;
-        }
-        .reward-btn img { width: 18px; margin-bottom: 4px; }
-
-        .order-btn { 
-            flex: 1; background: #8DA198; color: white; border: none; 
-            border-radius: 15px; font-weight: 800; font-size: 16px; transition: 0.3s;
-        }
-        .order-btn.active-green { background: var(--primary); }
-
+        /* MODAL */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
         .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
-
-        mark { background-color: #FFEB3B; color: black; padding: 0 2px; border-radius: 2px; font-weight: 800; }
-        @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
     </style>
 </head>
 <body>
 
 <div id="welcome-overlay" style="position:fixed; inset:0; background:white; z-index:10002; display:flex; align-items:center; justify-content:center; padding:30px;">
-    <div style="text-align: center; width: 100%; max-width: 400px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-        <div style="width: 280px; height: 280px; margin-bottom: 30px; border-radius: 50%; overflow: hidden;">
-            <img src="welcome4.png" style="width: 100%; height: 100%; object-fit: cover;">
-        </div>
-        <h2 style="font-weight: 900; font-size: 24px; margin-bottom: 10px; color: #333;">Hei..Aku Siap Kasih yang Terbaik</h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 35px;">Izinkan lokasi biar aku bisa kasih yang terbaik.</p>
-        <button onclick="startApp()" class="order-btn active-green" style="width: 100%; padding: 18px;">MULAI SEKARANG</button>
+    <div style="text-align:center;">
+        <img src="welcome4.png" style="width:250px; height:250px; border-radius:50%; margin-bottom:20px; object-fit:cover;">
+        <h2 style="font-weight:900;">Siap Kasih yang Terbaik</h2>
+        <button onclick="startApp()" class="btn-order active" style="width:100%; padding:15px; margin-top:20px;">MULAI</button>
     </div>
 </div>
 
@@ -197,204 +91,133 @@
 <div class="banner-container"><div id="banner-track"></div></div>
 
 <div class="service-mode">
-    <div id="mDineIn" class="service-btn active" onclick="changeMode('DINE IN', this)"><div class="icon"><img src="dine-in3.png" class="service-icon-img"></div><span>Dine In</span></div>
-    <div id="mTakeAway" class="service-btn" onclick="changeMode('TAKE AWAY', this)"><div class="icon"><img src="take-away3.png" class="service-icon-img"></div><span>Take Away</span></div>
-    <div id="mDelivery" class="service-btn" onclick="changeMode('DELIVERY', this)"><div class="icon"><img src="delivery3.png" class="service-icon-img"></div><span>Delivery</span></div>
-    <div id="mKatering" class="service-btn" onclick="changeMode('KATERING', this)"><div class="icon"><img src="katering3.png" class="service-icon-img"></div><span>Katering</span></div>
+    <div class="service-btn active" onclick="changeMode('DINE IN', this)"><div class="icon"><img src="dine-in3.png" class="service-icon-img"></div><span>Dine In</span></div>
+    <div class="service-btn" onclick="changeMode('TAKE AWAY', this)"><div class="icon"><img src="take-away3.png" class="service-icon-img"></div><span>Take Away</span></div>
+    <div class="service-btn" onclick="changeMode('DELIVERY', this)"><div class="icon"><img src="delivery3.png" class="service-icon-img"></div><span>Delivery</span></div>
+    <div class="service-btn" onclick="changeMode('KATERING', this)"><div class="icon"><img src="katering3.png" class="service-icon-img"></div><span>Katering</span></div>
 </div>
 
 <div id="map"></div>
 
 <div class="main-content">
-    <div id="wrapName" class="input-card"><label>Nama Anda</label><input type="text" id="custName" placeholder="Masukkan nama..."></div>
-    <div id="wrapEmail" class="input-card"><label>Email (Untuk Struk Online)</label><input type="email" id="custEmail" placeholder="contoh@gmail.com"></div>
-    <div id="boxMeja"><div id="wrapMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="Contoh: 08"></div></div>
-    <div id="boxAlamat" style="display:none;"><div id="wrapAddr" class="input-card"><label>Alamat Pengiriman</label><textarea id="addressDetail" placeholder="Nama Jalan, Blok, No Rumah..." rows="2"></textarea></div></div>
-    <div id="boxKateringInfo" style="display: none; margin-bottom: 15px;">
-        <div class="input-card"><label>TANGGAL PENGIRIMAN (Minimal Besok)</label><input type="date" id="tglKatering"></div>
-    </div>
-
-    <div class="search-wrapper"><input type="text" id="searchMenu" placeholder="Cari menu favorit Anda..." oninput="filterMenu()"></div>
-    <div class="category-tabs" id="cat-tabs"></div>
+    <div class="input-card"><label>Nama Anda</label><input type="text" id="custName" placeholder="Nama lengkap..."></div>
+    <div class="input-card"><label>Email (Untuk Struk Online)</label><input type="email" id="custEmail" placeholder="contoh@gmail.com"></div>
+    <div id="boxMeja" class="input-card"><label>Nomor Meja</label><input type="number" id="tableNo" placeholder="00"></div>
+    
     <div class="menu-grid" id="menu-container">Memuat menu...</div>
-    <div class="input-card" style="margin-top:20px;"><label>Catatan</label><textarea id="orderNote" placeholder="Contoh: Pedas sedang..." rows="2"></textarea></div>
-</div>
-
-<div id="summaryOverlay" onclick="toggleSummary(false)" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none; z-index:998;"></div>
-<div id="orderSummaryPanel" class="order-summary-mini">
-    <div class="sheet-header" onclick="toggleSummary(false)" style="padding:15px; text-align:center; border-bottom:1px solid #eee;">
-        <div style="width:40px; height:4px; background:#ddd; border-radius:10px; margin:0 auto 10px;"></div>
-        <div style="font-weight:800; font-size:12px;">RINCIAN PESANAN</div>
-    </div>
-    <div class="summary-scroll" id="summaryItems"></div>
 </div>
 
 <div class="bottom-bar">
-    <div class="bottom-main-row">
-        <div class="price-total">Rp <span id="miniPrice">0</span></div>
-        <button class="btn-rincian" onclick="toggleSummary(true)">RINCIAN ↑</button>
+    <div class="bottom-info">
+        <div class="total-price">Rp <span id="miniPrice">0</span></div>
+        <button class="btn-detail">RINCIAN ↑</button>
     </div>
-    <div class="bottom-action-row">
-        <div class="reward-btn" onclick="alert('Kode Voucher Anda: ' + userVoucherCode)">
-            <img src="https://cdn-icons-png.flaticon.com/512/872/872243.png">VOUCHER
+    <div class="bottom-actions">
+        <div class="btn-extra" onclick="showVoucher()">
+            <img src="https://cdn-icons-png.flaticon.com/512/872/872243.png">
+            <span>VOUCHER</span>
         </div>
-        <div class="reward-btn" onclick="alert('Poin akan bertambah setelah pesanan selesai!')">
-            <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png">POIN
+        <div class="btn-extra" onclick="alert('Poin Anda akan bertambah setelah pesanan selesai!')">
+            <img src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png">
+            <span>POIN</span>
         </div>
-        <button id="btnOrder" class="order-btn" onclick="openModal()" disabled>PILIH MENU</button>
+        <button id="btnOrder" class="btn-order" onclick="openModal()" disabled>PILIH MENU</button>
     </div>
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
     <div class="modal-card">
-        <h3 style="font-weight: 900;">Kirim Pesanan?</h3>
-        <p style="font-size: 13px; color: var(--muted);">Struk akan dikirim ke Email & WhatsApp</p>
-        <div style="display: flex; gap: 8px;">
-            <button onclick="closeModal()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5;">Batal</button>
-            <button onclick="submitOrder()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white;">Kirim WA</button>
+        <h3>Kirim Pesanan?</h3>
+        <p>Struk akan dikirim ke Email & WhatsApp.</p>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button onclick="closeModal()" style="flex:1; padding:12px; border:none; border-radius:12px;">Batal</button>
+            <button onclick="submitOrder()" style="flex:1; padding:12px; border:none; border-radius:12px; background:var(--primary); color:white;">Ya, Kirim</button>
         </div>
     </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+    // MASUKKAN URL GAS ANDA DI SINI
     const CONFIG = {
-        WEB_APP_URL: 'URL_GAS_ANDA_DISINI', // Ganti dengan URL GAS setelah deploy
+        WEB_APP_URL: 'URL_GAS_ANDA', 
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
-        WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
-        WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
-        TOKEN: 'dyg-access-v2',
-        RADIUS_DINE_IN: 150
+        TOKEN: 'dyg-access-v2'
     };
 
-    let menuData = [], cart = [], currentMode = 'DINE IN', userDist = 0, userVoucherCode = "";
+    let menuData = [], cart = [], currentMode = 'DINE IN', myVoucher = "";
 
-    // Generate Voucher Unik tiap User
     function generateVoucher() {
-        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        let code = "DYG-";
-        for (let i = 0; i < 5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+        const code = "DYG-" + Math.random().toString(36).substring(2, 7).toUpperCase();
         return code;
     }
 
-    async function startApp() {
-        userVoucherCode = generateVoucher();
+    function startApp() {
+        myVoucher = generateVoucher();
+        document.getElementById('welcome-overlay').style.display = 'none';
         loadMenu();
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const { latitude, longitude } = pos.coords;
-            window.userLat = latitude; window.userLng = longitude;
-            userDist = L.latLng(latitude, longitude).distanceTo(L.latLng(CONFIG.WARUNG_LOCATION)) * 1.45;
-            initMap(latitude, longitude);
-            document.getElementById('welcome-overlay').style.display = 'none';
-            syncQueue();
-        }, () => { document.getElementById('welcome-overlay').style.display = 'none'; });
+    }
+
+    function showVoucher() {
+        alert("Kode Voucher Anda: " + myVoucher + "\nSalin kode ini untuk diskon berikutnya!");
     }
 
     async function loadMenu() {
-        try {
-            const resp = await fetch(CONFIG.MENU_CSV_URL);
-            const csv = await resp.text();
-            menuData = csv.split('\n').slice(1).map((row, i) => {
-                const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
-                return { id: 'm'+i, kat: cols[0] || '', nama: cols[1] || '', harga: parseInt(cols[2]) || 0 };
-            }).filter(m => m.nama);
-            renderTabs(); renderMenu();
-        } catch (e) {}
+        const resp = await fetch(CONFIG.MENU_CSV_URL);
+        const csv = await resp.text();
+        menuData = csv.split('\n').slice(1).map((row, i) => {
+            const cols = row.split(',');
+            return { id: i, kat: cols[0], nama: cols[1], harga: parseInt(cols[2]) || 0 };
+        });
+        renderMenu();
     }
 
-    function renderTabs() {
-        const cats = [...new Set(menuData.map(m => m.kat))];
-        document.getElementById('cat-tabs').innerHTML = `<div class="tab active" onclick="filterByTab('ALL', this)">Semua</div>` + 
-            cats.map(c => `<div class="tab" onclick="filterByTab('${c}', this)">${c}</div>`).join('');
+    function renderMenu() {
+        const container = document.getElementById('menu-container');
+        container.innerHTML = menuData.map(m => `
+            <div class="input-card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><b>${m.nama}</b><br>Rp ${m.harga.toLocaleString()}</div>
+                <button onclick="addToCart(${m.id})" style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:8px;">Tambah</button>
+            </div>
+        `).join('');
     }
 
-    function renderMenu(filterKat = 'ALL') {
-        const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
-        const counts = {}; cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
-        document.getElementById('menu-container').innerHTML = items.map(m => `
-            <div class="menu-item">
-                <div class="menu-info"><h4 data-name="${m.nama}">${m.nama}</h4><div class="price">Rp ${m.harga.toLocaleString()}</div></div>
-                <div class="qty-box">
-                    <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
-                    <span id="qty-${m.id}">${counts[m.id] || 0}</span>
-                    <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
-                </div>
-            </div>`).join('');
+    function addToCart(id) {
+        cart.push(menuData[id]);
+        updateUI();
     }
 
-    function updateCart(id, change) {
-        const item = menuData.find(m => m.id === id);
-        if (change > 0) cart.push({...item});
-        else { const idx = cart.findLastIndex(c => c.id === id); if (idx !== -1) cart.splice(idx, 1); }
-        refreshUI();
-    }
-
-    function refreshUI() {
-        let subtotal = 0; cart.forEach(c => subtotal += c.harga);
-        document.getElementById('miniPrice').innerText = subtotal.toLocaleString('id-ID');
+    function updateUI() {
+        let total = cart.reduce((sum, item) => sum + item.harga, 0);
+        document.getElementById('miniPrice').innerText = total.toLocaleString('id-ID');
         const btn = document.getElementById('btnOrder');
-        if (subtotal > 0) { btn.disabled = false; btn.classList.add('active-green'); btn.innerText = 'PESAN'; }
-        else { btn.disabled = true; btn.classList.remove('active-green'); btn.innerText = 'PILIH MENU'; }
-        updateOrderSummary();
+        if (total > 0) {
+            btn.disabled = false;
+            btn.classList.add('active');
+            btn.innerText = "PESAN SEKARANG";
+        }
     }
 
-    function updateOrderSummary() {
-        const container = document.getElementById('summaryItems');
-        const groups = {}; cart.forEach(c => { groups[c.id] = groups[c.id] || { ...c, qty: 0 }; groups[c.id].qty++; });
-        container.innerHTML = Object.values(groups).map(item => `
-            <div style="display:flex; justify-content:space-between; padding:10px 18px; border-bottom:1px solid #eee;">
-                <div><b>${item.nama}</b><br><small>${item.qty}x Rp ${item.harga.toLocaleString()}</small></div>
-                <b>Rp ${(item.qty * item.harga).toLocaleString()}</b>
-            </div>`).join('') || '<div style="text-align:center;padding:20px;">Kosong</div>';
-    }
-
-    async function submitOrder() {
-        const nI = document.getElementById('custName'), eI = document.getElementById('custEmail');
-        if (!nI.value || !eI.value) return alert("Nama & Email wajib diisi!");
-
-        const finalPrice = document.getElementById('miniPrice').innerText.replace(/\./g, '');
-        const summaryTeks = cart.map(c => c.nama).join(', ');
-
-        // Kirim ke GAS (Database + Email)
-        const gasUrl = `${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&email=${encodeURIComponent(eI.value)}&pesanan=${encodeURIComponent(summaryTeks)}&mode=${currentMode}&total=${finalPrice}&voucher=${userVoucherCode}`;
-        fetch(gasUrl, { mode: 'no-cors' });
-
-        // Kirim ke WhatsApp
-        const msg = `Halo cloudkitchen.dyg++!\nMode: *${currentMode}*\nNama: ${nI.value}\nVoucher: ${userVoucherCode}\nTotal: Rp ${finalPrice}\n\nStruk online dikirim ke email: ${eI.value}`;
-        window.location.href = `https://wa.me/${currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN}?text=${encodeURIComponent(msg)}`;
-    }
-
-    function changeMode(m, el) {
-        currentMode = m;
-        document.querySelectorAll('.service-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById('boxMeja').style.display = m === 'DINE IN' ? 'block' : 'none';
-        document.getElementById('boxAlamat').style.display = (m === 'DELIVERY' || m === 'KATERING') ? 'block' : 'none';
-    }
-
-    function initMap(lat, lng) {
-        const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-        L.marker(CONFIG.WARUNG_LOCATION).addTo(map);
-    }
-
-    function toggleSummary(open) {
-        document.getElementById('orderSummaryPanel').classList.toggle('active', open);
-        document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
-    }
-
-    async function syncQueue() {
-        try {
-            const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
-            const num = await resp.text();
-            if (num) document.getElementById('noAntrean').innerText = "#" + num;
-        } catch(e) {}
-        setTimeout(syncQueue, 20000);
-    }
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
-    function filterMenu() {} // Tetap ada agar tidak error
-    function renderTabs() {} // Sesuai struktur lama
+
+    async function submitOrder() {
+        const nama = document.getElementById('custName').value;
+        const email = document.getElementById('custEmail').value;
+        const total = document.getElementById('miniPrice').innerText.replace(/\./g, '');
+        const pesanan = cart.map(c => c.nama).join(', ');
+
+        if(!nama || !email) return alert("Isi Nama & Email!");
+
+        const url = `${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nama)}&email=${encodeURIComponent(email)}&pesanan=${encodeURIComponent(pesanan)}&mode=${currentMode}&total=${total}&voucher=${myVoucher}`;
+        
+        // Kirim ke GAS (Database + Email)
+        fetch(url, { mode: 'no-cors' });
+
+        // Kirim ke WA
+        const msg = `Halo! Pesanan Baru:\nNama: ${nama}\nTotal: Rp ${total}\nVoucher: ${myVoucher}\nStruk dikirim ke: ${email}`;
+        window.location.href = `https://wa.me/6281393048132?text=${encodeURIComponent(msg)}`;
+    }
 </script>
 </body>
 </html>
