@@ -472,11 +472,20 @@ mark {
     </div>
 </div>
 
-<div class="header-top">
-    <div class="nav-row">
-        <div class="brand-logo"><div class="brand-icon">D+</div> cloudkitchen.dyg++</div>
-        <div class="queue-badge" id="noAntrean">#0</div>
+<div class="nav-row">
+    <div style="position: relative;">
+        <div onclick="toggleMenuDropdown()" style="cursor:pointer; padding: 5px; font-size: 20px;">☰</div>
+        
+        <div id="menuDropdown" style="display:none; position:absolute; top:35px; left:0; background:white; color:black; border-radius:12px; width:150px; box-shadow:0 8px 20px rgba(0,0,0,0.2); z-index:2000; overflow:hidden;">
+            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
+            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
+            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
+            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
+        </div>
     </div>
+
+    <div class="brand-logo"><div class="brand-icon">D+</div> cloudkitchen.dyg++</div>
+    <div class="queue-badge" id="noAntrean">#0</div>
 </div>
 
 <div class="banner-container">
@@ -585,6 +594,8 @@ mark {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+   // Ubah bagian ini di awal script Anda
+let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
         WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwmsL1frpP-vnwymYKFpYKR-C4SyasJpgAmxmTIvK0eVbBLIQggRL9nl2k8UwLXYw-P7A/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
@@ -600,8 +611,23 @@ mark {
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
     const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
-    // Ubah bagian ini di awal script Anda
-let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
+function toggleMenuDropdown() {
+    const dropdown = document.getElementById('menuDropdown');
+    const isVisible = dropdown.style.display === 'block';
+    
+    // Tutup jika klik lagi, buka jika sedang tertutup
+    dropdown.style.display = isVisible ? 'none' : 'block';
+}
+
+// Tambahan: Tutup dropdown otomatis jika pengguna klik di luar menu
+window.onclick = function(event) {
+    if (!event.target.matches('[onclick="toggleMenuDropdown()"]')) {
+        const dropdown = document.getElementById('menuDropdown');
+        if (dropdown && dropdown.style.display === 'block') {
+            dropdown.style.display = 'none';
+        }
+    }
+}
 
 async function startApp() {
     // 1. Langsung ganti tombol ke Loading Jam Pasir
