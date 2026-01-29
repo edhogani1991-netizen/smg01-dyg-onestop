@@ -573,14 +573,16 @@ function closeVoucher() {
 function applyVoucher() {
     const code = document.getElementById('voucherInput').value.trim().toUpperCase();
     if (!VOUCHERS[code]) {
-        alert("Kode voucher tidak valid");
+        alert("❌ Kode voucher tidak valid atau sudah kedaluwarsa.");
         return;
     }
 
     appliedVoucher = code;
-    calculateVoucher();
-    closeVoucher();
-    refreshUI();
+    // Hitung diskon secara manual di sini atau pastikan refreshUI menghitungnya
+    alert("✅ Voucher " + code + " berhasil diterapkan!");
+    
+    closeVoucher(); // Otomatis menutup popup
+    refreshUI();    // Perbarui tampilan harga
 }
 
 
@@ -770,77 +772,83 @@ function renderMenu(filterKat = 'ALL') {
     }
 
     function refreshUI() {
-const voucherInfo = document.getElementById('voucherInfo');
+    const voucherInfo = document.getElementById('voucherInfo');
+    let subtotal = 0;
+    voucherDiscount = 0; 
 
-if (voucherDiscount > 0) {
-    voucherInfo.style.display = 'block';
-    voucherInfo.innerText = `− Voucher Rp ${voucherDiscount.toLocaleString('id-ID')}`;
-} else {
-    voucherInfo.style.display = 'none';
-}
+    // 1. Hitung Subtotal (Harga Menu + Ekstra Varian)
+    cart.forEach(c => { 
+        subtotal += (c.harga + (c.ex || 0)); 
+    });
 
-        let subtotal = 0;
-voucherDiscount = 0; 
-        const counts = {};
-        cart.forEach(c => { 
-            subtotal += (c.harga + (c.ex || 0)); 
-            counts[c.id] = (counts[c.id] || 0) + 1; 
-        });
-
-        menuData.forEach(m => {
-            const el = document.getElementById(`qty-${m.id}`);
-            if(el) {
-                const val = counts[m.id] || 0;
-                el.innerText = val;
-                el.previousElementSibling.disabled = val === 0;
-            }
-        });
-
-        const sInd = document.getElementById('swipeInd');
-        const distEl = document.getElementById('dist-info');
-        const ongEl = document.getElementById('ongkir-label');
-        const priceEl = document.getElementById('miniPrice');
-
-        if (subtotal > 0) {
-            sInd.style.display = 'block';
-            if (currentMode === 'DELIVERY') {
-                let ongkir = calculateOngkir(userDist);
-                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
-                distEl.style.display = 'block';
-                distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
-                ongEl.style.display = 'block';
-                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
-            } else {
-                let finalTotal = subtotal;
-
-if (appliedVoucher) {
-    const v = VOUCHERS[appliedVoucher];
-    if (v.type === "flat") {
-        voucherDiscount = v.value;
-    } else if (v.type === "percent") {
-        voucherDiscount = Math.floor(subtotal * v.value / 100);
+    // 2. Hitung Nilai Diskon Voucher
+    if (appliedVoucher) {
+        const v = VOUCHERS[appliedVoucher];
+        if (v.type === "flat") {
+            voucherDiscount = v.value;
+        } else if (v.type === "percent") {
+            voucherDiscount = Math.floor(subtotal * v.value / 100);
+        }
     }
-    finalTotal = Math.max(0, subtotal - voucherDiscount);
-}
 
-priceEl.innerText = finalTotal.toLocaleString('id-ID');
+    // 3. Update Visual Voucher
+    if (voucherDiscount > 0) {
+        voucherInfo.style.display = 'block';
+        voucherInfo.innerText = `− Diskon Voucher: Rp ${voucherDiscount.toLocaleString('id-ID')}`;
+    } else {
+        voucherInfo.style.display = 'none';
+    }
 
-                distEl.style.display = 'none';
-                ongEl.style.display = 'none';
-            }
-            document.getElementById('btnOrder').disabled = false;
-            document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
+    // 4. Hitung Ongkir (Jika Delivery)
+    let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
+
+    // 5. HITUNG TOTAL AKHIR (Subtotal + Ongkir - Diskon)
+    let finalTotal = (subtotal + ongkir) - voucherDiscount;
+    if (finalTotal < 0) finalTotal = 0; // Agar tidak minus
+
+    // 6. Update Tampilan Angka
+    const priceEl = document.getElementById('miniPrice');
+    const distEl = document.getElementById('dist-info');
+    const ongEl = document.getElementById('ongkir-label');
+
+    if (subtotal > 0) {
+        priceEl.innerText = finalTotal.toLocaleString('id-ID');
+        
+        if (currentMode === 'DELIVERY') {
+            distEl.style.display = 'block';
+            distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+            ongEl.style.display = 'block';
+            ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
         } else {
-            sInd.style.display = 'none';
             distEl.style.display = 'none';
             ongEl.style.display = 'none';
-            priceEl.innerText = "0";
-            document.getElementById('btnOrder').disabled = true;
-            document.getElementById('btnOrder').innerText = 'PILIH MENU';
-            toggleSummary(false); // Tutup rincian jika item habis
         }
-        updateOrderSummary();
+        document.getElementById('btnOrder').disabled = false;
+        document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
+    } else {
+        // Reset jika keranjang kosong
+        priceEl.innerText = "0";
+        document.getElementById('btnOrder').disabled = true;
+        voucherInfo.style.display = 'none';
     }
+
+    updateOrderSummary();
+    updateMenuQtyVisuals(); // Pindahkan logika update qty menu ke fungsi terpisah agar rapi
+}
+
+// Fungsi pembantu untuk update angka di tombol menu
+function updateMenuQtyVisuals() {
+    const counts = {};
+    cart.forEach(c => { counts[c.id] = (counts[c.id] || 0) + 1; });
+    menuData.forEach(m => {
+        const el = document.getElementById(`qty-${m.id}`);
+        if(el) {
+            const val = counts[m.id] || 0;
+            el.innerText = val;
+            el.previousElementSibling.disabled = val === 0;
+        }
+    });
+}
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
