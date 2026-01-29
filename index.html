@@ -565,19 +565,25 @@ function closeVoucherPrompt() {
 }
 
 function checkVoucherCode() {
-    const input = document.getElementById('voucherCodeInput').value.trim().toUpperCase();
-    
+    const code = document.getElementById('voucherCodeInput').value.trim().toUpperCase();
     if (databaseVoucher[input]) {
         appliedVoucher = databaseVoucher[input]; // Simpan voucher ke sistem
         appliedVoucher.code = input; // Simpan namanya juga
         
-        alert("Klaim Berhasil! Voucher " + input + " telah terpasang.");
+    if (validCodes[code]) {
+        appliedVoucher = { 
+            code: code, 
+            discount: validCodes[code].value, 
+            type: validCodes[code].type 
+        };
+        alert("Selamat! Kode " + code + " berhasil dipasang.");
         closeVoucherPrompt();
-        refreshUI(); // Langsung update tampilan
+        refreshUI();
     } else {
-        alert("Maaf, kode voucher tidak valid.");
+        alert("Maaf, kode voucher tidak valid atau sudah kadaluarsa.");
     }
 }
+
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
