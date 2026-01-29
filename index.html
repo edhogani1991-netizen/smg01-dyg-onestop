@@ -432,9 +432,7 @@ mark {
             <div onclick="openVoucher()" style="padding:12px;font-size:13px;font-weight:700;border-bottom:1px solid #eee;">
  🎫 Voucher
 </div>
-           <div onclick="toggleMenuDropdown(); openMemberModal();" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee; cursor:pointer;">
-    🪙 Poin
-</div>
+           <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
         </div>
@@ -556,96 +554,6 @@ mark {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-// Database sementara
-let membersData = {
-    "628123456789": { nama: "User Demo", email: "demo@mail.com", poin: 100 }
-};
-
-function openMemberModal() {
-    document.getElementById('memberModal').style.display = 'flex';
-    renderStepCekHP();
-}
-
-function closeMemberModal() {
-    document.getElementById('memberModal').style.display = 'none';
-}
-
-// STEP 1: Input Nomor HP
-function renderStepCekHP() {
-    const content = document.getElementById('memberContent');
-    content.innerHTML = `
-        <h3 style="font-weight:900;margin-bottom:6px;">🎁 Cek Poin Member</h3>
-        <p style="font-size:12px;color:#777;margin-bottom:14px;">Masukkan nomor WA diawali 628...</p>
-        
-        <input id="hpInput" type="number" placeholder="628xxxxxxxxx" 
-            style="width:100%;padding:12px;font-size:14px;border-radius:10px;border:1.5px solid #ddd;margin-bottom:14px;font-weight:700;text-align:center;">
-        
-        <div style="display:flex;gap:8px;">
-            <button onclick="closeMemberModal()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#eee;font-weight:700;">Batal</button>
-            <button onclick="handleCekPoin()" style="flex:1;padding:12px;border-radius:12px;border:none;background:var(--primary);color:white;font-weight:800;">Cek Poin</button>
-        </div>
-    `;
-}
-
-// STEP 2: Pertanyaan jika belum terdaftar
-function renderStepOffer(hp) {
-    const content = document.getElementById('memberContent');
-    content.innerHTML = `
-        <h3 style="font-weight:900;margin-bottom:6px;">Yah, Belum Terdaftar</h3>
-        <p style="font-size:13px;color:#444;margin-bottom:20px;">Nomor <b>${hp}</b> belum jadi member. <br>Mau jadi member sekarang?</p>
-        
-        <div style="display:flex;flex-direction:column;gap:8px;">
-            <button onclick="renderStepForm('${hp}')" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--primary);color:white;font-weight:800;">Boleh, Mau!</button>
-            <button onclick="closeMemberModal()" style="width:100%;padding:12px;border-radius:12px;border:none;background:#eee;font-weight:700;">Nanti Dulu Deh</button>
-        </div>
-    `;
-}
-
-// STEP 3: Form Pendaftaran
-function renderStepForm(hp) {
-    const content = document.getElementById('memberContent');
-    content.innerHTML = `
-        <h3 style="font-weight:900;margin-bottom:6px;">📝 Daftar Member</h3>
-        <p style="font-size:12px;color:#777;margin-bottom:14px;">Lengkapi data diri Anda</p>
-        
-        <input id="regNama" placeholder="Nama Lengkap" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #ddd;margin-bottom:8px;font-size:14px;">
-        <input id="regEmail" type="email" placeholder="Email" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #ddd;margin-bottom:8px;font-size:14px;">
-        <input id="regHP" value="${hp}" readonly style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #ddd;margin-bottom:14px;background:#f5f5f5;font-size:14px;font-weight:700;color:#888;">
-        
-        <button onclick="prosesDaftarMember()" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--primary);color:white;font-weight:800;">Daftar Sekarang</button>
-    `;
-}
-
-// FUNGSI PROSES
-function handleCekPoin() {
-    const hp = document.getElementById('hpInput').value.trim();
-    if (hp.length < 10 || !hp.startsWith('628')) {
-        alert("Gunakan format 628xxxxxxxx");
-        return;
-    }
-
-    if (membersData[hp]) {
-        alert("Halo " + membersData[hp].nama + "!\nPoin Anda: " + membersData[hp].poin + " Poin");
-        closeMemberModal();
-    } else {
-        renderStepOffer(hp);
-    }
-}
-
-function prosesDaftarMember() {
-    const nama = document.getElementById('regNama').value;
-    const email = document.getElementById('regEmail').value;
-    const hp = document.getElementById('regHP').value;
-
-    if (!nama || !email) {
-        alert("Mohon isi nama dan email");
-        return;
-    }
-
-    membersData[hp] = { nama, email, poin: 0 };
-    alert("🎉 Selamat " + nama + ", pendaftaran member berhasil!");
-    closeMemberModal();
-}
 let appliedVoucher = null;
 let voucherDiscount = 0;
 
@@ -681,7 +589,7 @@ function applyVoucher() {
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwmsL1frpP-vnwymYKFpYKR-C4SyasJpgAmxmTIvK0eVbBLIQggRL9nl2k8UwLXYw-P7A/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycby2MVd6lvkh-UCtG8SnnsDVHD3c_Z-9_3U42j1EEd4gmw_QIEj3vcMwTAxg01xrP2Fl0Q/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1249,10 +1157,6 @@ function changeMode(m, el) {
     </div>
 </div>
 <!-- === MODAL VOUCHER === -->
-<div id="memberModal" class="modal-overlay" style="display:none;">
-    <div class="modal-card" id="memberContent">
-        </div>
-</div>
 <div id="voucherModal" class="modal-overlay">
   <div class="modal-card">
     <h3 style="font-weight:900;margin-bottom:6px;">🎫 Klaim Voucher</h3>
