@@ -546,14 +546,27 @@ mark {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
 let appliedVoucher = null;
-
+const CONFIG = {
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwmsL1frpP-vnwymYKFpYKR-C4SyasJpgAmxmTIvK0eVbBLIQggRL9nl2k8UwLXYw-P7A/exec',
+        MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
+        WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
+        WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
+        TOKEN: 'dyg-access-v2',
+        RADIUS_DINE_IN: 150
+    };
 // Daftar kode voucher yang berlaku (Kamu bisa tambah/kurangi di sini)
 const validCodes = {
     "DISKON5K": { type: "NOMINAL", value: 5000 },
     "PROMOHEBAT": { type: "NOMINAL", value: 10000 },
     "FREEONG": { type: "ONGKIR", value: 0 }
 };
+ const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
+    const VARIAN_MIE_GORENG = [{n:'Original',e:0},{n:'Rendang',e:0},{n:'Salero Padang',e:0}];
+    const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
+    const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
+    const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
 function openVoucherPrompt() {
     document.getElementById('modalVoucherPrompt').style.display = 'flex';
@@ -565,43 +578,24 @@ function closeVoucherPrompt() {
 }
 
 function checkVoucherCode() {
-    const code = document.getElementById('voucherCodeInput').value.trim().toUpperCase();
-    if (databaseVoucher[input]) {
-        appliedVoucher = databaseVoucher[input]; // Simpan voucher ke sistem
-        appliedVoucher.code = input; // Simpan namanya juga
-        
-    if (validCodes[code]) {
-        appliedVoucher = { 
-            code: code, 
-            discount: validCodes[code].value, 
-            type: validCodes[code].type 
+    const inputField = document.getElementById('voucherCodeInput');
+    const code = inputField.value.trim().toUpperCase();
+    
+    if (databaseVoucher[code]) {
+        // Simpan data voucher ke variabel global
+        appliedVoucher = {
+            code: code,
+            tipe: databaseVoucher[code].tipe,
+            potongan: databaseVoucher[code].potongan
         };
-        alert("Selamat! Kode " + code + " berhasil dipasang.");
+        
+        alert("KLAIM BERHASIL!\nVoucher " + code + " telah terpasang.");
         closeVoucherPrompt();
-        refreshUI();
+        refreshUI(); // <--- Ini yang bikin harga langsung update otomatis
     } else {
-        alert("Maaf, kode voucher tidak valid atau sudah kadaluarsa.");
+        alert("Kode voucher tidak valid atau salah ketik.");
     }
-}
-
-   // Ubah bagian ini di awal script Anda
-let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
-    const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwmsL1frpP-vnwymYKFpYKR-C4SyasJpgAmxmTIvK0eVbBLIQggRL9nl2k8UwLXYw-P7A/exec',
-        MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
-        WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
-        WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
-        TOKEN: 'dyg-access-v2',
-        RADIUS_DINE_IN: 150
-    };
-
-    const VARIAN_NASI = [{n:'Nasi Putih',e:0},{n:'Nasi Uduk',e:0},{n:'Nasi Cabe Ijo',e:2000},{n:'Nasi Kecombrang',e:2000},{n:'Nasi Rumput Laut',e:2000},{n:'Nasi Margarin',e:2000}];
-    const VARIAN_MIE_GORENG = [{n:'Original',e:0},{n:'Rendang',e:0},{n:'Salero Padang',e:0}];
-    const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
-    const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
-    const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
-
-function toggleMenuDropdown() {
+}function toggleMenuDropdown() {
     const dropdown = document.getElementById('menuDropdown');
     const isVisible = dropdown.style.display === 'block';
     
@@ -771,60 +765,36 @@ function renderMenu(filterKat = 'ALL') {
 
     function refreshUI() {
     let subtotal = 0; 
-    const counts = {};
-    cart.forEach(c => { 
-        subtotal += (c.harga + (c.ex || 0)); 
-        counts[c.id] = (counts[c.id] || 0) + 1; 
-    });
+    cart.forEach(c => { subtotal += (c.harga + (c.ex || 0)); });
 
-    menuData.forEach(m => {
-        const el = document.getElementById(`qty-${m.id}`);
-        if(el) {
-            const val = counts[m.id] || 0;
-            el.innerText = val;
-            el.previousElementSibling.disabled = val === 0;
-        }
-    });
-
-    const sInd = document.getElementById('swipeInd');
-    const distEl = document.getElementById('dist-info');
     const ongEl = document.getElementById('ongkir-label');
     const priceEl = document.getElementById('miniPrice');
-
-    // --- LOGIKA OTOMATIS HARGA ---
+    
     let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
-    let diskonNominal = 0;
-
+    
+    // --- HITUNG DISKON ---
+    let totalPotongan = 0;
     if (appliedVoucher) {
         if (appliedVoucher.tipe === "NOMINAL") {
-            diskonNominal = appliedVoucher.potongan;
+            totalPotongan = appliedVoucher.potongan;
         } else if (appliedVoucher.tipe === "ONGKIR") {
-            diskonNominal = ongkir;
+            totalPotongan = ongkir;
         }
     }
 
+    // --- HARGA AKHIR (OTOMATIS BERKURANG) ---
+    let totalAkhir = (subtotal + ongkir) - totalPotongan;
+    if (totalAkhir < 0) totalAkhir = 0;
+
+    // Tampilkan ke layar
+    priceEl.innerText = (subtotal > 0) ? totalAkhir.toLocaleString('id-ID') : "0";
+
     if (subtotal > 0) {
-        sInd.style.display = 'block';
-        
-        // Rumus: (Harga Menu + Ongkir) - Diskon
-        let totalAkhir = (subtotal + ongkir) - diskonNominal;
-        if (totalAkhir < 0) totalAkhir = 0;
-        
-        priceEl.innerText = totalAkhir.toLocaleString('id-ID');
-
-        if (currentMode === 'DELIVERY') {
-            distEl.style.display = 'block';
-            distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
-        } else {
-            distEl.style.display = 'none';
-        }
-
-        // --- VISUAL TEKS MERAH ---
         if (appliedVoucher) {
             ongEl.style.display = 'block';
-            ongEl.style.color = 'var(--danger)';
+            ongEl.style.color = 'var(--danger)'; // Warna Merah
             ongEl.style.fontWeight = '800';
-            ongEl.innerText = `Voucher ${appliedVoucher.code}: -Rp ${diskonNominal.toLocaleString('id-ID')}`;
+            ongEl.innerText = `Voucher ${appliedVoucher.code}: -Rp ${totalPotongan.toLocaleString('id-ID')}`;
         } else if (currentMode === 'DELIVERY') {
             ongEl.style.display = 'block';
             ongEl.style.color = 'var(--muted)';
@@ -832,19 +802,11 @@ function renderMenu(filterKat = 'ALL') {
         } else {
             ongEl.style.display = 'none';
         }
-
-        document.getElementById('btnOrder').disabled = false;
-        document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
     } else {
-        // Jika keranjang kosong, harga tetap 0 tapi voucher tetap tersimpan
-        sInd.style.display = 'none';
-        distEl.style.display = 'none';
         ongEl.style.display = 'none';
-        priceEl.innerText = "0";
-        document.getElementById('btnOrder').disabled = true;
-        document.getElementById('btnOrder').innerText = 'PILIH MENU';
-        toggleSummary(false);
     }
+    
+    // ... panggil fungsi update lainnya ...
     updateOrderSummary();
 }
 
@@ -1151,18 +1113,16 @@ function changeMode(m, el) {
     </div>
 </div>
 
-<div id="modalVoucherPrompt" class="modal-overlay">
-    <div class="modal-card">
-        <div style="font-size: 40px; margin-bottom: 10px;">🎟️</div>
-        <h3 style="font-weight: 900; margin-bottom: 5px;">Punya Kode Voucher?</h3>
-        <p style="font-size: 12px; color: var(--muted); margin-bottom: 20px;">Masukkan kode unik yang Anda terima melalui email.</p>
+<div id="modalVoucherPrompt" class="modal-overlay" style="display:none; align-items:center; justify-content:center; z-index:9999;">
+    <div class="modal-card" style="padding: 25px;">
+        <h3 style="font-weight: 900;">Masukkan Kode</h3>
         
-        <div class="input-card" style="border: 2px solid #eee; margin-bottom: 20px;">
-            <input type="text" id="voucherCodeInput" placeholder="Contoh: DISKON5K" style="text-align: center; text-transform: uppercase; font-weight: 800; font-size: 16px;">
-        </div>
+        <input type="text" id="voucherCodeInput" placeholder="CONTOH: DISKONKU" 
+               style="width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #eee; border-radius: 10px; text-align: center; font-weight: 800; text-transform: uppercase;">
 
-        <div style="display: flex; gap: 8px;">
-            <button onclick="closeVoucherPrompt()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700;">Batal</button>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="closeVoucherPrompt()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#eee; font-weight:700;">Batal</button>
+            
             <button onclick="checkVoucherCode()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700;">Klaim</button>
         </div>
     </div>
