@@ -546,6 +546,43 @@ mark {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+// Tambahkan di bagian atas script bersama variabel lainnya
+let activeDiscount = 0;
+let claimedVoucherName = "";
+
+// Fungsi untuk membuka modal voucher
+function openVoucherPrompt() {
+    toggleMenuDropdown(); // Tutup hamburger menu
+    document.getElementById('modalVoucher').style.display = 'flex';
+    document.getElementById('voucherCode').value = "";
+}
+
+function closeVoucher() {
+    document.getElementById('modalVoucher').style.display = 'none';
+}
+
+function claimVoucher() {
+    const code = document.getElementById('voucherCode').value.toUpperCase().trim();
+    
+    // Logika Voucher (Bisa Anda tambah sendiri kodenya di sini)
+    if (code === "HEMAT5K") {
+        activeDiscount = 5000;
+        claimedVoucherName = "HEMAT5K";
+    } else if (code === "DYG++") {
+        activeDiscount = 10000;
+        claimedVoucherName = "DYG++";
+    } else if (code === "") {
+        alert("Masukkan kode voucher terlebih dahulu!");
+        return;
+    } else {
+        alert("Yah, kode voucher tidak valid!");
+        return;
+    }
+
+    alert(`🎉 Berhasil! Voucher ${claimedVoucherName} senilai Rp ${activeDiscount.toLocaleString()} telah terpasang.`);
+    closeVoucher();
+    refreshUI(); // Update tampilan harga seketika
+}
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
@@ -732,54 +769,70 @@ function renderMenu(filterKat = 'ALL') {
     }
 
     function refreshUI() {
-        let subtotal = 0; 
-        const counts = {};
-        cart.forEach(c => { 
-            subtotal += (c.harga + (c.ex || 0)); 
-            counts[c.id] = (counts[c.id] || 0) + 1; 
-        });
+    let subtotal = 0; 
+    const counts = {};
+    cart.forEach(c => { 
+        subtotal += (c.harga + (c.ex || 0)); 
+        counts[c.id] = (counts[c.id] || 0) + 1; 
+    });
 
-        menuData.forEach(m => {
-            const el = document.getElementById(`qty-${m.id}`);
-            if(el) {
-                const val = counts[m.id] || 0;
-                el.innerText = val;
-                el.previousElementSibling.disabled = val === 0;
-            }
-        });
-
-        const sInd = document.getElementById('swipeInd');
-        const distEl = document.getElementById('dist-info');
-        const ongEl = document.getElementById('ongkir-label');
-        const priceEl = document.getElementById('miniPrice');
-
-        if (subtotal > 0) {
-            sInd.style.display = 'block';
-            if (currentMode === 'DELIVERY') {
-                let ongkir = calculateOngkir(userDist);
-                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
-                distEl.style.display = 'block';
-                distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
-                ongEl.style.display = 'block';
-                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
-            } else {
-                priceEl.innerText = subtotal.toLocaleString('id-ID');
-                distEl.style.display = 'none';
-                ongEl.style.display = 'none';
-            }
-            document.getElementById('btnOrder').disabled = false;
-            document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
-        } else {
-            sInd.style.display = 'none';
-            distEl.style.display = 'none';
-            ongEl.style.display = 'none';
-            priceEl.innerText = "0";
-            document.getElementById('btnOrder').disabled = true;
-            document.getElementById('btnOrder').innerText = 'PILIH MENU';
-            toggleSummary(false); // Tutup rincian jika item habis
+    menuData.forEach(m => {
+        const el = document.getElementById(`qty-${m.id}`);
+        if(el) {
+            const val = counts[m.id] || 0;
+            el.innerText = val;
+            el.previousElementSibling.disabled = val === 0;
         }
-        updateOrderSummary();
+    });
+
+    const sInd = document.getElementById('swipeInd');
+    const distEl = document.getElementById('dist-info');
+    const ongEl = document.getElementById('ongkir-label');
+    const priceEl = document.getElementById('miniPrice');
+
+    if (subtotal > 0) {
+        sInd.style.display = 'block';
+        let ongkir = (currentMode === 'DELIVERY') ? calculateOngkir(userDist) : 0;
+        
+        // HITUNG TOTAL AKHIR
+        let totalAkhir = (subtotal + ongkir) - activeDiscount;
+        if (totalAkhir < 0) totalAkhir = 0; // Jangan sampai minus
+
+        // Visualisasi Potongan Harga
+        let visualPrice = "";
+        if (activeDiscount > 0) {
+            visualPrice = `<span style="text-decoration: line-through; color: #999; font-size: 12px; margin-right: 5px;">Rp ${(subtotal + ongkir).toLocaleString('id-ID')}</span>`;
+            ongEl.innerHTML = `<span style="color:var(--accent)">Voucher -Rp ${activeDiscount.toLocaleString('id-ID')}</span>`;
+            ongEl.style.display = 'block';
+        } else if (currentMode === 'DELIVERY') {
+            ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+            ongEl.style.display = 'block';
+        } else {
+            ongEl.style.display = 'none';
+        }
+
+        priceEl.closest('.price-total').innerHTML = `Rp <span id="miniPrice">${visualPrice}${totalAkhir.toLocaleString('id-ID')}</span>`;
+        
+        if (currentMode === 'DELIVERY') {
+            distEl.style.display = 'block';
+            distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+        } else {
+            distEl.style.display = 'none';
+        }
+
+        document.getElementById('btnOrder').disabled = false;
+        document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
+    } else {
+        sInd.style.display = 'none';
+        distEl.style.display = 'none';
+        ongEl.style.display = 'none';
+        priceEl.innerText = "0";
+        document.getElementById('btnOrder').disabled = true;
+        document.getElementById('btnOrder').innerText = 'PILIH MENU';
+        toggleSummary(false);
     }
+    updateOrderSummary();
+}
 
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
@@ -1083,6 +1136,21 @@ function changeMode(m, el) {
         </button>
     </div>
 </div>
+<div id="modalVoucher" class="modal-overlay">
+    <div class="modal-card">
+        <div style="font-size:40px;margin-bottom:10px;">🎫</div>
+        <h3 style="font-weight:900;margin-bottom:6px;">Punya Kode Voucher?</h3>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:15px;">Masukkan kode promo untuk mendapatkan potongan harga.</p>
+        
+        <div class="input-card" style="border: 1.5px solid #ddd; margin-bottom: 15px;">
+            <input type="text" id="voucherCode" placeholder="Contoh: HEMAT5K" style="text-align: center; text-transform: uppercase; font-size: 16px; letter-spacing: 2px;">
+        </div>
 
+        <div style="display: flex; gap: 8px;">
+            <button onclick="closeVoucher()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700;">Batal</button>
+            <button onclick="claimVoucher()" style="flex:2; padding:12px; border-radius:12px; border:none; background:var(--accent); color:white; font-weight:800;">KLAIM VOUCHER</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
