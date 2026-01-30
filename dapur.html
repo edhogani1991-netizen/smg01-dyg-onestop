@@ -99,8 +99,8 @@ if(prompt("Masukkan PIN Dapur:") !== PIN_DAPUR){
 }
 
 const CONFIG = {
-    API_URL: "https://script.google.com/macros/s/AKfycbxBz2zBDeEsqNey4YINAAhJdMqVVBM1emAh7Lcol1CkbQ_xkBzMgZAzrVA0JfZ0UIKrgw/exec",
-    TOKEN: "dyg-access-v2",
+    WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxBz2zBDeEsqNey4YINAAhJdMqVVBM1emAh7Lcol1CkbQ_xkBzMgZAzrVA0JfZ0UIKrgw/exec',
+    TOKEN: 'dyg-access-v2',
     REFRESH_RATE: 10000
 };
 
@@ -108,30 +108,32 @@ let lastOrderCount = 0;
 let isRemoving = []; 
 
 async function fetchOrders(){
+    const statusEl = document.getElementById('status-conn');
     try {
         const resp = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true`);
-        if (!resp.ok) throw new Error("Server Error"); // Cek respon server
         
+        if (!resp.ok) throw new Error("Server Error");
+
         const data = await resp.json();
         
-        // Update Status Jadi Terhubung
-        const statusEl = document.getElementById('status-conn');
+        // Update Status Jadi Terhubung jika berhasil
         statusEl.innerText = "● TERHUBUNG";
         statusEl.style.color = "green";
 
         if(data.length > lastOrderCount && lastOrderCount !== 0) {
             document.getElementById('notifSound').play().catch(()=>{});
         }
+        
         lastOrderCount = data.length;
         renderOrders(data);
     } catch(e) {
-        // Jika gagal, tampilkan status terputus tapi jangan hentikan skrip
-        const statusEl = document.getElementById('status-conn');
+        // JIKA GAGAL: Ubah status menjadi merah agar Anda tahu koneksi putus
+        console.error("Fetch error:", e);
         statusEl.innerText = "● TERPUTUS (Mencoba lagi...)";
         statusEl.style.color = "red";
-        console.log("Koneksi gagal, mencoba lagi dalam siklus berikutnya...");
     }
 }
+
 function renderOrders(orders){
     const container = document.getElementById('orderList');
     const filtered = orders.filter(ord => !isRemoving.includes(ord.row_index.toString()));
