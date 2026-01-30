@@ -718,12 +718,21 @@ async function startApp() {
         document.getElementById('welcome-overlay').style.display = 'none';
         syncQueue();
 
+        // --- TAMBAHAN LOGIKA NETRAL ---
+        currentMode = null;
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        // ------------------------------
+
     }, (err) => {
         alert("Gagal akses lokasi. Harap aktifkan GPS untuk pengalaman terbaik.");
         document.getElementById('welcome-overlay').style.display = 'none';
+        
+        // --- TAMBAHAN LOGIKA NETRAL (SAAT ERROR) ---
+        currentMode = null;
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        // -------------------------------------------
     }, { enableHighAccuracy: true });
 }
-
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
         if (km <= 1.5) return 3000;
@@ -1018,24 +1027,37 @@ async function submitOrder() {
     const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, ''); 
     const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
 
-    // 1. KIRIM DATA KE DATABASE (Jalan di Background)
+    // 1. Jalankan Fetch ke Database (Background)
     fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalTotal}`)
-    .then(r => console.log("Database synced"));
+    .then(r => console.log("Data Sent"));
 
-    // 2. EKSEKUSI WA + REFRESH (Jeda 150ms agar fetch sempat terkirim)
+    // 2. Eksekusi Pindah ke WA
+    const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+    window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+
+    // 3. RESET TAMPILAN WEB (Tanpa Refresh Total)
+    // Ini berjalan tepat setelah perintah ke WA ditembakkan
     setTimeout(() => {
-        const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
-        const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+        // Kosongkan Keranjang
+        cart = {};
+        updateCart();
         
-        // Buka WhatsApp (Redirect)
-        window.location.href = waUrl;
+        // Tutup semua Modal
+        closeConfirm();
+        
+        // Munculkan kembali Welcome Overlay
+        const welcome = document.getElementById('welcomeOverlay');
+        if (welcome) {
+            welcome.style.display = 'flex';
+        }
 
-        // Refresh Halaman (Akan terjadi setelah user kembali dari WA atau saat proses redirect)
-        // Ini memastikan saat web dibuka lagi, langsung muncul Welcome Overlay
-        setTimeout(() => {
-            location.reload();
-        }, 500); 
-    }, 150);
+        // Kembalikan tombol ke status normal (jika nanti user balik ke web)
+        if (btnKirim) {
+          btnKirim.innerHTML = "Konfirmasi & Kirim WA";
+          btnKirim.style.opacity = "1";
+          btnKirim.style.pointerEvents = "auto";
+        }
+    }, 500); 
 }
 
     function toggleSummary(open) {
