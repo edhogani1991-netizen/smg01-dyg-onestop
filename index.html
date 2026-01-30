@@ -1,4 +1,3 @@
-ver 29.1.2026 (menu hamburger)
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -604,16 +603,42 @@ async function apiCekMember() {
 async function apiDaftarMember() {
     const phone = document.getElementById('m-phone').value;
     const nama = document.getElementById('m-reg-nama').value;
+    const btnReg = event.target; // Menangkap tombol yang diklik
+
     if (!nama) return alert("Nama wajib diisi!");
 
+    // 1. Matikan tombol agar tidak bisa diklik berkali-kali (Cegah kebocoran)
+    btnReg.disabled = true;
+    btnReg.innerText = "SEDANG MENDAFTAR...";
+    btnReg.style.opacity = "0.5";
+
     try {
+        // 2. Cek ulang ke database untuk memastikan nomor belum terdaftar 
+        // (Antisipasi jika pelanggan klik sangat cepat)
+        const checkResp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${phone}`);
+        const checkRes = await checkResp.json();
+
+        if (checkRes.exists) {
+            alert("Nomor kamu sudah terdaftar! Undang temanmu untuk mendaftar member dyg++ ya.");
+            apiCekMember(); // Langsung tampilkan poinnya saja
+            return;
+        }
+
+        // 3. Jika benar-benar belum ada, baru lakukan pendaftaran
         const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=daftarMember&nama=${nama}&noHP=${phone}`);
         const res = await resp.text();
+        
         if (res === "Success") {
             alert("Selamat! Pendaftaran Member Berhasil.");
-            apiCekMember(); // Refresh tampilan untuk lihat poin 0
+            apiCekMember(); 
         }
-    } catch (e) { alert("Gagal mendaftar."); }
+    } catch (e) {
+        alert("Gagal mendaftar. Silakan coba lagi.");
+        // Kembalikan tombol jika gagal koneksi
+        btnReg.disabled = false;
+        btnReg.innerText = "DAFTAR JADI MEMBER";
+        btnReg.style.opacity = "1";
+    }
 }
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
