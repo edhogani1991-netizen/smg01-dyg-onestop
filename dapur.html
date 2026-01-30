@@ -99,7 +99,7 @@ if(prompt("Masukkan PIN Dapur:") !== PIN_DAPUR){
 }
 
 const CONFIG = {
-    API_URL: "https://script.google.com/macros/s/AKfycbzrD7NIcQGmFC5PHsx6UcgCpcYhYqg_EZB-jRLaK3_0xd22eZqRi_7Z9BoFZsV88v9FKQ/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbxjTvlYtK-ZaPHMhxI-Q7tirf3Hl0W3Tin_Yzka0PpbwCTrcQTV_KK8srW6KdeUiY8yng/exec",
     TOKEN: "dyg-access-v2",
     REFRESH_RATE: 10000
 };
@@ -108,23 +108,30 @@ let lastOrderCount = 0;
 let isRemoving = []; 
 
 async function fetchOrders(){
-    try{
+    try {
         const resp = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true`);
+        if (!resp.ok) throw new Error("Server Error"); // Cek respon server
+        
         const data = await resp.json();
-        document.getElementById('status-conn').innerText = "● TERHUBUNG";
-        document.getElementById('status-conn').style.color = "green";
+        
+        // Update Status Jadi Terhubung
+        const statusEl = document.getElementById('status-conn');
+        statusEl.innerText = "● TERHUBUNG";
+        statusEl.style.color = "green";
 
         if(data.length > lastOrderCount && lastOrderCount !== 0) {
             document.getElementById('notifSound').play().catch(()=>{});
         }
         lastOrderCount = data.length;
         renderOrders(data);
-    } catch(err) {
-        document.getElementById('status-conn').innerText = "○ TERPUTUS";
-        document.getElementById('status-conn').style.color = "red";
+    } catch(e) {
+        // Jika gagal, tampilkan status terputus tapi jangan hentikan skrip
+        const statusEl = document.getElementById('status-conn');
+        statusEl.innerText = "● TERPUTUS (Mencoba lagi...)";
+        statusEl.style.color = "red";
+        console.log("Koneksi gagal, mencoba lagi dalam siklus berikutnya...");
     }
 }
-
 function renderOrders(orders){
     const container = document.getElementById('orderList');
     const filtered = orders.filter(ord => !isRemoving.includes(ord.row_index.toString()));
