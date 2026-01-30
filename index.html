@@ -643,7 +643,7 @@ async function apiDaftarMember() {
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyUXkM-HaY0WHAmtQJFhmc1thAJAYPma9mHstTjeLuKRxpb7TYC9fKRzwr6sdpMBuyrWg/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxBz2zBDeEsqNey4YINAAhJdMqVVBM1emAh7Lcol1CkbQ_xkBzMgZAzrVA0JfZ0UIKrgw/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1032,9 +1032,16 @@ else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
         btnKirim.style.pointerEvents = "none";
     }
 
-    // Kirim data ke database di latar belakang
-    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
-    fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalPrice.replace(/\./g, '')}`, { mode: 'no-cors' });
+    // Menghitung total bersih (hanya angka)
+const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, ''); 
+
+// Mengirim data ke Backend dengan Action yang Benar
+fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder&nama=${encodeURIComponent(nI.value)}&pesanan=${encodeURIComponent(pesananTeks)}&mode=${currentMode}&total=${finalTotal}`)
+.then(response => response.text())
+.then(nextQueue => {
+    console.log("Pesanan berhasil masuk antrean nomor: " + nextQueue);
+})
+.catch(err => console.error("Gagal mengirim ke database:", err));
 
     // Tunggu animasi sebentar baru pindah ke WA
     setTimeout(() => {
