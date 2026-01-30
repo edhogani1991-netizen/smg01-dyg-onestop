@@ -70,72 +70,112 @@
             </div>
         </div>
 
-        <div class="w-[400px] bg-white border-l shadow-2xl flex flex-col">
-            <div class="p-5 flex-1 flex flex-col overflow-hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="font-black text-slate-400 text-xs uppercase tracking-widest">🛒 Pesanan</h2>
-                    <button onclick="clearCart()" class="text-[10px] font-bold text-red-500 underline uppercase">Kosongkan</button>
-                </div>
-                <div id="cart-list" class="flex-1 overflow-y-auto pr-2 space-y-2 mb-4 scroll-custom">
-                    <p class="text-center text-slate-300 text-xs mt-20 italic">Klik menu di kiri untuk menambah...</p>
-                </div>
-
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input id="i-cust" placeholder="Nama Pelanggan" class="p-3 bg-white border rounded-xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500">
-                        <input id="i-noHP" placeholder="WA (Opsional)" class="p-3 bg-white border rounded-xl text-xs font-bold outline-none focus:ring-2 ring-emerald-500">
-                    </div>
-                    <div class="flex gap-2">
-                        <select id="i-mode" class="flex-1 p-3 bg-white border rounded-xl text-[10px] font-black outline-none">
-                            <option value="CASH">💵 TUNAI (CASH)</option>
-                            <option value="QRIS">📱 QRIS / TRANSFER</option>
-                        </select>
-                        <input id="i-disc" type="number" oninput="updateTotal()" placeholder="Diskon" class="w-24 p-3 bg-red-50 border rounded-xl text-xs font-black text-red-600 outline-none">
-                    </div>
-                    <div class="flex justify-between items-center pt-2 border-t border-slate-200">
-                        <span class="font-black text-xs text-slate-400 uppercase">Total Akhir</span>
-                        <span id="v-total" class="text-3xl font-black text-emerald-900 tracking-tighter">Rp 0</span>
-                    </div>
-                </div>
-                <button onclick="submitOrder()" id="btn-order" class="w-full dyg-green text-white py-5 rounded-2xl mt-4 font-black shadow-xl active:scale-95 transition-all uppercase tracking-widest">Simpan & Cetak</button>
-            </div>
-
-            <div class="p-4 bg-slate-100 border-t flex flex-col gap-2">
-                <div class="flex justify-between items-center">
-                    <p class="text-[9px] font-black text-slate-500 uppercase">Administrasi / Closing</p>
-                    <button onclick="toggleFinance()" class="text-[10px] font-bold text-emerald-700">Buka Panel</button>
-                </div>
-                <div id="finance-panel" class="hidden space-y-2 pt-2">
-                    <div class="flex gap-1 bg-white p-1 rounded-lg border">
-                        <button onclick="setFinanceTab('pengeluaran')" id="tab-pengeluaran" class="flex-1 text-[8px] font-bold p-1 bg-slate-200 rounded">BELANJA</button>
-                        <button onclick="setFinanceTab('online_food')" id="tab-online" class="flex-1 text-[8px] font-bold p-1">ONLINE</button>
-                        <button onclick="setFinanceTab('modal')" id="tab-modal" class="flex-1 text-[8px] font-bold p-1">MODAL</button>
-                    </div>
-                    <div class="flex gap-1">
-                        <input id="f-desc" placeholder="Ket" class="flex-1 p-2 text-[10px] border rounded-lg outline-none">
-                        <div class="relative w-24">
-                            <input id="f-amt" type="number" placeholder="Rp" class="w-full p-2 text-[10px] border rounded-lg outline-none">
-                            <button id="lock-icon" onclick="unlockModal()" class="hidden absolute right-1 top-1 text-[10px]">🔒</button>
-                        </div>
-                        <button onclick="saveFinance()" id="btn-save-fin" class="bg-slate-800 text-white px-3 rounded-lg text-[8px] font-bold">SIMPAN</button>
-                    </div>
-                    <div class="border-t pt-2 mt-2">
-                        <input id="i-fisik" type="number" oninput="checkSettle()" placeholder="Uang Tunai di Laci..." class="w-full p-3 bg-white border-2 border-red-100 rounded-xl text-center text-lg font-black text-red-600">
-                        <button id="btn-settle" disabled onclick="doSettle()" class="w-full bg-slate-300 text-white py-3 rounded-xl mt-1 font-black text-[10px] uppercase">Kas Belum Sesuai</button>
-                    </div>
-                </div>
-            </div>
+        <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-3">
+    <div class="grid grid-cols-2 gap-2">
+        <div class="flex flex-col">
+            <label class="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1">No WhatsApp</label>
+            <input id="i-noHP" type="number" oninput="cekMemberOtomatis()" placeholder="628xxx" 
+                class="p-3 bg-white border rounded-xl text-xs font-black outline-none focus:ring-2 ring-emerald-500">
+        </div>
+        <div class="flex flex-col">
+            <label class="text-[8px] font-black text-slate-400 uppercase ml-2 mb-1">Nama Pelanggan</label>
+            <input id="i-cust" readonly placeholder="Otomatis..." 
+                class="p-3 bg-slate-100 border rounded-xl text-xs font-bold text-slate-500 outline-none">
         </div>
     </div>
 
+    <div id="area-poin" class="hidden flex items-center justify-between bg-emerald-600 p-3 rounded-xl shadow-inner">
+        <div>
+            <p class="text-[8px] font-black text-emerald-100 uppercase tracking-widest">Poin Member</p>
+            <p id="v-poin" class="text-xl font-black text-white">0</p>
+        </div>
+        <button id="btn-redeem" onclick="eksekusiRedeem()" disabled 
+            class="px-4 py-2 bg-white/20 text-white rounded-lg font-black text-[10px] uppercase transition-all opacity-50">
+            Redeem Poin
+        </button>
+    </div>
+
+    <div class="flex gap-2">
+        <select id="i-mode" class="flex-1 p-3 bg-white border rounded-xl text-[10px] font-black outline-none">
+            <option value="CASH">💵 TUNAI (CASH)</option>
+            <option value="QRIS">📱 QRIS / TRANSFER</option>
+        </select>
+        <div class="flex flex-col">
+            <input id="i-disc" type="number" oninput="updateTotal()" placeholder="Diskon" 
+                class="w-24 p-3 bg-red-50 border rounded-xl text-xs font-black text-red-600 outline-none">
+        </div>
+    </div>
+
+    <div class="flex justify-between items-center pt-2 border-t border-slate-200">
+        <div class="flex flex-col">
+            <span class="font-black text-[9px] text-slate-400 uppercase">Total Akhir</span>
+            <span id="label-redeem" class="hidden text-[10px] font-bold text-orange-600 italic">Poin Digunakan...</span>
+        </div>
+        <span id="v-total" class="text-3xl font-black text-emerald-900 tracking-tighter">Rp 0</span>
+    </div>
+</div>
+
+<button onclick="submitOrder()" id="btn-order" class="w-full dyg-green text-white py-5 rounded-2xl mt-4 font-black shadow-xl active:scale-95 transition-all uppercase tracking-widest">
+    Simpan & Cetak
+</button>
+
     <script>
-        const API = "https://script.google.com/macros/s/AKfycby2MVd6lvkh-UCtG8SnnsDVHD3c_Z-9_3U42j1EEd4gmw_QIEj3vcMwTAxg01xrP2Fl0Q/exec"; 
+        const API = "https://script.google.com/macros/s/AKfycbzTgauCjtJHhaO0_oH1vrhAiyA3fk1owOze52eTXvAyZ_dXJBHUxkAvM6h8wC8ExcYPzw/exec"; 
         const TOKEN = "dyg-access-v2";
         const SPV_PASS = "admin123"; // Password Manager/Supervisor
         
         let cart = {}, totalRaw = 0, sysCash = 0, fTab = 'pengeluaran', activeCat = 'ALL';
         let openingCashValue = 0;
+let potonganRedeem = 0;
 
+async function cekMemberOtomatis() {
+    const phone = document.getElementById('i-noHP').value;
+    const areaPoin = document.getElementById('area-poin');
+    const btnRedeem = document.getElementById('btn-redeem');
+    const inputCust = document.getElementById('i-cust');
+
+    if (phone.length >= 10) {
+        try {
+            const r = await fetch(`${API}?token=${TOKEN}&action=cekMember&noHP=${phone}`);
+            const res = await r.json();
+            
+            if (res.exists) {
+                inputCust.value = res.nama;
+                document.getElementById('v-poin').innerText = res.poin.toLocaleString();
+                areaPoin.classList.remove('hidden');
+                
+                // Syarat Redeem: Poin > 5000
+                if (res.poin >= 5000) {
+                    btnRedeem.disabled = false;
+                    btnRedeem.classList.remove('opacity-50', 'bg-white/20');
+                    btnRedeem.classList.add('bg-orange-500', 'shadow-lg');
+                }
+            } else {
+                inputCust.value = "BUKAN MEMBER";
+                areaPoin.classList.add('hidden');
+            }
+        } catch (e) { console.log("Cek member skip."); }
+    } else {
+        areaPoin.classList.add('hidden');
+        inputCust.value = "";
+    }
+}
+
+function eksekusiRedeem() {
+    const poin = parseInt(document.getElementById('v-poin').innerText.replace(/\D/g,''));
+    potonganRedeem = poin; // Seluruh poin dijadikan potongan (Misal 1 Poin = 1 Rupiah)
+    
+    document.getElementById('label-redeem').innerText = `- Rp ${potonganRedeem.toLocaleString()} (Poin)`;
+    document.getElementById('label-redeem').classList.remove('hidden');
+    
+    alert("Redeem diterapkan! Total bayar akan otomatis berkurang.");
+    updateTotal(); // Panggil fungsi hitung total Anda
+}
+
+// Di dalam fungsi updateTotal() Anda, pastikan ada baris ini:
+// let totalAkhir = (subtotal - diskonInput) - potonganRedeem;
+// if(totalAkhir < 0) totalAkhir = 0;
+// document.getElementById('v-total').innerText = "Rp " + totalAkhir.toLocaleString();
         const MENU_DATA = [
             {cat: "PAKET HEMAT+TEH", items: [["[PH] Nasi Ayam Saus Padang+ Teh", 15000], ["[PH] Nasi Rica Ayam+ Teh", 15000], ["[PH] Nasi Ayam bakar madu+ Teh", 15000], ["[PH] Nasi Orak Arik Ayam Bali+ Teh", 15000], ["[PH] Nasi Telor Balado+ Teh", 12000], ["[PH] Mie Lik Goreng Nyemek+ Teh", 13000]]},
             {cat: "WARDOY", items: [["Nasi Ayam Saus Padang", 15000], ["Nasi Ayam Saus Margarin", 15000], ["Nasi Rica Ayam", 15000], ["Nasi Ayam Bakar Madu", 15000], ["Nasi Ayam Bakar Saus kacang", 15000], ["Nasi Ayam Bakar Dabu", 15000], ["Nasi Orak Arik Ayam//Ayam Bali", 15000], ["Nasi Telor Balado", 12000], ["Nasi Telor bakar madu", 13000], ["Nasi Telor Bakar Saus Kacang", 13000], ["Nasi Telor", 12000], ["Nasi Orak Arik Telor", 12000], ["Nasi Telor Gobal-Gabul", 12000], ["Mie Tek-tek", 13000], ["Mie Dogh.dogh", 13000], ["Mie goreng", 9000], ["Mie rebus", 9000], ["Mie Goreng telur", 11000], ["Mie Rebus Telur", 11000], ["Mie Goreng double", 11000], ["Mie Rebus double", 11000], ["Mie Goreng double telur", 14000], ["Mie Rebus double telur", 14000], ["Nasi Ommelet", 15000]]},

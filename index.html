@@ -431,7 +431,7 @@ mark {
         
         <div id="menuDropdown" style="display:none; position:absolute; top:35px; left:0; background:white; color:black; border-radius:12px; width:150px; box-shadow:0 8px 20px rgba(0,0,0,0.2); z-index:2000; overflow:hidden;">
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
-            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
+            <div onclick="openMemberModal()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
         </div>
@@ -547,10 +547,78 @@ mark {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+function openMemberModal() {
+    document.getElementById('modalMember').style.display = 'flex';
+    document.getElementById('m-view-input').style.display = 'block';
+    document.getElementById('m-view-result').style.display = 'none';
+    document.getElementById('m-view-reg').style.display = 'none';
+    document.getElementById('menuDropdown').style.display = 'none'; // Tutup hamburger
+}
+
+function closeMemberModal() {
+    document.getElementById('modalMember').style.display = 'none';
+}
+
+async function apiCekMember() {
+    let phone = document.getElementById('m-phone').value.trim();
+    
+    // VALIDASI KETAT
+    if (phone.startsWith('0')) {
+        alert("Peringatan: Jangan gunakan angka 0 di depan. Gunakan format 628...");
+        return;
+    }
+    if (phone.startsWith('+')) {
+        alert("Peringatan: Jangan gunakan simbol (+). Gunakan format 628...");
+        return;
+    }
+    if (!phone.startsWith('628')) {
+        alert("Peringatan: Nomor harus diawali dengan 628... (Kode Negara Indonesia)");
+        return;
+    }
+    if (isNaN(phone)) {
+        alert("Peringatan: Masukkan hanya angka saja!");
+        return;
+    }
+    if (phone.length < 10) {
+        alert("Peringatan: Nomor terlalu pendek!");
+        return;
+    }
+
+    // Jika lolos validasi, baru panggil API
+    try {
+        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${phone}`);
+        const res = await resp.json();
+
+        document.getElementById('m-view-input').style.display = 'none';
+        if (res.exists) {
+            document.getElementById('m-view-result').style.display = 'block';
+            document.getElementById('m-res-nama').innerText = res.nama;
+            document.getElementById('m-res-poin').innerText = res.poin.toLocaleString();
+        } else {
+            document.getElementById('m-view-reg').style.display = 'block';
+        }
+    } catch (e) {
+        alert("Terjadi kesalahan koneksi.");
+    }
+}
+async function apiDaftarMember() {
+    const phone = document.getElementById('m-phone').value;
+    const nama = document.getElementById('m-reg-nama').value;
+    if (!nama) return alert("Nama wajib diisi!");
+
+    try {
+        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=daftarMember&nama=${nama}&noHP=${phone}`);
+        const res = await resp.text();
+        if (res === "Success") {
+            alert("Selamat! Pendaftaran Member Berhasil.");
+            apiCekMember(); // Refresh tampilan untuk lihat poin 0
+        }
+    } catch (e) { alert("Gagal mendaftar."); }
+}
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycby2MVd6lvkh-UCtG8SnnsDVHD3c_Z-9_3U42j1EEd4gmw_QIEj3vcMwTAxg01xrP2Fl0Q/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzTgauCjtJHhaO0_oH1vrhAiyA3fk1owOze52eTXvAyZ_dXJBHUxkAvM6h8wC8ExcYPzw/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1084,6 +1152,42 @@ function changeMode(m, el) {
         </button>
     </div>
 </div>
+<div id="modalMember" class="modal-overlay" style="display:none; align-items:center; justify-content:center; padding:20px; z-index:10000;">
+    <div class="modal-card" style="max-width:350px; border-radius:24px; overflow:hidden;">
+        <div style="background:var(--primary); color:white; padding:25px; text-align:center;">
+            <div style="font-size:40px; margin-bottom:10px;">🪙</div>
+            <h3 style="font-weight:900; margin:0; letter-spacing:1px;">MEMBER POIN</h3>
+            <p style="font-size:10px; opacity:0.8; margin-top:5px;">WAJIB DIAWALI 628 (TANPA 0 / +)</p>
+        </div>
+        
+        <div id="m-view-input" style="padding:25px; text-align:center;">
+            <div style="margin-bottom:15px;">
+                <label style="font-size:10px; font-weight:900; color:var(--danger); display:block; margin-bottom:5px;">FORMAT: 628xxxxxxxx</label>
+                <input type="text" id="m-phone" inputmode="numeric" placeholder="Contoh: 62812345678" 
+                    style="width:100%; padding:15px; border:2px solid var(--soft); border-radius:15px; font-size:18px; font-weight:900; text-align:center; outline:none;">
+            </div>
+            <button onclick="apiCekMember()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:15px; font-weight:900; cursor:pointer;">CEK POIN SAYA</button>
+            <button onclick="closeMemberModal()" style="background:none; border:none; color:var(--muted); font-size:12px; margin-top:15px; font-weight:bold;">Tutup</button>
+        </div>
 
+        <div id="m-view-result" style="padding:25px; display:none; text-align:center;">
+            <p style="font-size:12px; color:var(--muted); margin:0;">Halo,</p>
+            <h4 id="m-res-nama" style="margin:5px 0 15px 0; font-weight:900; font-size:20px; color:var(--primary);">...</h4>
+            <div style="background:var(--bg); border:2px dashed var(--primary); padding:20px; border-radius:20px; margin-bottom:15px;">
+                <span id="m-res-poin" style="font-size:40px; font-weight:900; color:var(--primary);">0</span>
+                <p style="margin:0; font-size:10px; font-weight:900; color:var(--primary); opacity:0.7;">TOTAL POIN</p>
+            </div>
+            <button onclick="closeMemberModal()" style="width:100%; padding:15px; background:var(--soft); color:var(--text); border:none; border-radius:15px; font-weight:900;">OKE</button>
+        </div>
+
+        <div id="m-view-reg" style="padding:25px; display:none; text-align:center;">
+            <p style="font-size:14px; font-weight:900; color:var(--danger); margin-bottom:10px;">Nomor Belum Terdaftar!</p>
+            <p style="font-size:12px; color:var(--muted); margin-bottom:15px;">Daftar sekarang untuk mulai mengumpulkan poin.</p>
+            <input type="text" id="m-reg-nama" placeholder="Tulis Nama Anda" 
+                style="width:100%; padding:12px; border:1px solid var(--soft); border-radius:12px; margin-bottom:15px; text-align:center; font-weight:bold;">
+            <button onclick="apiDaftarMember()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:15px; font-weight:900;">DAFTAR JADI MEMBER</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
