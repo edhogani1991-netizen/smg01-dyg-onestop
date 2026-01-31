@@ -546,6 +546,48 @@ mark {
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+let generatedOTP = null;
+
+// FUNGSI 1: Minta OTP ke Google Apps Script
+function requestOTP() {
+    const email = document.getElementById('m-reg-email').value;
+    const btn = document.getElementById('btn-kirim-otp');
+    
+    if (!email.includes('@')) return alert("Masukkan email yang valid!");
+
+    btn.innerText = "Wait...";
+    btn.disabled = true;
+
+    // Panggil Apps Script (Pastikan fungsi sendEmailOTP sudah ada di .gs)
+    google.script.run.withSuccessHandler(function(otp) {
+        if (otp === "error") {
+            alert("Gagal mengirim email!");
+            btn.disabled = false;
+            btn.innerText = "KIRIM OTP";
+        } else {
+            generatedOTP = otp;
+            document.getElementById('m-otp-box').style.display = 'block';
+            alert("Kode OTP berhasil dikirim. Cek Inbox/Spam email Anda.");
+            btn.innerText = "TERKIRIM";
+        }
+    }).sendEmailOTP(email);
+}
+
+// FUNGSI 2: Verifikasi Angka OTP
+function verifyOTP() {
+    const input = document.getElementById('m-otp-code').value;
+    const finalBtn = document.getElementById('btn-final-daftar');
+
+    if (input == generatedOTP) {
+        alert("Email Terverifikasi!");
+        finalBtn.disabled = false;
+        finalBtn.style.opacity = "1";
+        document.getElementById('m-otp-box').style.display = 'none';
+    } else {
+        alert("Kode OTP salah!");
+    }
+}
+
 function openMemberModal() {
     document.getElementById('modalMember').style.display = 'flex';
     document.getElementById('m-view-input').style.display = 'block';
@@ -603,29 +645,30 @@ async function apiCekMember() {
 async function apiDaftarMember() {
     const phone = document.getElementById('m-phone').value;
     const nama = document.getElementById('m-reg-nama').value;
-    const btnReg = event.target; // Menangkap tombol yang diklik
+    const email = document.getElementById('m-reg-email').value; // AMBIL EMAIL
+    const btnReg = event.target; 
 
     if (!nama) return alert("Nama wajib diisi!");
+    if (!email) return alert("Email wajib diisi!"); // Tambahan validasi email
 
-    // 1. Matikan tombol agar tidak bisa diklik berkali-kali (Cegah kebocoran)
+    // 1. Matikan tombol agar tidak klik berkali-kali
     btnReg.disabled = true;
     btnReg.innerText = "SEDANG MENDAFTAR...";
     btnReg.style.opacity = "0.5";
 
     try {
-        // 2. Cek ulang ke database untuk memastikan nomor belum terdaftar 
-        // (Antisipasi jika pelanggan klik sangat cepat)
+        // 2. Cek ulang ke database (Tetap pakai noHP sebagai kunci utama)
         const checkResp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${phone}`);
         const checkRes = await checkResp.json();
 
         if (checkRes.exists) {
-            alert("Nomor kamu sudah terdaftar! Undang temanmu untuk mendaftar member dyg++ ya.");
-            apiCekMember(); // Langsung tampilkan poinnya saja
+            alert("Nomor kamu sudah terdaftar! Langsung cek poin saja ya.");
+            apiCekMember(); 
             return;
         }
 
-        // 3. Jika benar-benar belum ada, baru lakukan pendaftaran
-        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=daftarMember&nama=${nama}&noHP=${phone}`);
+        // 3. JALANKAN PENDAFTARAN (Tambahkan parameter &email di akhir)
+        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=daftarMember&nama=${nama}&noHP=${phone}&email=${email}`);
         const res = await resp.text();
         
         if (res === "Success") {
@@ -634,7 +677,6 @@ async function apiDaftarMember() {
         }
     } catch (e) {
         alert("Gagal mendaftar. Silakan coba lagi.");
-        // Kembalikan tombol jika gagal koneksi
         btnReg.disabled = false;
         btnReg.innerText = "DAFTAR JADI MEMBER";
         btnReg.style.opacity = "1";
@@ -643,7 +685,7 @@ async function apiDaftarMember() {
    // Ubah bagian ini di awal script Anda
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzsGgR6xMqCSIA-gdJYQFT00kLQy2RORTHaTaU8AVam_D_RCUx7LmEaA0aaZyJJrv8BLw/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz4M11u29NQ-MlcUgvib5cDQC2L6_mGp6L5MrLnvm63uvKj0k_LxiuJSwfXRjT0aTSnNQ/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1222,12 +1264,28 @@ function changeMode(m, el) {
         </div>
 
         <div id="m-view-reg" style="padding:25px; display:none; text-align:center;">
-            <p style="font-size:14px; font-weight:900; color:var(--danger); margin-bottom:10px;">Nomor Belum Terdaftar!</p>
-            <p style="font-size:12px; color:var(--muted); margin-bottom:15px;">Daftar sekarang untuk mulai mengumpulkan poin.</p>
-            <input type="text" id="m-reg-nama" placeholder="Tulis Nama Anda" 
-                style="width:100%; padding:12px; border:1px solid var(--soft); border-radius:12px; margin-bottom:15px; text-align:center; font-weight:bold;">
-            <button onclick="apiDaftarMember()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:15px; font-weight:900;">DAFTAR JADI MEMBER</button>
-        </div>
+    <p style="font-size:14px; font-weight:900; color:var(--danger); margin-bottom:10px;">Nomor Belum Terdaftar!</p>
+    
+    <input type="text" id="m-reg-nama" placeholder="Tulis Nama Anda" 
+        style="width:100%; padding:12px; border:1px solid var(--soft); border-radius:12px; margin-bottom:10px; text-align:center; font-weight:bold;">
+    
+    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+        <input type="email" id="m-reg-email" placeholder="Email Verifikasi" 
+            style="flex: 1; padding:12px; border:1px solid var(--soft); border-radius:12px; font-weight:bold;">
+        <button id="btn-kirim-otp" onclick="requestOTP()" 
+            style="padding: 10px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 10px; font-weight: 900;">KIRIM OTP</button>
+    </div>
+
+    <div id="m-otp-box" style="display:none; margin-bottom: 15px; background: #fff4f4; padding: 15px; border-radius: 15px;">
+        <p style="font-size: 10px; font-weight: bold; color: var(--danger); margin-bottom: 5px;">KODE OTP DIKIRIM KE EMAIL</p>
+        <input type="number" id="m-otp-code" placeholder="4 Digit" 
+            style="width:80px; padding:10px; border:2px solid var(--primary); border-radius:10px; text-align:center; font-size: 18px; font-weight: 900;">
+        <button onclick="verifyOTP()" style="display:block; width:100%; margin-top:10px; background:orange; color:white; border:none; padding:8px; border-radius:8px; font-weight:900;">VERIFIKASI</button>
+    </div>
+
+    <button id="btn-final-daftar" onclick="apiDaftarMember()" disabled 
+        style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:15px; font-weight:900; opacity: 0.5;">DAFTAR JADI MEMBER</button>
+</div>
     </div>
 </div>
 </body>
