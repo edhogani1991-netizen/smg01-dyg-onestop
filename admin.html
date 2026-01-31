@@ -3,109 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DYG++ POS TABLET MODE</title>
+    <title>DYG++ SUPER POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F1F5F9; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .dyg-green { background: #1B4332; }
-        .scroll-custom::-webkit-scrollbar { width: 4px; }
+        .scroll-custom::-webkit-scrollbar { width: 5px; }
         .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .active-cat { background: #1B4332 !important; color: white !important; }
-        /* Memaksa tampilan 2 kolom di tablet (landscape/portrait lebar) */
-        .main-container { display: flex; flex: 1; overflow: hidden; }
-        .menu-side { flex: 1; display: flex; flex-direction: column; background: #f8fafc; }
-        .admin-side { width: 380px; background: white; border-left: 1px solid #e2e8f0; display: flex; flex-direction: column; box-shadow: -4px 0 15px rgba(0,0,0,0.05); z-index: 10; }
+        .active-cat { background: #1B4332 !important; color: white !important; box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3); }
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+        .admin-sidebar { width: 380px; min-width: 380px; background: white; border-left: 2px solid #e2e8f0; display: flex; flex-direction: column; }
+        .qty-badge { position: absolute; top: -5px; right: -5px; background: #EF4444; color: white; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; border: 2px solid white; }
     </style>
 </head>
 <body>
 
-    <div class="dyg-green text-white p-4 flex justify-between items-center shadow-lg">
-        <div class="flex items-center gap-4">
-            <h1 class="font-black text-2xl tracking-tighter">dyg++</h1>
-            <div class="bg-white/10 px-3 py-1 rounded-full border border-white/20">
-                <p id="v-cash" class="text-xs font-bold text-emerald-400">Cash: Rp 0</p>
+    <div class="dyg-green text-white p-3 flex justify-between items-center shadow-md z-50">
+        <div class="flex items-center gap-6">
+            <h1 class="font-black tracking-tighter text-xl mr-4 italic">dyg++</h1>
+            <div class="hidden md:block">
+                <p class="text-[8px] uppercase font-bold opacity-60">Laci Kasir (System)</p>
+                <p id="v-cash" class="text-sm font-black text-emerald-400">Rp 0</p>
             </div>
         </div>
-        <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari menu..." class="bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm w-64 outline-none focus:bg-white focus:text-gray-800 transition-all">
+        <div class="flex items-center gap-3">
+            <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari menu..." class="bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-xs w-48 md:w-64 outline-none focus:bg-white focus:text-gray-800 transition-all font-bold">
+            <button onclick="location.reload()" class="bg-red-500 text-white px-3 py-2 rounded-lg text-[10px] font-black uppercase">Refresh</button>
+        </div>
     </div>
 
-    <div class="main-container">
-        <div class="menu-side">
-            <div id="cat-grid" class="flex gap-2 p-4 overflow-x-auto no-scrollbar bg-white border-b">
-                <button onclick="filterCat('ALL')" class="active-cat whitespace-nowrap px-6 py-2 rounded-xl text-xs font-black bg-slate-100">SEMUA</button>
+    <div class="flex flex-1 overflow-hidden">
+        <div class="flex-1 flex flex-col bg-slate-50 overflow-hidden">
+            <div id="cat-grid" class="flex gap-2 p-3 overflow-x-auto bg-white border-b shadow-sm no-scrollbar">
+                <button onclick="filterCat('ALL')" id="cat-ALL" class="active-cat whitespace-nowrap px-5 py-2 rounded-xl text-[10px] font-black bg-slate-100 text-slate-500 border border-transparent">SEMUA</button>
             </div>
-            <div class="flex-1 p-4 overflow-y-auto scroll-custom">
-                <div id="menu-render" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+            <div class="flex-1 p-3 overflow-y-auto scroll-custom">
+                <div id="menu-render" class="menu-grid"></div>
             </div>
         </div>
 
-        <div class="admin-side">
+        <div class="admin-sidebar">
             <div class="p-4 flex-1 overflow-y-auto scroll-custom space-y-4">
                 
-                <div id="cart-list" class="space-y-2">
-                    <p class="text-center text-slate-300 text-xs mt-10 italic">Keranjang Kosong</p>
-                </div>
-
-                <div class="bg-slate-50 p-3 rounded-2xl border border-dashed border-slate-300">
-                    <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Data Member</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input id="i-noHP" type="number" oninput="cekMemberOtomatis()" placeholder="WA Member" class="p-3 bg-white border rounded-xl text-xs font-black outline-none">
-                        <input id="i-cust" readonly placeholder="Nama..." class="p-3 bg-slate-100 border rounded-xl text-xs font-bold outline-none">
+                <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200">
+                    <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Item Pesanan</p>
+                    <div id="cart-list" class="space-y-2 min-h-[100px]">
+                        <p class="text-center text-slate-300 text-[10px] mt-4 italic">Belum ada menu dipilih</p>
                     </div>
                 </div>
 
-                <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-100 space-y-2">
-                    <p class="text-[9px] font-black text-emerald-700 uppercase">Admin Finance</p>
-                    <select id="f-type" class="w-full p-2 text-[10px] font-black bg-white border rounded-lg">
-                        <option value="pengeluaran">🛒 PENGELUARAN</option>
-                        <option value="online_food">🛵 ONLINE FOOD (GOFOOD/GRAB)</option>
-                        <option value="modal">💰 TAMBAH MODAL</option>
+                <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <p class="text-[10px] font-black text-emerald-800 uppercase italic">Admin / Finance Input</p>
+                        <span class="text-[8px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Auto-Sync</span>
+                    </div>
+                    <select id="f-type" onchange="toggleModalInput()" class="w-full p-2.5 bg-white border rounded-xl text-[10px] font-black outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="pengeluaran">🛒 PENGELUARAN (Belanja/Ops)</option>
+                        <option value="online_food">🛵 ONLINE FOOD (Gojek/Grab)</option>
+                        <option value="modal">💰 TAMBAH MODAL LACI</option>
                     </select>
-                    <input id="f-desc" type="text" placeholder="Keterangan..." class="w-full p-2 text-[10px] font-bold border rounded-lg">
+                    <input id="f-desc" type="text" placeholder="Keterangan..." class="w-full p-2.5 text-[10px] font-bold bg-white border rounded-xl outline-none">
                     <div class="flex gap-1">
-                        <input id="f-amt" type="number" placeholder="Nominal Rp" class="flex-1 p-2 text-[10px] font-black border rounded-lg">
-                        <button onclick="saveFinance()" class="px-3 bg-emerald-700 text-white rounded-lg font-black text-[9px]">SIMPAN</button>
+                        <input id="f-amt" type="number" placeholder="Nominal Rp" class="flex-1 p-2.5 text-[10px] font-black bg-white border rounded-xl outline-none">
+                        <button onclick="saveFinance()" id="btn-save-fin" class="px-4 dyg-green text-white rounded-xl font-black text-[10px] uppercase shadow-md active:scale-95 transition-all">Simpan</button>
                     </div>
                 </div>
 
-                <div class="bg-orange-50 p-3 rounded-2xl border border-orange-100">
-                    <p class="text-[9px] font-black text-orange-700 uppercase">Closing (Uang Fisik)</p>
-                    <input id="i-fisik" type="number" placeholder="Masukkan total uang di laci..." class="w-full p-2 text-sm font-black border-2 border-orange-200 rounded-lg outline-none">
-                    <button onclick="doSettle()" class="w-full bg-orange-600 text-white py-2 rounded-lg mt-2 font-black text-[10px] uppercase">Settle & Tutup Buku</button>
+                <div class="bg-orange-50 p-3 rounded-2xl border border-orange-200">
+                    <p class="text-[10px] font-black text-orange-700 uppercase italic mb-2">Input Uang Fisik (Closing)</p>
+                    <input id="i-fisik" type="number" oninput="checkSettle()" placeholder="Hitung uang di laci..." class="w-full p-2.5 bg-white border-2 border-orange-200 rounded-xl text-xs font-black text-orange-900 outline-none">
+                    <button id="btn-settle" onclick="doSettle()" disabled class="w-full bg-slate-300 text-white py-3 rounded-xl mt-2 font-black text-[10px] uppercase cursor-not-allowed transition-all">Cek Selisih</button>
                 </div>
+
+                <div class="grid grid-cols-2 gap-2 p-1">
+                    <div class="flex flex-col">
+                        <label class="text-[8px] font-black text-slate-400 uppercase ml-1">WA Member</label>
+                        <input id="i-noHP" type="number" oninput="cekMemberOtomatis()" placeholder="628..." class="p-2.5 bg-white border rounded-xl text-[10px] font-black outline-none">
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[8px] font-black text-slate-400 uppercase ml-1">Nama</label>
+                        <input id="i-cust" readonly placeholder="..." class="p-2.5 bg-slate-100 border rounded-xl text-[10px] font-bold text-slate-500 outline-none">
+                    </div>
+                </div>
+
             </div>
 
-            <div class="p-4 bg-white border-t-2 border-slate-100 shadow-2xl">
-                <div class="flex justify-between items-end mb-4">
-                    <span class="text-[10px] font-black text-slate-400 uppercase">Total Tagihan</span>
-                    <span id="v-total" class="text-3xl font-black text-emerald-900">Rp 0</span>
+            <div class="p-4 bg-white border-t-2 border-slate-100">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="font-black text-[10px] text-slate-400 uppercase">Total Tagihan</span>
+                    <span id="v-total" class="text-3xl font-black text-emerald-900 tracking-tighter">Rp 0</span>
                 </div>
                 <div class="flex gap-2 mb-3">
-                    <select id="i-mode" class="flex-1 p-2 bg-slate-100 rounded-lg text-[10px] font-black">
-                        <option value="CASH">💵 TUNAI</option>
-                        <option value="QRIS">📱 QRIS</option>
+                    <select id="i-mode" class="flex-1 p-3 bg-slate-100 rounded-xl text-[10px] font-black outline-none border-none">
+                        <option value="CASH">💵 CASH (TUNAI)</option>
+                        <option value="QRIS">📱 QRIS / TRANSFER</option>
                     </select>
                 </div>
-                <button onclick="submitOrder()" id="btn-order" class="w-full dyg-green text-white py-4 rounded-2xl font-black shadow-lg uppercase tracking-widest active:scale-95 transition-all">Proses Pesanan</button>
+                <button onclick="submitOrder()" id="btn-order" class="w-full dyg-green text-white py-4 rounded-2xl font-black shadow-xl uppercase tracking-widest active:scale-95 transition-all">Simpan & Cetak</button>
             </div>
         </div>
     </div>
 
     <script>
-        // GANTI DENGAN URL WEB APP GAS KAMU
-        const API = "URL_WEB_APP_GAS_KAMU"; 
+        const API = "https://script.google.com/macros/s/AKfycbzdDveudrC9NNPX0XnAE784Cif5pFZLW-tulkKHhMGj41-8KCioaJuj76vjzeWRsoNYgg/exec"; 
         const TOKEN = "dyg-access-v2";
         
-        let cart = {};
-        let totalRaw = 0;
+        let cart = {}, totalRaw = 0, sysCash = 0, activeCat = 'ALL';
 
-        // Data Menu (Sesuaikan dengan menu dyg++)
+        // --- DATA MENU LENGKAP UTUH ---
         const MENU_DATA = [
-            {cat: "PAKET", items: [["Nasi Ayam Padang + Teh", 15000], ["Nasi Rica + Teh", 15000]]},
-            {cat: "WARDOY", items: [["Mie Tek-tek", 13000], ["Nasi Ommelet", 15000]]},
-            {cat: "DRINK", items: [["Es Kopi Item", 9000], ["Es Teh", 3000]]}
+            {cat: "PAKET HEMAT+TEH", items: [["[PH] Nasi Ayam Saus Padang+ Teh", 15000], ["[PH] Nasi Rica Ayam+ Teh", 15000], ["[PH] Nasi Ayam bakar madu+ Teh", 15000], ["[PH] Nasi Orak Arik Ayam Bali+ Teh", 15000], ["[PH] Nasi Telor Balado+ Teh", 12000], ["[PH] Mie Lik Goreng Nyemek+ Teh", 13000]]},
+            {cat: "WARDOY", items: [["Nasi Ayam Saus Padang", 15000], ["Nasi Ayam Saus Margarin", 15000], ["Nasi Rica Ayam", 15000], ["Nasi Ayam Bakar Madu", 15000], ["Nasi Ayam Bakar Saus kacang", 15000], ["Nasi Ayam Bakar Dabu", 15000], ["Nasi Orak Arik Ayam//Ayam Bali", 15000], ["Nasi Telor Balado", 12000], ["Nasi Telor bakar madu", 13000], ["Nasi Telor Bakar Saus Kacang", 13000], ["Nasi Telor", 12000], ["Nasi Orak Arik Telor", 12000], ["Nasi Telor Gobal-Gabul", 12000], ["Mie Tek-tek", 13000], ["Mie Dogh.dogh", 13000], ["Mie goreng", 9000], ["Mie rebus", 9000], ["Mie Goreng telur", 11000], ["Mie Rebus Telur", 11000], ["Mie Goreng double", 11000], ["Mie Rebus double", 11000], ["Mie Goreng double telur", 14000], ["Mie Rebus double telur", 14000], ["Nasi Ommelet", 15000]]},
+            {cat: "DRINK", items: [["Kopi Klothok", 9000], ["Kopi Lelet", 9000], ["Kopi Coklat", 10000], ["Kopi Jahe", 10000], ["Es Kopi Item", 9000], ["Es Kopiko", 12000], ["Kopi Susu (Panas//es)", 10000], ["Kopi Ka'Amel", 10000], ["Kopi Susu Beri", 12000], ["Susu Teman Panas//Es", 8000], ["Es Susu Mantan", 12000], ["Es Jossu", 10000], ["Es Bissu", 10000], ["Es Jeruk Susu", 15000], ["Coklat panas//es", 10000], ["Es choco oren", 12000], ["Es Jeruk Yakult", 9000], ["Es Milksex Beri", 10000], ["Es Matcha", 15000], ["Es Squash Oren", 15000], ["Jus Mangga", 8000], ["Jus Stoberi", 10000], ["Smoothies Mary", 15000], ["Float Mangga", 13000], ["Float Stoberi", 15000], ["Nescafe Blue", 5000], ["Kopi Kapal Api", 5000], ["GoodDay Capucino", 7000], ["GoodDay Frez", 7000], ["Coffemix", 5000], ["Beng-Beng", 7000], ["Milo", 5000], ["Dancow Putih", 8000], ["Susu Putih", 5000], ["Susu Coklat", 5000], ["Extra Joss", 5000], ["Kukubima", 5000], ["Jahe", 5000], ["Jahe Jeruk", 8000], ["Teh Jahe", 5000], ["Susu Jahe", 10000], ["Jeruk", 5000], ["Teh", 3000]]},
+            {cat: "NASGOR", items: [["Nasgor Biasa", 12000], ["Nasgor Ayam", 18000], ["Nasgor Ayam+Kremesan", 18000], ["Nasgor Bakso", 14000], ["Nasgor Sosis", 14000], ["Nasgor Bakso Sosis", 17000], ["Nasgor Telor Cabe Ijo", 14000], ["Nasgor Ayam Cabe ijo", 20000], ["Nasgor Ruwed", 14000], ["Nasgor Ruwed bumbu Rendang", 14000], ["Nasgor Ruwed bumbu Padang", 14000], ["Nasgor Margarin", 12000], ["Nasgor Gila", 20000], ["Nasi Gila", 20000]]},
+            {cat: "PENYET", items: [["Telor Penyet", 7000], ["Telor,bakso,sosis penyet", 12000], ["Ayam Penyet", 14000], ["Pangsit goreng Penyet", 7000], ["Tahu bakso penyet", 8000], ["Gelantin penyet", 5000], ["Nasi Putih", 4000], ["Nasi Uduk", 4000], ["Nasi Cabe ijo", 6000], ["Nasi Kecombrang", 6000], ["Nasi Rumput laut", 6000], ["Nasi Margarin", 6000]]},
+            {cat: "SNACK", items: [["Corndog Coklat", 14000], ["Corndog Matcha", 14000], ["Ropang Susu Mangga", 14000], ["Ropang Susu Oreo", 14000], ["Risol Kentang ayam", 11000], ["[Snack]Tahu bakso goreng", 7000], ["Kentang Goreng", 12000]]},
+            {cat: "MIE LIK", items: [["MIE LIK PRABU GORENG NYEMEK", 13000], ["MIE LIK PRABU KUAH", 13000], ["MIE LIK YAMIN GORENG", 13000], ["MIE LIK YAMIN KUAH", 13000], ["MIE LIK KUAH ASAM MANIS", 13000], ["MIE LIK KUAH PEDAS MANIS", 13000], ["MIE LIK GORENG PECEL", 13000], ["MIE LIK GORENG MARGARIN", 13000]]}
         ];
+
+        // --- FUNGSI CORE ---
+        function init() { renderCategories(); renderMenu(); loadStats(); }
+
+        function renderCategories() {
+            const container = document.getElementById('cat-grid');
+            MENU_DATA.forEach(c => {
+                const id = c.cat.replace(/\s+/g,'-');
+                container.innerHTML += `<button onclick="filterCat('${c.cat}')" id="cat-${id}" class="whitespace-nowrap px-6 py-2 rounded-xl text-[10px] font-black bg-white text-slate-500 border border-slate-200">${c.cat}</button>`;
+            });
+        }
 
         function renderMenu() {
             const container = document.getElementById('menu-render');
@@ -113,56 +139,130 @@
             container.innerHTML = "";
             
             MENU_DATA.forEach(cat => {
+                if (activeCat !== 'ALL' && cat.cat !== activeCat) return;
                 cat.items.forEach(item => {
-                    if(item[0].toLowerCase().includes(search)) {
-                        container.innerHTML += `
-                            <div onclick="addToCart('${item[0]}', ${item[1]})" class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm active:bg-emerald-50 cursor-pointer">
-                                <p class="text-[9px] font-black text-emerald-600 uppercase">${cat.cat}</p>
-                                <h3 class="font-bold text-xs mb-2">${item[0]}</h3>
-                                <p class="text-sm font-black">Rp ${item[1].toLocaleString()}</p>
-                            </div>
-                        `;
-                    }
+                    if (search && !item[0].toLowerCase().includes(search)) return;
+                    const qty = cart[item[0]] ? cart[item[0]].qty : 0;
+                    container.innerHTML += `
+                        <div onclick="changeQty('${item[0]}', ${item[1]}, 1)" class="relative bg-white p-3 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md cursor-pointer flex flex-col justify-between h-32 active:scale-95 transition-all">
+                            ${qty > 0 ? `<div class="qty-badge">${qty}</div>` : ''}
+                            <h3 class="font-bold text-[10px] leading-tight text-slate-700">${item[0]}</h3>
+                            <p class="text-[12px] font-black text-emerald-900 mt-2">Rp ${item[1].toLocaleString()}</p>
+                        </div>`;
                 });
             });
         }
 
-        function addToCart(name, price) {
-            if(cart[name]) cart[name].qty++;
-            else cart[name] = { price, qty: 1 };
-            updateCartUI();
+        function filterCat(cat) {
+            activeCat = cat;
+            document.querySelectorAll('#cat-grid button').forEach(b => b.classList.remove('active-cat'));
+            const id = cat.replace(/\s+/g,'-');
+            document.getElementById('cat-'+id).classList.add('active-cat');
+            renderMenu();
         }
 
-        function updateCartUI() {
+        function changeQty(name, price, delta) {
+            if(!cart[name]) cart[name] = { price, qty: 0 };
+            cart[name].qty += delta;
+            if(cart[name].qty <= 0) delete cart[name];
+            updateCart();
+        }
+
+        function updateCart() {
             const list = document.getElementById('cart-list');
             list.innerHTML = ""; totalRaw = 0;
-            Object.keys(cart).forEach(n => {
-                const item = cart[n];
+            Object.keys(cart).forEach(name => {
+                const item = cart[name];
                 totalRaw += (item.price * item.qty);
-                list.innerHTML += `<div class="flex justify-between text-xs font-bold border-b pb-1"><span>${n} x${item.qty}</span><span>${(item.price * item.qty).toLocaleString()}</span></div>`;
+                list.innerHTML += `
+                    <div class="flex items-center justify-between bg-white p-2 rounded-lg border text-[10px]">
+                        <span class="font-bold flex-1">${name}</span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeQty('${name}',${item.price},-1)" class="w-6 h-6 bg-slate-100 rounded">-</button>
+                            <span class="font-black">${item.qty}</span>
+                            <button onclick="changeQty('${name}',${item.price},1)" class="w-6 h-6 bg-slate-100 rounded">+</button>
+                        </div>
+                    </div>`;
             });
+            if(!Object.keys(cart).length) list.innerHTML = `<p class="text-center text-slate-300 text-[10px] mt-4 italic">Belum ada menu dipilih</p>`;
             document.getElementById('v-total').innerText = "Rp " + totalRaw.toLocaleString();
+            renderMenu();
         }
 
-        // FUNGSI UNTUK ADMIN (SINKRON KE GAS)
+        // --- FUNGSI ADMIN & SYNC ---
         async function saveFinance() {
-            const type = document.getElementById('f-type').value;
-            const desc = document.getElementById('f-desc').value;
-            const amt = document.getElementById('f-amt').value;
-            if(!desc || !amt) return alert("Isi data!");
+            const t = document.getElementById('f-type').value;
+            const d = document.getElementById('f-desc').value;
+            const a = document.getElementById('f-amt').value;
+            if(!d || !a) return alert("Lengkapi data!");
             
-            const data = JSON.stringify([new Date(), desc, "ADMIN", Number(amt)]);
-            const url = `${API}?token=${TOKEN}&action=saveFinance&type=${type}&data=${encodeURIComponent(data)}`;
+            const btn = document.getElementById('btn-save-fin');
+            btn.disabled = true; btn.innerText = "...";
             
-            await fetch(url);
-            alert("Berhasil disimpan!");
-            location.reload();
+            const rowData = JSON.stringify(["", d, "ADMIN", Number(a)]);
+            try {
+                await fetch(`${API}?token=${TOKEN}&action=saveFinance&type=${t}&data=${encodeURIComponent(rowData)}`);
+                alert("Data Finance Berhasil Disimpan!");
+                location.reload();
+            } catch(e) { alert("Gagal Simpan"); btn.disabled = false; btn.innerText = "Simpan"; }
         }
 
-        // Sisanya fungsi sinkronisasi (cekMember, submitOrder, dll) sama dengan logika GAS kamu
-        // ...
-        
-        renderMenu();
+        function checkSettle() {
+            const fis = Number(document.getElementById('i-fisik').value) || 0;
+            const selisih = fis - sysCash;
+            const btn = document.getElementById('btn-settle');
+            if(fis > 0) {
+                btn.disabled = false;
+                btn.className = "w-full bg-orange-500 text-white py-3 rounded-xl mt-2 font-black text-[10px] uppercase shadow-lg";
+                btn.innerText = `Settle (Selisih: Rp ${selisih.toLocaleString()})`;
+            }
+        }
+
+        async function doSettle() {
+            const fis = Number(document.getElementById('i-fisik').value);
+            const data = { sys: sysCash, fisik: fis, selisih: fis - sysCash };
+            await fetch(`${API}?token=${TOKEN}&action=settle&data=${encodeURIComponent(JSON.stringify(data))}`);
+            alert("Closing Berhasil!"); location.reload();
+        }
+
+        async function loadStats() {
+            try {
+                const r = await fetch(`${API}?token=${TOKEN}&action=getFinance`);
+                const d = await r.json();
+                sysCash = d.cash;
+                document.getElementById('v-cash').innerText = "Rp " + Math.round(d.cash).toLocaleString();
+            } catch(e) {}
+        }
+
+        async function cekMemberOtomatis() {
+            const hp = document.getElementById('i-noHP').value;
+            if(hp.length > 9) {
+                const r = await fetch(`${API}?token=${TOKEN}&action=cekMember&noHP=${hp}`);
+                const res = await r.json();
+                if(res.exists) document.getElementById('i-cust').value = res.nama;
+            }
+        }
+
+        async function submitOrder() {
+            if(!Object.keys(cart).length) return alert("Pilih menu!");
+            const btn = document.getElementById('btn-order');
+            btn.disabled = true; btn.innerText = "PROSES...";
+            
+            const q = new URLSearchParams({
+                token: TOKEN, action: "processOrder",
+                nama: document.getElementById('i-cust').value || "Customer",
+                noHP: document.getElementById('i-noHP').value,
+                pesanan: Object.keys(cart).map(n => `${n} (${cart[n].qty})`).join(", "),
+                total: totalRaw, mode: document.getElementById('i-mode').value
+            });
+            
+            try {
+                await fetch(`${API}?${q.toString()}`);
+                alert("Pesanan Berhasil!"); location.reload();
+            } catch(e) { btn.disabled = false; btn.innerText = "SIMPAN & CETAK"; }
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
