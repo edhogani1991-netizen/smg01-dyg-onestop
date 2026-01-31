@@ -548,38 +548,39 @@ mark {
 <script>
 let generatedOTP = null;
 
-// FUNGSI 1: Minta OTP ke Google Apps Script
 async function requestOTP() {
     const email = document.getElementById('m-reg-email').value;
     const btn = document.getElementById('btn-kirim-otp');
     
     if (!email.includes('@')) return alert("Masukkan email yang valid!");
-// Di dalam fungsi requestOTP() index.html, tambahkan pengecekan ini:
-const otp = await resp.text();
 
-if (otp === "email_exists") {
-    alert("Maaf, Email ini sudah terdaftar sebagai member dyg++!");
-    btn.disabled = false;
-    btn.innerText = "KIRIM OTP";
-    return;
-}
-    // Efek Loading agar user tahu sedang diproses
+    // --- EFEK LOADING (Tetap Dipertahankan) ---
     btn.innerText = "Mengirim...";
     btn.disabled = true;
 
     try {
-        // Pemanggilan ke GAS harus menyertakan action=requestOTP
-        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=requestOTP&email=${email}`);
+        // --- PROSES KIRIM KE GAS ---
+        const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=requestOTP&email=${encodeURIComponent(email)}`);
         const otp = await resp.text();
 
-        if (otp === "error" || !otp) {
+        // --- PENGECEKAN EMAIL_EXISTS (Pindah ke sini agar resp sudah ada) ---
+        if (otp.trim() === "email_exists") {
+            alert("Maaf, Email ini sudah terdaftar sebagai member dyg++!");
+            btn.disabled = false;
+            btn.innerText = "KIRIM OTP";
+            return;
+        }
+
+        if (otp.trim() === "error" || !otp) {
             throw new Error("Gagal kirim email");
         }
 
-        generatedOTP = otp; // Simpan angka OTP yang dikirim GAS
+        // --- BERHASIL ---
+        generatedOTP = otp.trim(); // Simpan angka OTP yang dikirim GAS
         document.getElementById('m-otp-box').style.display = 'block';
         alert("Kode OTP dikirim ke: " + email);
         btn.innerText = "TERKIRIM";
+
     } catch (e) {
         alert("Gagal mengirim email. Pastikan email benar atau coba lagi.");
         btn.disabled = false;
