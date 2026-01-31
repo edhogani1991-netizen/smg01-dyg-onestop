@@ -3,140 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>dyg++ ADMIN POS</title>
+    <title>DYG++ ADMIN POS FIXED</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
+        /* Background luar gelap agar fokus ke aplikasi */
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
-            background: #0f172a; /* Warna gelap di luar container agar fokus */
+            background: #1e293b; 
             height: 100vh; 
+            margin: 0;
             display: flex; 
-            justify-content: center; /* Pusatkan ke tengah layar tablet */
+            align-items: center; 
+            justify-content: center; 
             overflow: hidden; 
         }
 
-        /* CONTAINER UTAMA: Membatasi lebar agar tidak melar di tablet lebar */
-        .app-container {
-            width: 100%;
-            max-width: 1280px; /* Batas maksimal lebar tablet/PC */
+        /* KUNCI LEBAR TOTAL: Tablet biasanya 1024px atau 1280px. Kita kunci di 1100px agar aman */
+        .pos-frame {
+            width: 1100px;
+            height: 95vh;
             background: #F1F5F9;
-            height: 100vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 8px solid #334155;
         }
 
-        .dyg-green { background: #1B4332; }
-        .scroll-custom::-webkit-scrollbar { width: 5px; }
-        .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .header { height: 70px; background: #1B4332; display: flex; align-items: center; justify-content: space-between; padding: 0 25px; color: white; }
         
-        .wrapper { display: flex; flex: 1; overflow: hidden; }
-        
-        /* Pembagian kolom yang lebih seimbang */
-        .menu-section { flex: 1; display: flex; flex-direction: column; background: #F8FAFC; border-right: 2px solid #E2E8F0; }
-        .admin-section { width: 400px; display: flex; flex-direction: column; background: white; }
-        
+        .main-content { display: flex; flex: 1; overflow: hidden; }
+
+        /* KUNCI LEBAR MENU (60%) */
+        .menu-side { 
+            width: 720px; 
+            display: flex; 
+            flex-direction: column; 
+            background: #F8FAFC; 
+            border-right: 2px solid #e2e8f0; 
+        }
+
+        /* KUNCI LEBAR ADMIN (40% atau 380px) */
+        .admin-side { 
+            width: 380px; 
+            display: flex; 
+            flex-direction: column; 
+            background: white; 
+        }
+
         .menu-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+            grid-template-columns: repeat(4, 1fr); /* Maksa 4 kolom saja biar tidak melar */
             gap: 12px; 
-            padding: 15px; 
+            padding: 20px; 
         }
 
         .card-menu { 
-            background: white; 
-            border: 1px solid #E2E8F0; 
-            border-radius: 16px; 
-            padding: 12px; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-            position: relative; 
-            height: 110px; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; 
+            height: 110px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between;
+            transition: 0.2s; position: relative;
         }
-        .card-menu:active { transform: scale(0.95); background: #F0FDF4; }
-        .qty-badge { position: absolute; top: -5px; right: -5px; background: #EF4444; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; border: 2px solid white; }
+        .card-menu:active { transform: scale(0.95); background: #f0fdf4; }
+        .qty-badge { position: absolute; top: -8px; right: -8px; background: #ef4444; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; border: 2px solid white; }
         
         .active-cat { background: #1B4332 !important; color: white !important; }
+        .scroll-custom::-webkit-scrollbar { width: 4px; }
+        .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <div class="dyg-green text-white p-3 flex justify-between items-center shadow-lg z-50">
-            <div class="flex items-center gap-4">
-                <h1 class="font-black text-xl italic tracking-tighter">dyg++</h1>
-                <div class="bg-black/20 px-3 py-1 rounded-lg">
-                    <p class="text-[8px] uppercase font-bold opacity-60">Laci Kasir</p>
-                    <p id="v-cash" class="text-sm font-black text-emerald-400">Loading...</p>
+    <div class="pos-frame">
+        <div class="header">
+            <div class="flex items-center gap-5">
+                <span class="text-2xl font-black italic tracking-tighter">dyg++</span>
+                <div class="h-8 w-[2px] bg-white/20"></div>
+                <div>
+                    <p class="text-[10px] font-bold opacity-60 uppercase">System Cash</p>
+                    <p id="v-cash" class="text-emerald-400 font-black">Rp 0</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari menu..." class="bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-xs w-48 outline-none focus:bg-white focus:text-gray-800 transition-all font-bold text-white">
-                <button onclick="location.reload()" class="bg-red-500 p-2 rounded-xl"><svg width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z"/><path d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9a5.002 5.002 0 0 0-4.9-4zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z"/></svg></button>
-            </div>
+            <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari menu..." class="bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-sm w-64 outline-none focus:bg-white focus:text-gray-900 transition-all">
         </div>
 
-        <div class="wrapper">
-            <div class="menu-section">
-                <div id="cat-grid" class="flex gap-2 p-3 overflow-x-auto bg-white border-b no-scrollbar">
-                    <button onclick="filterCat('ALL')" id="cat-ALL" class="active-cat whitespace-nowrap px-5 py-2 rounded-xl text-[10px] font-black bg-slate-100 text-slate-500 border border-transparent transition-all">SEMUA</button>
+        <div class="main-content">
+            <div class="menu-side">
+                <div id="cat-grid" class="flex gap-2 p-4 overflow-x-auto bg-white border-b no-scrollbar">
+                    <button onclick="filterCat('ALL')" id="cat-ALL" class="active-cat whitespace-nowrap px-6 py-2 rounded-xl text-[11px] font-black bg-slate-100 text-slate-500">SEMUA</button>
                 </div>
                 <div class="flex-1 overflow-y-auto scroll-custom">
                     <div id="menu-render" class="menu-grid"></div>
                 </div>
             </div>
 
-            <div class="admin-section border-l shadow-2xl">
-                <div class="flex-1 p-4 overflow-y-auto scroll-custom space-y-4">
+            <div class="admin-side">
+                <div class="flex-1 p-5 overflow-y-auto scroll-custom space-y-5">
                     
-                    <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200">
-                        <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Item Terpilih</p>
-                        <div id="cart-list" class="space-y-2 min-h-[60px]"></div>
+                    <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200">
+                        <p class="text-[10px] font-black text-slate-400 uppercase mb-3 italic">Item Pesanan</p>
+                        <div id="cart-list" class="space-y-2 min-h-[50px]"></div>
                     </div>
 
                     <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 space-y-3">
-                        <p class="text-[10px] font-black text-emerald-800 uppercase italic">Admin Finance</p>
-                        <select id="f-type" class="w-full p-3 bg-white border rounded-xl text-[11px] font-black outline-none">
+                        <p class="text-[11px] font-black text-emerald-800 uppercase">Admin Finance</p>
+                        <select id="f-type" class="w-full p-3 bg-white border rounded-xl text-xs font-black outline-none">
                             <option value="pengeluaran">🛒 PENGELUARAN</option>
                             <option value="online_food">🛵 ONLINE FOOD (NET)</option>
-                            <option value="modal">💰 TAMBAH MODAL</option>
+                            <option value="modal">💰 MODAL LACI</option>
                         </select>
-                        <input id="f-desc" type="text" placeholder="Keterangan..." class="w-full p-3 text-[11px] font-bold bg-white border rounded-xl outline-none">
+                        <input id="f-desc" type="text" placeholder="Keterangan..." class="w-full p-3 text-xs font-bold bg-white border rounded-xl outline-none">
                         <div class="flex gap-2">
-                            <input id="f-amt" type="number" placeholder="Nominal Rp" class="flex-1 p-3 text-[11px] font-black bg-white border rounded-xl outline-none">
-                            <button onclick="saveFinance()" id="btn-save-fin" class="px-6 dyg-green text-white rounded-xl font-black text-[11px] uppercase shadow-md active:scale-95 transition-all">SIMPAN</button>
+                            <input id="f-amt" type="number" placeholder="Rp" class="flex-1 p-3 text-xs font-black bg-white border rounded-xl outline-none">
+                            <button onclick="saveFinance()" id="btn-save-fin" class="px-5 bg-[#1B4332] text-white rounded-xl font-black text-[11px] uppercase active:scale-95 transition-all">OK</button>
                         </div>
                     </div>
 
                     <div class="bg-orange-50 p-4 rounded-2xl border border-orange-200">
-                        <p class="text-[10px] font-black text-orange-700 uppercase italic mb-2">Closing Laci</p>
-                        <input id="i-fisik" type="number" oninput="checkSettle()" placeholder="Input Uang Fisik..." class="w-full p-3 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-orange-900 outline-none">
+                        <p class="text-[11px] font-black text-orange-700 uppercase mb-2">Closing</p>
+                        <input id="i-fisik" type="number" oninput="checkSettle()" placeholder="Uang Fisik di Laci..." class="w-full p-3 bg-white border-2 border-orange-200 rounded-xl text-sm font-black text-orange-900 outline-none">
                         <div id="settle-info" class="hidden mt-2 p-2 bg-white/60 rounded-lg text-[10px] font-bold text-orange-800"></div>
-                        <button id="btn-settle" onclick="doSettle()" disabled class="w-full bg-slate-300 text-white py-3 rounded-xl mt-2 font-black text-[10px] uppercase transition-all">PROSES TUTUP BUKU</button>
+                        <button id="btn-settle" onclick="doSettle()" disabled class="w-full bg-slate-300 text-white py-3 rounded-xl mt-2 font-black text-[10px] uppercase">TUTUP BUKU</button>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2 bg-slate-100 p-3 rounded-2xl">
-                        <input id="i-noHP" type="number" oninput="cekMemberOtomatis()" placeholder="Nomor WA" class="p-2.5 bg-white border rounded-xl text-[11px] font-black outline-none">
-                        <input id="i-cust" readonly placeholder="Nama Member" class="p-2.5 bg-slate-50 border rounded-xl text-[11px] font-bold text-slate-400">
+                    <div class="bg-slate-100 p-4 rounded-2xl space-y-2 border">
+                        <input id="i-noHP" type="number" oninput="cekMemberOtomatis()" placeholder="No WA Member" class="w-full p-3 bg-white border rounded-xl text-xs font-black outline-none">
+                        <input id="i-cust" readonly placeholder="Nama Member" class="w-full p-3 bg-slate-50 border rounded-xl text-xs font-bold text-slate-400">
                     </div>
                 </div>
 
-                <div class="p-4 bg-white border-t-2">
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="font-black text-[11px] text-slate-400 uppercase tracking-widest">Total Tagihan</span>
-                        <span id="v-total" class="text-3xl font-black text-emerald-900 tracking-tighter">Rp 0</span>
+                <div class="p-6 bg-white border-t-2 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+                    <div class="flex justify-between items-center mb-5">
+                        <span class="font-black text-[11px] text-slate-400 uppercase tracking-widest">Total</span>
+                        <span id="v-total" class="text-4xl font-black text-[#1B4332] tracking-tighter">Rp 0</span>
                     </div>
                     <div class="flex gap-2">
-                        <select id="i-mode" class="flex-1 p-3 bg-slate-100 rounded-xl text-[11px] font-black outline-none">
+                        <select id="i-mode" class="flex-1 p-3 bg-slate-100 rounded-xl text-xs font-black outline-none border-none">
                             <option value="CASH">💵 CASH</option>
                             <option value="QRIS">📱 QRIS</option>
                         </select>
-                        <button onclick="submitOrder()" id="btn-order" class="flex-[1.5] dyg-green text-white py-4 rounded-xl font-black shadow-lg uppercase text-[12px] tracking-wider active:scale-95 transition-all">SELESAI</button>
+                        <button onclick="submitOrder()" id="btn-order" class="flex-[1.5] bg-[#1B4332] text-white py-4 rounded-xl font-black shadow-xl uppercase text-[12px] tracking-wider active:scale-95 transition-all">BAYAR</button>
                     </div>
                 </div>
             </div>
@@ -152,10 +159,7 @@
 
         let menuData = [], cart = {}, sysCash = 0, activeCat = 'ALL';
 
-        async function init() {
-            await loadMenuFromCSV();
-            loadStats();
-        }
+        async function init() { await loadMenuFromCSV(); loadStats(); }
 
         async function loadMenuFromCSV() {
             try {
@@ -166,9 +170,8 @@
                     const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
                     return { kat: cols[0], nama: cols[1], harga: parseInt(cols[2]) || 0 };
                 }).filter(m => m.nama);
-                renderCategories();
-                renderMenu();
-            } catch (e) { console.error("CSV Load Error"); }
+                renderCategories(); renderMenu();
+            } catch (e) { alert("CSV Error"); }
         }
 
         function renderCategories() {
@@ -176,7 +179,7 @@
             const cats = [...new Set(menuData.map(m => m.kat))];
             cats.forEach(c => {
                 const safeId = c.replace(/[^\w\s]/gi, '').replace(/\s+/g,'-');
-                container.innerHTML += `<button onclick="filterCat('${c}')" id="cat-${safeId}" class="whitespace-nowrap px-5 py-2 rounded-xl text-[10px] font-black bg-white text-slate-500 border border-slate-200 transition-all">${c}</button>`;
+                container.innerHTML += `<button onclick="filterCat('${c}')" id="cat-${safeId}" class="whitespace-nowrap px-6 py-2 rounded-xl text-[11px] font-black bg-white text-slate-500 border border-slate-200">${c}</button>`;
             });
         }
 
@@ -207,8 +210,7 @@
 
         function addToCart(name, price) {
             if(!cart[name]) cart[name] = { price, qty: 0 };
-            cart[name].qty++;
-            updateCartUI();
+            cart[name].qty++; updateCartUI();
         }
 
         function changeQty(name, delta) {
@@ -221,18 +223,16 @@
 
         function updateCartUI() {
             const list = document.getElementById('cart-list');
-            let total = 0;
-            list.innerHTML = "";
+            let total = 0; list.innerHTML = "";
             Object.keys(cart).forEach(name => {
-                const item = cart[name];
-                total += (item.price * item.qty);
+                const item = cart[name]; total += (item.price * item.qty);
                 list.innerHTML += `
-                    <div class="flex items-center justify-between bg-white p-2 rounded-xl border text-[10px] shadow-sm">
-                        <div class="flex-1 font-black pr-2">${name}</div>
+                    <div class="flex items-center justify-between bg-white p-2 rounded-xl border text-[10px]">
+                        <div class="flex-1 font-black pr-2 uppercase">${name}</div>
                         <div class="flex items-center gap-2">
-                            <button onclick="changeQty('${name}',-1)" class="w-6 h-6 bg-slate-100 rounded-lg font-black">-</button>
+                            <button onclick="changeQty('${name}',-1)" class="w-7 h-7 bg-slate-100 rounded-lg font-black">-</button>
                             <span class="font-black w-4 text-center">${item.qty}</span>
-                            <button onclick="changeQty('${name}',1)" class="w-6 h-6 bg-slate-100 rounded-lg font-black">+</button>
+                            <button onclick="changeQty('${name}',1)" class="w-7 h-7 bg-slate-100 rounded-lg font-black">+</button>
                         </div>
                     </div>`;
             });
@@ -243,20 +243,21 @@
         async function loadStats() {
             try {
                 const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance`);
-                const d = await r.json();
-                sysCash = d.cash;
+                const d = await r.json(); sysCash = d.cash;
                 document.getElementById('v-cash').innerText = "Rp " + Math.round(d.cash).toLocaleString();
-            } catch(e) { document.getElementById('v-cash').innerText = "OFFLINE"; }
+            } catch(e) {}
         }
 
         function checkSettle() {
             const fis = Number(document.getElementById('i-fisik').value) || 0;
-            const info = document.getElementById('settle-info');
-            const btn = document.getElementById('btn-settle');
             const diff = fis - sysCash;
+            const info = document.getElementById('settle-info');
             info.classList.remove('hidden');
             info.innerHTML = `SELISIH: <span class="${diff < 0 ? 'text-red-600' : 'text-green-600'}">Rp ${diff.toLocaleString()}</span>`;
-            if(fis > 0) { btn.disabled = false; btn.classList.replace('bg-slate-300', 'bg-orange-600'); }
+            if(fis > 0) { 
+                document.getElementById('btn-settle').disabled = false; 
+                document.getElementById('btn-settle').classList.replace('bg-slate-300', 'bg-orange-600');
+            }
         }
 
         async function saveFinance() {
@@ -264,18 +265,12 @@
             const d = document.getElementById('f-desc').value;
             const a = document.getElementById('f-amt').value;
             if(!d || !a) return alert("Lengkapi data!");
-            const btn = document.getElementById('btn-save-fin');
-            btn.disabled = true; btn.innerText = "...";
-            try {
-                await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${t}&data=${encodeURIComponent(JSON.stringify(["", d, "ADMIN", Number(a)]))}`);
-                location.reload();
-            } catch(e) { btn.disabled = false; btn.innerText = "SIMPAN"; }
+            await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${t}&data=${encodeURIComponent(JSON.stringify(["", d, "ADMIN", Number(a)]))}`);
+            location.reload();
         }
 
         async function submitOrder() {
             if(!Object.keys(cart).length) return alert("Pilih menu!");
-            const btn = document.getElementById('btn-order');
-            btn.disabled = true; btn.innerText = "PROSES...";
             const total = Object.values(cart).reduce((s, i) => s + (i.price * i.qty), 0);
             const pesanan = Object.keys(cart).map(n => `${n} (${cart[n].qty}x)`).join(", ");
             const q = new URLSearchParams({
