@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>dyg++ COMPACT ADMIN POS</title>
+    <title>dyg++ SECURE POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -11,13 +11,8 @@
         .pos-container { width: 100%; max-width: 1100px; background: #F1F5F9; display: flex; flex-direction: column; }
         .main-content { display: flex; flex: 1; overflow: hidden; }
         .menu-side { flex: 1; display: flex; flex-direction: column; background: #F8FAFC; border-right: 1px solid #e2e8f0; }
-        .admin-side { width: 340px; display: flex; flex-direction: column; background: white; }
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; padding: 12px; }
-        .card-menu { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; height: 65px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; transition: 0.15s; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .card-menu:active { transform: scale(0.95); background: #f0fdf4; }
-        .card-menu h3 { font-size: 9px; line-height: 1.1; font-weight: 700; color: #334155; text-transform: uppercase; margin-bottom: 2px; }
-        .card-menu p { font-size: 10px; font-weight: 800; color: #1B4332; }
-        .qty-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; border: 1.5px solid white; }
+        .admin-side { width: 360px; display: flex; flex-direction: column; background: white; border-left: 2px solid #cbd5e1; }
+        .monitor-table td { padding: 4px 8px; font-size: 10px; font-weight: 700; border-bottom: 1px solid #f1f5f9; }
         .scroll-custom::-webkit-scrollbar { width: 4px; }
         .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
@@ -26,81 +21,67 @@
 
 <div class="pos-container shadow-2xl">
     <div class="bg-[#1B4332] text-white p-3 flex justify-between items-center shrink-0">
-        <h1 class="text-lg font-black italic tracking-tighter">dyg++ <span class="text-[10px] opacity-50 font-normal ml-2">POS ADMIN</span></h1>
-        <div class="flex items-center gap-4">
-            <div class="text-right">
-                <p class="text-[8px] uppercase opacity-60 leading-none">Uang di Laci</p>
-                <p id="v-cash" class="text-sm font-black text-emerald-400">Rp 0</p>
-            </div>
-            <button onclick="location.reload()" class="bg-white/10 p-2 rounded-lg"><svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg></button>
-        </div>
-    </div>
-
-    <div class="bg-white border-b p-2 flex gap-2 items-center">
-        <select id="cat-select" onchange="filterCat(this.value)" class="w-44 p-2 bg-slate-100 border rounded-lg text-xs font-black outline-none cursor-pointer">
-            <option value="ALL">📦 SEMUA KATEGORI</option>
-        </select>
-        <div class="relative flex-1 max-w-[200px]">
-            <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari menu..." class="w-full p-2 pl-8 bg-slate-100 border rounded-lg text-xs font-bold outline-none">
-            <svg class="absolute left-2.5 top-2.5 text-slate-400" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+        <h1 class="text-lg font-black italic tracking-tighter text-emerald-400">dyg++ <span class="text-white opacity-50 ml-2">POS SECURE</span></h1>
+        <div class="text-right">
+            <p class="text-[8px] uppercase opacity-60">Fisik Laci</p>
+            <p id="v-cash" class="text-lg font-black text-emerald-400">Rp 0</p>
         </div>
     </div>
 
     <div class="main-content">
         <div class="menu-side overflow-y-auto scroll-custom">
-            <div id="menu-render" class="menu-grid"></div>
+            <div class="p-2 border-b bg-white flex gap-2">
+                <select id="cat-select" onchange="filterCat(this.value)" class="flex-1 p-2 bg-slate-100 border rounded-lg text-[10px] font-black"></select>
+                <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari..." class="w-32 p-2 bg-slate-100 border rounded-lg text-[10px] font-bold">
+            </div>
+            <div id="menu-render" class="grid grid-cols-4 gap-2 p-3"></div>
         </div>
 
-        <div class="admin-side border-l flex flex-col">
+        <div class="admin-side">
             <div class="flex-1 p-3 overflow-y-auto scroll-custom space-y-4">
                 
-                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
-                    <p class="text-[8px] font-black text-slate-400 uppercase mb-2 italic">Keranjang Pesanan</p>
-                    <div id="cart-list" class="space-y-1.5 min-h-[40px]"></div>
+                <div class="bg-slate-900 text-white rounded-xl p-3 shadow-lg">
+                    <p class="text-[9px] font-black text-emerald-400 uppercase mb-2">Monitor Shift Aktif</p>
+                    <table class="w-full monitor-table">
+                        <tr><td>Modal Awal</td><td id="m-modal" class="text-right text-blue-300 font-black">Rp 0</td></tr>
+                        <tr><td>Cash Masuk</td><td id="m-cash" class="text-right text-emerald-400 font-black">Rp 0</td></tr>
+                        <tr><td>Belanja/Out</td><td id="m-out" class="text-right text-red-400 font-black">- Rp 0</td></tr>
+                        <tr><td>QRIS (Non-Laci)</td><td id="m-qris" class="text-right text-orange-400 font-black">Rp 0</td></tr>
+                        <tr><td>Online (Non-Laci)</td><td id="m-online" class="text-right text-purple-400 font-black">Rp 0</td></tr>
+                    </table>
                 </div>
 
-                <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100 space-y-2">
-                    <p class="text-[9px] font-black text-emerald-800 uppercase italic">Input Finance (Laci)</p>
-                    <div class="flex gap-1.5">
-                        <select id="f-type" class="flex-1 p-2 bg-white border rounded-lg text-[10px] font-black outline-none">
+                <div class="bg-white p-4 rounded-xl border-2 border-blue-100 space-y-2 shadow-md">
+                    <p class="text-[10px] font-black text-blue-800 uppercase italic">Input Finance</p>
+                    <div class="flex gap-1">
+                        <select id="f-type" class="flex-1 p-2 bg-slate-100 border rounded text-[10px] font-extrabold outline-none">
                             <option value="modal">💰 MODAL AWAL</option>
-                            <option value="pengeluaran">🛒 BELANJA/PENGELUARAN</option>
-                            <option value="online_food">🛵 ONLINE FOOD (NET)</option>
+                            <option value="pengeluaran">🛒 PENGELUARAN</option>
+                            <option value="online_food">🛵 ONLINE FOOD</option>
                         </select>
-                        <input id="f-amt" type="number" placeholder="Rp" class="flex-1 p-2 text-[10px] font-black bg-white border rounded-lg outline-none">
+                        <input id="f-amt" type="number" placeholder="Rp 0" class="flex-1 p-2 border-2 border-slate-200 rounded text-[11px] font-black focus:border-blue-500">
                     </div>
-                    <div class="flex gap-1.5">
-                        <input id="f-desc" type="text" placeholder="Ket: misal 'Modal Pagi'" class="flex-1 p-2 text-[10px] font-bold bg-white border rounded-lg outline-none">
-                        <button onclick="saveFinance()" id="btn-save-fin" class="bg-[#1B4332] text-white px-4 rounded-lg font-black text-[10px] active:scale-95 transition-all">SIMPAN</button>
-                    </div>
+                    <input id="f-desc" type="text" placeholder="Keterangan..." class="w-full p-2 border rounded text-[10px] font-bold">
+                    <button onclick="confirmFinance()" id="btn-f" class="w-full py-3 bg-blue-600 text-white rounded-lg font-black text-[11px] active:bg-blue-800">SIMPAN & KUNCI DATA</button>
                 </div>
 
-                <div class="bg-orange-50 p-3 rounded-xl border border-orange-100">
-                    <p class="text-[9px] font-black text-orange-700 uppercase mb-1.5">Closing (Tutup Laci)</p>
-                    <div class="flex gap-1.5">
-                        <input id="i-fisik" type="number" oninput="checkSettle()" placeholder="Uang Fisik..." class="flex-1 p-2 bg-white border rounded-lg text-[10px] font-black outline-none">
-                        <button id="btn-settle" onclick="doSettle()" disabled class="bg-slate-300 text-white px-3 rounded-lg font-black text-[10px]">SETTLE</button>
-                    </div>
-                    <div id="settle-info" class="hidden mt-1.5 text-[9px] font-bold text-orange-800"></div>
-                </div>
-
-                <div class="flex gap-1.5 bg-slate-100 p-2 rounded-lg">
-                    <input id="i-noHP" type="number" oninput="cekMemberOtomatis()" placeholder="No WA Member" class="w-1/2 p-2 bg-white border rounded-lg text-[9px] font-black outline-none">
-                    <input id="i-cust" readonly placeholder="Nama Member" class="w-1/2 p-2 bg-slate-50 border rounded-lg text-[9px] font-bold text-slate-400">
+                <div class="bg-slate-50 rounded-xl p-2 border border-slate-200">
+                    <p class="text-[8px] font-black text-slate-400 mb-2 uppercase">Order List</p>
+                    <div id="cart-list" class="space-y-1"></div>
                 </div>
             </div>
 
-            <div class="p-4 bg-white border-t-2 shadow-inner">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="font-black text-[10px] text-slate-400 uppercase">Total Tagihan</span>
-                    <span id="v-total" class="text-2xl font-black text-[#1B4332] tracking-tighter">Rp 0</span>
+            <div class="p-4 bg-slate-50 border-t-2">
+                <div class="flex justify-between items-center mb-3 text-[#1B4332]">
+                    <span class="font-black text-[10px]">TOTAL BILL</span>
+                    <span id="v-total" class="text-2xl font-black">Rp 0</span>
                 </div>
-                <div class="flex gap-1.5">
-                    <select id="i-mode" class="flex-1 p-2 bg-slate-100 rounded-lg text-[10px] font-black outline-none border-none">
+                <div class="flex gap-2">
+                    <select id="i-mode" class="w-24 p-2 bg-white border rounded text-[10px] font-black">
                         <option value="CASH">💵 CASH</option>
                         <option value="QRIS">📱 QRIS</option>
                     </select>
-                    <button onclick="submitOrder()" id="btn-order" class="flex-[2] bg-[#1B4332] text-white py-3.5 rounded-xl font-black shadow-lg uppercase text-[11px] tracking-wider active:scale-95 transition-all">SIMPAN</button>
+                    <button onclick="confirmOrder()" id="btn-order" class="flex-1 bg-[#1B4332] text-white py-3 rounded-lg font-black text-[11px] hover:bg-black">BAYAR & KUNCI</button>
                 </div>
             </div>
         </div>
@@ -114,175 +95,152 @@
         TOKEN: "dyg-access-v2"
     };
 
-    let menuData = [], cart = {}, sysCash = 0, activeCat = 'ALL';
+    let cart = {}, menuData = [];
 
-    async function init() { await loadMenuFromCSV(); loadStats(); }
+    // --- LOGIKA KONFIRMASI FINANCE ---
+    function confirmFinance() {
+        const typeEl = document.getElementById('f-type');
+        const typeText = typeEl.options[typeEl.selectedIndex].text;
+        const amt = document.getElementById('f-amt').value;
+        const desc = document.getElementById('f-desc').value;
 
-    async function loadMenuFromCSV() {
+        if(!amt || !desc) return alert("❌ Data Belum Lengkap!");
+
+        const tanya = confirm(`CEK LAGI BOSKU!\n\nIndikator: ${typeText}\nNominal: Rp ${Number(amt).toLocaleString()}\nKeterangan: ${desc}\n\nData sudah sesuai? Klik 'YA' untuk simpan & kunci.`);
+        
+        if(tanya) {
+            saveFinance();
+        }
+    }
+
+    async function saveFinance() {
+        const t = document.getElementById('f-type').value;
+        const a = document.getElementById('f-amt').value;
+        const d = document.getElementById('f-desc').value;
+        const btn = document.getElementById('btn-f');
+
+        // Proteksi Input Ganda
+        btn.disabled = true;
+        btn.innerText = "SEDANG MENGUNCI DATA...";
+        btn.classList.add('bg-gray-400');
+
         try {
-            const resp = await fetch(CONFIG.CSV);
-            const csv = await resp.text();
-            const rows = csv.split('\n').slice(1);
-            menuData = rows.map(row => {
-                const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
-                return { kat: cols[0], nama: cols[1], harga: parseInt(cols[2]) || 0 };
-            }).filter(m => m.nama);
-            
-            const select = document.getElementById('cat-select');
-            const cats = [...new Set(menuData.map(m => m.kat))];
-            cats.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c; opt.innerText = c.toUpperCase();
-                select.appendChild(opt);
-            });
-            renderMenu();
-        } catch (e) { console.error(e); }
+            await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${t}&data=${encodeURIComponent(JSON.stringify(["", d, "ADMIN", Number(a)]))}`);
+            // Reset input setelah sukses
+            document.getElementById('f-amt').value = "";
+            document.getElementById('f-desc').value = "";
+            alert("✅ Data Berhasil Dikunci!");
+            refreshDashboard();
+        } catch(e) {
+            alert("❌ Gagal Terkoneksi!");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "INPUT DATA FINANCE";
+            btn.classList.remove('bg-gray-400');
+        }
+    }
+
+    // --- LOGIKA KONFIRMASI ORDER ---
+    function confirmOrder() {
+        const total = Object.values(cart).reduce((s, i) => s + (i.price * i.qty), 0);
+        if(total === 0) return alert("❌ Keranjang Kosong!");
+        
+        const mode = document.getElementById('i-mode').value;
+        const tanya = confirm(`BAYAR SEKARANG?\n\nTotal: Rp ${total.toLocaleString()}\nMetode: ${mode}\n\nSudah terima uang? Klik 'YA' untuk proses.`);
+        
+        if(tanya) {
+            submitOrder();
+        }
+    }
+
+    async function submitOrder() {
+        const btn = document.getElementById('btn-order');
+        btn.disabled = true;
+        btn.innerText = "MEMPROSES...";
+
+        const total = Object.values(cart).reduce((s, i) => s + (i.price * i.qty), 0);
+        const pesanan = Object.keys(cart).map(n => `${n} (${cart[n].qty}x)`).join(", ");
+        const mode = document.getElementById('i-mode').value;
+
+        try {
+            await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&pesanan=${encodeURIComponent(pesanan)}&total=${total}&mode=${mode}&nama=ADMIN`);
+            cart = {};
+            updateCartUI();
+            alert("✅ Transaksi Berhasil!");
+            refreshDashboard();
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "BAYAR & KUNCI";
+        }
+    }
+
+    async function refreshDashboard() {
+        try {
+            const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance&_=${Date.now()}`);
+            const d = await r.json();
+            document.getElementById('m-modal').innerText = "Rp " + (d.totalModal || 0).toLocaleString();
+            document.getElementById('m-cash').innerText = "Rp " + (d.totalCash || 0).toLocaleString();
+            document.getElementById('m-out').innerText = "- Rp " + (d.totalOut || 0).toLocaleString();
+            document.getElementById('m-qris').innerText = "Rp " + (d.totalQris || 0).toLocaleString();
+            document.getElementById('m-online').innerText = "Rp " + (d.totalOnline || 0).toLocaleString();
+            const sysCash = (d.totalModal + d.totalCash) - d.totalOut;
+            document.getElementById('v-cash').innerText = "Rp " + sysCash.toLocaleString();
+        } catch(e) {}
+    }
+
+    // --- FUNGSI POS STANDAR ---
+    async function loadMenu() {
+        const resp = await fetch(CONFIG.CSV);
+        const csv = await resp.text();
+        const rows = csv.split('\n').slice(1);
+        menuData = rows.map(row => {
+            const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
+            return { kat: cols[0], nama: cols[1], harga: parseInt(cols[2]) || 0 };
+        }).filter(m => m.nama);
+        
+        const select = document.getElementById('cat-select');
+        select.innerHTML = '<option value="ALL">SEMUA MENU</option>';
+        [...new Set(menuData.map(m => m.kat))].forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
+        renderMenu();
     }
 
     function renderMenu() {
         const container = document.getElementById('menu-render');
-        const search = document.getElementById('menuSearch').value.toLowerCase();
+        const s = document.getElementById('menuSearch').value.toLowerCase();
         container.innerHTML = "";
         menuData.forEach(m => {
-            if (activeCat !== 'ALL' && m.kat !== activeCat) return;
-            if (search && !m.nama.toLowerCase().includes(search)) return;
-            const qty = cart[m.nama] ? cart[m.nama].qty : 0;
-            container.innerHTML += `
-                <div onclick="addToCart('${m.nama}', ${m.harga})" class="card-menu">
-                    ${qty > 0 ? `<div class="qty-badge">${qty}</div>` : ''}
-                    <h3>${m.nama}</h3>
-                    <p>Rp ${m.harga.toLocaleString()}</p>
+            if ((activeCat === 'ALL' || m.kat === activeCat) && (!s || m.nama.toLowerCase().includes(s))) {
+                const qty = cart[m.nama]?.qty || 0;
+                container.innerHTML += `<div onclick="addToCart('${m.nama}', ${m.harga})" class="bg-white p-2 border rounded-lg h-14 flex flex-col justify-center cursor-pointer relative">
+                    ${qty ? `<div class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-black">${qty}</div>` : ''}
+                    <h3 class="text-[8px] font-bold truncate uppercase">${m.nama}</h3>
+                    <p class="text-[9px] font-black text-emerald-700">Rp ${m.harga.toLocaleString()}</p>
                 </div>`;
+            }
         });
     }
 
-    function filterCat(val) { activeCat = val; renderMenu(); }
-
-    function addToCart(name, price) {
-        if(!cart[name]) cart[name] = { price, qty: 0 };
-        cart[name].qty++; updateCartUI();
-    }
-
-    function changeQty(name, delta) {
-        if(cart[name]) {
-            cart[name].qty += delta;
-            if(cart[name].qty <= 0) delete cart[name];
-        }
-        updateCartUI();
-    }
-
+    function addToCart(n, p) { cart[n] = { price: p, qty: (cart[n]?.qty || 0) + 1 }; updateCartUI(); }
+    function changeQty(n, d) { cart[n].qty += d; if(cart[n].qty <= 0) delete cart[n]; updateCartUI(); }
     function updateCartUI() {
         const list = document.getElementById('cart-list');
-        let total = 0; list.innerHTML = "";
-        Object.keys(cart).forEach(name => {
-            const item = cart[name]; total += (item.price * item.qty);
-            list.innerHTML += `<div class="flex items-center justify-between bg-white p-1.5 rounded-lg border text-[9px]"><div class="flex-1 font-bold truncate uppercase">${name}</div><div class="flex items-center gap-2 font-black"><button onclick="changeQty('${name}',-1)" class="w-5 h-5 bg-slate-100 rounded">-</button><span>${item.qty}</span><button onclick="changeQty('${name}',1)" class="w-5 h-5 bg-slate-100 rounded">+</button></div></div>`;
+        let t = 0; list.innerHTML = "";
+        Object.keys(cart).forEach(n => {
+            t += (cart[n].price * cart[n].qty);
+            list.innerHTML += `<div class="flex justify-between items-center text-[9px] bg-white p-1 rounded border">
+                <span class="truncate w-24">${n}</span>
+                <div class="flex items-center gap-1 font-black">
+                    <button onclick="changeQty('${n}',-1)" class="w-4 h-4 bg-slate-100 rounded">-</button>
+                    <span>${cart[n].qty}</span>
+                    <button onclick="changeQty('${n}',1)" class="w-4 h-4 bg-slate-100 rounded">+</button>
+                </div>
+            </div>`;
         });
-        document.getElementById('v-total').innerText = "Rp " + total.toLocaleString();
+        document.getElementById('v-total').innerText = "Rp " + t.toLocaleString();
         renderMenu();
     }
-
-// 1. FUNGSI LOAD STATS: Menghitung total uang di laci secara akurat
-    async function loadStats() {
-        try {
-            // Kita panggil data finance terbaru dengan cache breaker (timestamp)
-            const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance&_=${new Date().getTime()}`);
-            const d = await r.json(); 
-            
-            // LOGIKA SALDO: 
-            // (Total Penjualan Cash + Total Modal) - Total Pengeluaran
-            // Kita pastikan sysCash mengambil nilai saldo akhir yang sudah dihitung server
-            sysCash = d.cash || 0; 
-
-            const display = document.getElementById('v-cash');
-            display.innerText = "Rp " + Math.round(sysCash).toLocaleString();
-            
-            // Efek visual jika saldo kosong
-            if(sysCash <= 0) {
-                display.classList.replace('text-emerald-400', 'text-slate-400');
-            } else {
-                display.classList.replace('text-slate-400', 'text-emerald-400');
-            }
-        } catch(e) {
-            console.error("Gagal ambil saldo");
-            document.getElementById('v-cash').innerText = "Rp 0";
-        }
-    }
-
-    // 2. FUNGSI SIMPAN FINANCE: Modal/Pengeluaran
-    async function saveFinance() {
-        const t = document.getElementById('f-type').value;
-        const d = document.getElementById('f-desc').value;
-        const a = document.getElementById('f-amt').value;
-        
-        if(!d || !a) return alert("Isi keterangan dan nominal!");
-        
-        const btn = document.getElementById('btn-save-fin');
-        btn.disabled = true;
-        btn.innerText = "Mencatat...";
-
-        try {
-            // Kirim data ke Google Sheets
-            const url = `${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${t}&data=${encodeURIComponent(JSON.stringify(["", d, "ADMIN", Number(a)]))}`;
-            const resp = await fetch(url);
-            const res = await resp.json();
-
-            if(res.status === "success") {
-                // Jangan langsung refresh! Update tampilan lokal dulu biar instan
-                if(t === 'modal') sysCash += Number(a);
-                if(t === 'pengeluaran') sysCash -= Number(a);
-                
-                document.getElementById('v-cash').innerText = "Rp " + Math.round(sysCash).toLocaleString();
-                
-                // Beri jeda sebentar baru refresh agar data di server stabil
-                setTimeout(() => {
-                    location.reload(); 
-                }, 1000);
-            }
-        } catch(e) {
-            alert("Koneksi gagal!");
-            btn.disabled = false;
-            btn.innerText = "OK";
-        }
-    }
-
-
-    function checkSettle() {
-        const fis = Number(document.getElementById('i-fisik').value) || 0;
-        const diff = fis - sysCash;
-        const info = document.getElementById('settle-info');
-        info.classList.remove('hidden');
-        info.innerHTML = `SELISIH: <span class="${diff < 0 ? 'text-red-600' : 'text-green-600'}">Rp ${diff.toLocaleString()}</span>`;
-        if(fis > 0) { document.getElementById('btn-settle').disabled = false; document.getElementById('btn-settle').classList.replace('bg-slate-300', 'bg-orange-600'); }
-    }
-
-    async function submitOrder() {
-        if(!Object.keys(cart).length) return alert("Pilih menu!");
-        const btn = document.getElementById('btn-order');
-        btn.disabled = true; btn.innerText = "...";
-        const total = Object.values(cart).reduce((s, i) => s + (i.price * i.qty), 0);
-        const pesanan = Object.keys(cart).map(n => `${n} (${cart[n].qty}x)`).join(", ");
-        const q = new URLSearchParams({ token: CONFIG.TOKEN, action: "processOrder", nama: document.getElementById('i-cust').value || "POS ADMIN", noHP: document.getElementById('i-noHP').value || "-", pesanan: pesanan, total: total, mode: document.getElementById('i-mode').value });
-        await fetch(`${CONFIG.API}?${q.toString()}`);
-        location.reload();
-    }
-
-    async function doSettle() {
-        const fis = Number(document.getElementById('i-fisik').value);
-        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=settle&data=${encodeURIComponent(JSON.stringify({sys:sysCash, fisik:fis, selisih:fis-sysCash}))}`);
-        location.reload();
-    }
-
-    async function cekMemberOtomatis() {
-        const hp = document.getElementById('i-noHP').value;
-        if(hp.length >= 10) {
-            const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${hp}`);
-            const res = await r.json();
-            if(res.exists) document.getElementById('i-cust').value = res.nama;
-        }
-    }
-
-    window.onload = init;
+    function filterCat(v) { activeCat = v; renderMenu(); }
+    window.onload = () => { loadMenu(); refreshDashboard(); };
 </script>
 </body>
 </html>
