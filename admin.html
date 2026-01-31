@@ -182,13 +182,70 @@
         renderMenu();
     }
 
+// 1. FUNGSI LOAD STATS: Menghitung total uang di laci secara akurat
     async function loadStats() {
         try {
-            const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance`);
-            const d = await r.json(); sysCash = d.cash;
-            document.getElementById('v-cash').innerText = "Rp " + Math.round(d.cash).toLocaleString();
-        } catch(e) {}
+            // Kita panggil data finance terbaru dengan cache breaker (timestamp)
+            const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance&_=${new Date().getTime()}`);
+            const d = await r.json(); 
+            
+            // LOGIKA SALDO: 
+            // (Total Penjualan Cash + Total Modal) - Total Pengeluaran
+            // Kita pastikan sysCash mengambil nilai saldo akhir yang sudah dihitung server
+            sysCash = d.cash || 0; 
+
+            const display = document.getElementById('v-cash');
+            display.innerText = "Rp " + Math.round(sysCash).toLocaleString();
+            
+            // Efek visual jika saldo kosong
+            if(sysCash <= 0) {
+                display.classList.replace('text-emerald-400', 'text-slate-400');
+            } else {
+                display.classList.replace('text-slate-400', 'text-emerald-400');
+            }
+        } catch(e) {
+            console.error("Gagal ambil saldo");
+            document.getElementById('v-cash').innerText = "Rp 0";
+        }
     }
+
+    // 2. FUNGSI SIMPAN FINANCE: Modal/Pengeluaran
+    async function saveFinance() {
+        const t = document.getElementById('f-type').value;
+        const d = document.getElementById('f-desc').value;
+        const a = document.getElementById('f-amt').value;
+        
+        if(!d || !a) return alert("Isi keterangan dan nominal!");
+        
+        const btn = document.getElementById('btn-save-fin');
+        btn.disabled = true;
+        btn.innerText = "Mencatat...";
+
+        try {
+            // Kirim data ke Google Sheets
+            const url = `${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${t}&data=${encodeURIComponent(JSON.stringify(["", d, "ADMIN", Number(a)]))}`;
+            const resp = await fetch(url);
+            const res = await resp.json();
+
+            if(res.status === "success") {
+                // Jangan langsung refresh! Update tampilan lokal dulu biar instan
+                if(t === 'modal') sysCash += Number(a);
+                if(t === 'pengeluaran') sysCash -= Number(a);
+                
+                document.getElementById('v-cash').innerText = "Rp " + Math.round(sysCash).toLocaleString();
+                
+                // Beri jeda sebentar baru refresh agar data di server stabil
+                setTimeout(() => {
+                    location.reload(); 
+                }, 1000);
+            }
+        } catch(e) {
+            alert("Koneksi gagal!");
+            btn.disabled = false;
+            btn.innerText = "OK";
+        }
+    }
+
 
     function checkSettle() {
         const fis = Number(document.getElementById('i-fisik').value) || 0;
@@ -197,17 +254,6 @@
         info.classList.remove('hidden');
         info.innerHTML = `SELISIH: <span class="${diff < 0 ? 'text-red-600' : 'text-green-600'}">Rp ${diff.toLocaleString()}</span>`;
         if(fis > 0) { document.getElementById('btn-settle').disabled = false; document.getElementById('btn-settle').classList.replace('bg-slate-300', 'bg-orange-600'); }
-    }
-
-    async function saveFinance() {
-        const t = document.getElementById('f-type').value;
-        const d = document.getElementById('f-desc').value;
-        const a = document.getElementById('f-amt').value;
-        if(!d || !a) return alert("Lengkapi data!");
-        const btn = document.getElementById('btn-save-fin');
-        btn.disabled = true; btn.innerText = "...";
-        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${t}&data=${encodeURIComponent(JSON.stringify(["", d, "ADMIN", Number(a)]))}`);
-        location.reload();
     }
 
     async function submitOrder() {
