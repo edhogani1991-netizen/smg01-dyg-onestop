@@ -147,28 +147,38 @@ let currentOrders = []; // <-- TAMBAHKAN INI untuk menyimpan data secara global
 
 /* ================= LOAD ================= */
 async function loadOrders(){
+console.log("Mencoba mengambil data..."); // Cek di console
   const status = document.getElementById("status");
-  try{
-    const res = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&_=${Date.now()}`);
-    const data = await res.json();
+  const status = document.getElementById("status");
+  // Jangan ubah teks di sini, biarkan dia default "Menghubungkan" saat mulai
+  
+  try {
+    const response = await fetch(`${CONFIG.API_URL}?token=${CONFIG.TOKEN}&getOrders=true&_=${Date.now()}`);
+    
+    if (!response.ok) throw new Error("Network response was not ok");
 
+    const data = await response.json();
+
+    // Jika sampai di sini, berarti koneksi berhasil
     status.textContent = "● TERHUBUNG";
     status.style.color = "green";
 
-    // Jika jumlah data di server lebih banyak dari data di layar kita
     if(data.length > lastCount && lastCount !== 0){
-      playVoiceNotif(); // Langsung bunyi tanpa file MP3
+      playVoiceNotif();
     }
     
     lastCount = data.length;
     currentOrders = data;
     render(data);
+
   } catch(err) {
+    // Jika ada error (internet mati, URL salah, atau token salah)
+    console.error("Detail Error:", err);
     status.textContent = "● TERPUTUS";
     status.style.color = "red";
   }
 }
-/* ================= RENDER ================= */
+
 function render(data){
   const box = document.getElementById("list");
   const active = data.filter(o => !removedRows.includes(String(o.row)));
@@ -192,17 +202,16 @@ function render(data){
       <button class="btn" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
     </div>
   `).join("");
-}
 
-  // Hammer JS untuk Swipe Left
+  // Inisialisasi Hammer setelah render
   document.querySelectorAll(".card").forEach(card=>{
     const mc = new Hammer(card);
     mc.on("swipeleft",()=>{
-      document.getElementById("ov-"+card.dataset.row).classList.add("active");
+        // Pastikan Anda punya elemen overlay di dalam card jika ingin menggunakan swipe
+        alert("Swipe terdeteksi untuk row: " + card.dataset.row);
     });
   });
 }
-
 /* ================= ACTION ================= */
 function cancel(row){
   document.getElementById("ov-"+row).classList.remove("active");
