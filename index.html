@@ -661,7 +661,8 @@ async function apiCekMember() {
 
 
    // Ubah bagian ini di awal script Anda
-let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0;
+// Tambahkan 'antrean = 0' di deretan variabel global
+let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
         WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzdDveudrC9NNPX0XnAE784Cif5pFZLW-tulkKHhMGj41-8KCioaJuj76vjzeWRsoNYgg/exec',
         MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
@@ -696,7 +697,6 @@ window.onclick = function(event) {
 }
 
 async function startApp() {
-    // 1. Langsung ganti tombol ke Loading Jam Pasir
     const startBtn = document.querySelector('#welcome-overlay button');
     if (startBtn) {
         startBtn.innerHTML = "⌛ Menyiapkan...";
@@ -704,11 +704,10 @@ async function startApp() {
         startBtn.style.pointerEvents = "none";
     }
 
-    // 2. JALANKAN LOAD MENU SEKARANG (Jangan pakai await di sini agar tidak menunggu)
-    // Dengan begini, menu didownload sambil GPS bekerja
+    // Jalankan load menu & sync antrean secara paralel
     loadMenu();
+    syncQueue(); 
 
-    // 3. BARU JALANKAN GPS
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude, longitude } = pos.coords;
         window.userLat = latitude;
@@ -732,28 +731,24 @@ async function startApp() {
             if(deliBtn) deliBtn.classList.add('disabled', 'too-close');
         }
 
-// 4. FINISH: Hapus overlay dan tampilkan sisanya
         initMap(latitude, longitude);
         initBanner();
-        document.getElementById('welcome-overlay').style.display = 'none';
+        
+        // Tampilkan nomor antrean yang sudah didapat dari syncQueue
         document.getElementById("noAntrean").innerText = "#" + antrean;
+        document.getElementById('welcome-overlay').style.display = 'none';
 
-
-        // --- TAMBAHAN LOGIKA NETRAL (SAAT SUKSES GPS) ---
         currentMode = null;
         document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
-        // ------------------------------------------------
 
     }, (err) => {
-        alert("Gagal akses lokasi. Harap aktifkan GPS untuk pengalaman terbaik.");
+        alert("Gagal akses lokasi. Harap aktifkan GPS.");
         document.getElementById('welcome-overlay').style.display = 'none';
-        
-        // --- TAMBAHAN LOGIKA NETRAL (SAAT ERROR GPS) ---
         currentMode = null;
         document.querySelectorAll('.service-btn').forEach(btn => btn.classList.remove('active'));
-        // -------------------------------------------
     }, { enableHighAccuracy: true });
 }
+
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
         if (km <= 1.5) return 3000;
@@ -774,7 +769,6 @@ async function startApp() {
             renderMenu();
         } catch (e) { console.error("Menu error:", e); }
     }
-
     function renderTabs() {
         const cats = [...new Set(menuData.map(m => m.kat))];
         document.getElementById('cat-tabs').innerHTML = `<div class="tab active" onclick="filterByTab('ALL', this)">Semua</div>` + 
@@ -1067,25 +1061,36 @@ async function submitOrder() {
     // 3. RESET TAMPILAN WEB
     setTimeout(() => {
         // Kosongkan Keranjang
-        cart = [];
+       cart = [];
         refreshUI();
+        closeModal();
         
-        // Tutup semua Modal
-        closeConfirm();
-        
-        // Munculkan kembali Welcome Overlay
-        const welcome = document.getElementById('welcomeOverlay');
+const welcome = document.getElementById('welcome-overlay'); 
         if (welcome) {
             welcome.style.display = 'flex';
+            // Kembalikan tombol mulai ke teks awal
+            const startBtn = welcome.querySelector('button');
+            if (startBtn) {
+                startBtn.innerHTML = "MULAI SEKARANG";
+                startBtn.style.opacity = "1";
+                startBtn.style.pointerEvents = "auto";
+            }
         }
 
-        // Kembalikan tombol ke status normal
+        // Kembalikan tombol konfirmasi ke status normal
         if (btnKirim) {
-          btnKirim.innerHTML = "Konfirmasi & Kirim WA";
+          btnKirim.innerHTML = "Kirim WA";
           btnKirim.style.opacity = "1";
           btnKirim.style.pointerEvents = "auto";
         }
-    }, 500); 
+        
+        // Reset form input
+        nI.value = '';
+        if(tI) tI.value = '';
+        if(aI) aI.value = '';
+        document.getElementById('orderNote').value = '';
+        
+    }, 1000); // Beri jeda 1 detik agar proses window.location.href selesai
 }
     function toggleSummary(open) {
         if (cart.length === 0 && open) return;
@@ -1190,13 +1195,17 @@ function changeMode(m, el) {
     }
 
     async function syncQueue() {
-        try {
-            const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
-            const num = await resp.text();
-            if (num) document.getElementById('noAntrean').innerText = "#" + num;
-        } catch(e) {}
-        setTimeout(syncQueue, 20000);
-    }
+    try {
+        const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
+        const num = await resp.text();
+        if (num) {
+            antrean = num; 
+            const el = document.getElementById('noAntrean');
+            if(el) el.innerText = "#" + num;
+        }
+    } catch(e) { console.error("Queue error:", e); }
+    setTimeout(syncQueue, 20000); // Cek antrean tiap 20 detik
+}
 
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
