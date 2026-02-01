@@ -21,6 +21,13 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#0f172a;display:flex;
 .monitor-table td{padding:4px 0;font-size:10px;font-weight:bold}
 .scroll-custom::-webkit-scrollbar{width:4px}
 .scroll-custom::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
+
+/* Style khusus cetak agar tidak tampil di layar tapi rapi di kertas */
+@media print {
+    body * { visibility: hidden; }
+    #print-section, #print-section * { visibility: visible; }
+    #print-section { position: absolute; left: 0; top: 0; width: 58mm; }
+}
 </style>
 </head>
 
@@ -114,43 +121,124 @@ document.getElementById("v-discount").innerText="- Rp "+discountMember.toLocaleS
 document.getElementById("v-total").innerText="Rp "+(sub-discountMember).toLocaleString();
 }
 
-function fastPrint58mm(html){
-const iframe=document.createElement("iframe");
-iframe.style.position="fixed";iframe.style.width="0";iframe.style.height="0";
-iframe.src="data:text/html;base64,"+btoa(unescape(encodeURIComponent(`
-<!DOCTYPE html><html><body onload="window.print();setTimeout(()=>window.close(),100)">
-<style>@page{size:58mm auto;margin:0}body{font-family:Courier New;font-size:11px}</style>
-${html}
-</body></html>`)));
-document.body.appendChild(iframe);
-setTimeout(()=>document.body.removeChild(iframe),500);
+// FUNGSI CETAK UTAMA (Mendukung Bluetooth via RawBT)
+function fastPrint58mm(htmlContent){
+    const printerWidth = "58mm";
+    const fullHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: 'Courier New', monospace; width: ${printerWidth}; padding: 0; margin: 0; font-size: 12px; }
+                .c { text-align: center; }
+                .r { text-align: right; }
+                .b { font-weight: bold; }
+                hr { border-top: 1px dashed #000; margin: 5px 0; }
+                table { width: 100%; border-collapse: collapse; }
+            </style>
+        </head>
+        <body>${htmlContent}</body>
+        </html>`;
+
+    // Cek jika Mobile (Android/iOS)
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+        // Kirim ke RawBT (Wajib install RawBT di Android)
+        window.location.href = "rawbt:base64," + btoa(unescape(encodeURIComponent(fullHtml)));
+    } else {
+        // Mode Desktop
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        document.body.appendChild(iframe);
+        const doc = iframe.contentWindow.document;
+        doc.open(); doc.write(fullHtml); doc.close();
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            document.body.removeChild(iframe);
+        }, 500);
+    }
 }
 
 async function submitOrder(){
-const subtotal=Object.values(cart).reduce((s,i)=>s+i.price*i.qty,0);
-if(!subtotal)return;
-await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${subtotal}`);
-let html=`<div style="text-align:center;font-weight:bold">dyg++ POS</div><hr>`;
-Object.keys(cart).forEach(n=>{
-html+=`<div>${n} x${cart[n].qty} ${ (cart[n].price*cart[n].qty).toLocaleString() }</div>`;
-});
-html+=`<hr><div>TOTAL ${subtotal.toLocaleString()}</div>`;
-fastPrint58mm(html);
-location.reload();
+    const subtotal = Object.values(cart).reduce((s,i)=>s+i.price*i.qty,0);
+    const total = subtotal - discountMember;
+    if(!total) return;
+
+    const btn = document.getElementById("btn-order");
+    btn.innerText = "PROCESSING...";
+    btn.disabled = true;
+
+    try {
+        // Kirim ke Google Apps Script
+        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${total}`);
+
+        // Buat Konten Struk
+        let receiptHtml = `
+            <div class="c b">dyg++ POS SECURE</div>
+            <div class="c">${new Date().toLocaleString('id-ID')}</div>
+            <hr>
+            <table>
+        `;
+
+        Object.keys(cart).forEach(n => {
+            receiptHtml += `
+                <tr>
+                    <td>${n} x${cart[n].qty}</td>
+                    <td class="r">${(cart[n].price * cart[n].qty).toLocaleString()}</td>
+                </tr>
+            `;
+        });
+
+        receiptHtml += `
+            </table>
+            <hr>
+            <table>
+                <tr class="b"><td>TOTAL</td><td class="r">Rp ${total.toLocaleString()}</td></tr>
+            </table>
+            <hr>
+            <div class="c">TERIMA KASIH</div>
+            <br><br>
+        `;
+
+        // Panggil fungsi cetak
+        fastPrint58mm(receiptHtml);
+
+        // Reset & Reload
+        alert("Transaksi Berhasil!");
+        location.reload();
+
+    } catch (e) {
+        alert("Error Koneksi!");
+        btn.innerText = "BAYAR & CETAK";
+        btn.disabled = false;
+    }
 }
 
 async function loadMenu(){
-const r=await fetch(CONFIG.CSV);const t=await r.text();
-menuData=t.split("\n").slice(1).map(r=>{const c=r.split(",");return{kat:c[0],nama:c[1],harga:+c[2]}}).filter(m=>m.nama);
-renderMenu();
+    try {
+        const r=await fetch(CONFIG.CSV);
+        const t=await r.text();
+        menuData=t.split("\n").slice(1).map(r=>{
+            const c=r.split(",");
+            return {kat:c[0], nama:c[1], harga:parseInt(c[2])||0}
+        }).filter(m=>m.nama);
+        renderMenu();
+    } catch(e) { console.error("Gagal muat menu"); }
 }
 
 function renderMenu(){
-const c=document.getElementById("menu-render");
-c.innerHTML="";
-menuData.forEach(m=>{
-c.innerHTML+=`<div onclick="addToCart('${m.nama}',${m.harga})" class="bg-white p-2 text-[9px]">${m.nama}<br>Rp ${m.harga.toLocaleString()}</div>`;
-});
+    const c=document.getElementById("menu-render");
+    const search = document.getElementById("menuSearch").value.toLowerCase();
+    c.innerHTML="";
+    menuData.filter(m => m.nama.toLowerCase().includes(search)).forEach(m=>{
+        c.innerHTML+=`
+            <div onclick="addToCart('${m.nama}',${m.harga})" class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 active:scale-95 transition-transform cursor-pointer">
+                <p class="text-[10px] font-black leading-tight h-8 overflow-hidden">${m.nama}</p>
+                <p class="text-emerald-600 font-bold text-[9px] mt-1">Rp ${m.harga.toLocaleString()}</p>
+            </div>`;
+    });
 }
 
 window.onload=loadMenu;
