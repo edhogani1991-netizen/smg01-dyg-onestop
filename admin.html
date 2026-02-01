@@ -15,20 +15,31 @@
         .scroll-area { flex: 1; overflow-y: auto; padding: 12px; }
         .sticky-bottom { shrink: 0; background: #f8fafc; border-top: 4px solid #fff; }
 
-        /* Fix Animasi Buka Tutup */
-        .collapse-content { 
-            display: none; /* Default tertutup */
-            overflow: hidden; 
-        }
-        .collapse-content.open { 
-            display: block; /* Muncul saat ada class open */
-            margin-bottom: 10px; 
-        }
+        .collapse-content { display: none; overflow: hidden; }
+        .collapse-content.open { display: block; margin-bottom: 10px; }
         
         .swipe-handle { cursor: pointer; background: #1e293b; color: #fbbf24; text-align: center; font-size: 9px; padding: 10px; font-weight: 800; border-radius: 8px; margin-bottom: 5px; }
         .monitor-table td { padding: 4px 0; font-size: 10px; font-weight: bold; }
         .scroll-custom::-webkit-scrollbar { width: 4px; }
         .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        /* =============================== */
+        /* CSS KHUSUS CETAK STRUK (HIDDEN DARI LAYAR) */
+        /* =============================== */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { 
+                position: absolute; 
+                left: 0; top: 0; 
+                width: 100%; 
+                padding: 10px;
+                font-family: 'Courier New', Courier, monospace; 
+                font-size: 12px; 
+                color: black;
+            }
+            @page { margin: 0; }
+        }
     </style>
 </head>
 <body>
@@ -53,7 +64,6 @@
 
         <div class="admin-side">
             <div class="scroll-area space-y-3">
-                
                 <div onclick="toggleSwipe()" class="swipe-handle">📂 KLIK UNTUK MONITOR & FINANCE OPERASIONAL</div>
                 
                 <div id="collapsible-section" class="collapse-content space-y-3">
@@ -135,6 +145,8 @@
     </div>
 </div>
 
+<div id="print-area"></div>
+
 <script>
     const CONFIG = {
         API: "https://script.google.com/macros/s/AKfycbwgE4TNuajMZy34ZOQKcHbUniCm6wU-a4rjGESFZC_1r6wUBVm_EwUZKvqchK-Pk6jL/exec",
@@ -145,17 +157,11 @@
     let cart = {}, menuData = [], activeCat = 'ALL';
     let discountMember = 0, currentMemberHP = "", poinAkanDipotong = 0;
 
-    // FUNGSI UTAMA UNTUK BUKA/TUTUP MONITOR
     function toggleSwipe() {
         const section = document.getElementById('collapsible-section');
-        if (section.style.display === "block") {
-            section.style.display = "none";
-        } else {
-            section.style.display = "block";
-        }
+        section.style.display = (section.style.display === "block") ? "none" : "block";
     }
 
-    // --- LOGIKA GAS (TETAP SAMA) ---
     async function handleShift(type) {
         if (type === 'open') {
             const amt = document.getElementById('input-modal').value;
@@ -218,17 +224,82 @@
         updateCartUI();
     }
 
+    // ==========================================
+    // FUNGSI SUBMIT ORDER + CETAK OTOMATIS
+    // ==========================================
     async function submitOrder() {
         const btn = document.getElementById('btn-order');
         const subtotal = Object.values(cart).reduce((s, i) => s + (i.price * i.qty), 0);
         if (subtotal === 0 || btn.disabled) return;
+        
         btn.disabled = true;
+        btn.innerText = "MEMPROSES...";
+
+        const totalAkhir = subtotal - discountMember;
+        const mode = document.getElementById('i-mode').value;
         const pesanan = Object.keys(cart).map(n => `${n} (${cart[n].qty}x)`).join(", ");
+
         try {
-            await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&pesanan=${encodeURIComponent(pesanan)}&total=${subtotal - discountMember}&mode=${document.getElementById('i-mode').value}&nama=ADMIN&noHP=${currentMemberHP}&potonganRedeem=${poinAkanDipotong}`);
-            alert("✅ Transaksi Berhasil!");
+            // 1. Kirim ke GAS
+            await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&pesanan=${encodeURIComponent(pesanan)}&total=${totalAkhir}&mode=${mode}&nama=ADMIN&noHP=${currentMemberHP}&potonganRedeem=${poinAkanDipotong}`);
+
+            // 2. Susun Struk di Print Area
+            const printArea = document.getElementById('print-area');
+            let content = `
+                <div style="text-align:center; text-transform:uppercase;">
+                    <strong>dyg++ SECURE POS</strong><br>
+                    Jakarta, Indonesia<br>
+                    --------------------------------
+                </div>
+                <div style="margin: 10px 0;">
+                    Tgl: ${new Date().toLocaleString('id-ID')}<br>
+                    Kasir: ADMIN<br>
+                    Mode: ${mode}<br>
+                    --------------------------------
+                </div>
+            `;
+
+            Object.keys(cart).forEach(name => {
+                const item = cart[name];
+                content += `
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>${name} (x${item.qty})</span>
+                        <span>${(item.price * item.qty).toLocaleString()}</span>
+                    </div>
+                `;
+            });
+
+            content += `
+                <div style="margin-top:10px; border-top:1px dashed #000; padding-top:5px;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span>Subtotal</span><span>${subtotal.toLocaleString()}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; color: #555;">
+                        <span>Diskon Poin</span><span>-${discountMember.toLocaleString()}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px; margin-top:5px;">
+                        <span>TOTAL</span><span>Rp ${totalAkhir.toLocaleString()}</span>
+                    </div>
+                </div>
+                <div style="text-align:center; margin-top:20px; font-size:10px;">
+                    TERIMA KASIH<br>
+                    SUDAH BERBELANJA
+                </div>
+            `;
+
+            printArea.innerHTML = content;
+
+            // 3. Jalankan Perintah Cetak
+            window.print();
+
+            // 4. Selesai
             location.reload();
-        } catch(e) { alert("Gagal!"); btn.disabled = false; }
+
+        } catch(e) { 
+            alert("Gagal memproses transaksi!"); 
+            btn.disabled = false; 
+            btn.innerText = "BAYAR & CETAK";
+        }
     }
 
     async function refreshDashboard() {
