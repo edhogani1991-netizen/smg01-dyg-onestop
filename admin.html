@@ -90,7 +90,7 @@
 
 <script>
     const CONFIG = {
-        API: "https://script.google.com/macros/s/AKfycbwgE4TNuajMZy34ZOQKcHbUniCm6wU-a4rjGESFZC_1r6wUBVm_EwUZKvqchK-Pk6jL/exec",
+        API: "https://script.google.com/macros/s/AKfycbwnosmfFMt7Vd3HGHw4AnDCKXCFDgZZqtpFWUzJvMxBzCs092z1OAYhngA_SvGjUWLSmA/exec",
         CSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv",
         TOKEN: "dyg-access-v2"
     };
@@ -153,26 +153,72 @@
         }
     }
 
-    async function submitOrder() {
-        const btn = document.getElementById('btn-order');
-        btn.disabled = true;
-        btn.innerText = "MEMPROSES...";
+   let poinAkanDipotong = 0; // Variabel global untuk mencatat poin yang ditukar
 
-        const total = Object.values(cart).reduce((s, i) => s + (i.price * i.qty), 0);
-        const pesanan = Object.keys(cart).map(n => `${n} (${cart[n].qty}x)`).join(", ");
-        const mode = document.getElementById('i-mode').value;
-
-        try {
-            await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&pesanan=${encodeURIComponent(pesanan)}&total=${total}&mode=${mode}&nama=ADMIN`);
-            cart = {};
-            updateCartUI();
-            alert("✅ Transaksi Berhasil!");
-            refreshDashboard();
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "BAYAR & KUNCI";
-        }
+function useVoucher() {
+    const poinText = document.getElementById('m-poin-display').innerText;
+    const totalPoinMember = parseInt(poinText.replace(/\D/g, ''));
+    
+    if (totalPoinMember < 500) {
+        return alert("❌ Minimal 500 poin untuk tukar potongan (Rp 5.000)");
     }
+
+    // HITUNG KELIPATAN 500
+    // Misal: 1200 poin -> kelipatan = 2 (karena 2 x 500 = 1000)
+    const kelipatan = Math.floor(totalPoinMember / 500);
+    const totalPotonganRupiah = kelipatan * 5000;
+    poinAkanDipotong = kelipatan * 500;
+
+    const tanya = confirm(`Tukar ${poinAkanDipotong} poin dengan potongan Rp ${totalPotonganRupiah.toLocaleString()}?`);
+    
+    if (tanya) {
+        discountMember = totalPotonganRupiah;
+        document.getElementById('btn-voucher').classList.replace('bg-orange-500', 'bg-slate-400');
+        document.getElementById('btn-voucher').innerText = `POTONGAN RP ${discountMember.toLocaleString()} AKTIF`;
+        updateCartUI();
+    }
+}
+
+async function submitOrder() {
+    const btn = document.getElementById('btn-order');
+    if (btn.disabled) return;
+    
+    const subtotal = Object.values(cart).reduce((s, i) => s + (i.price * i.qty), 0);
+    const totalAkhir = subtotal - discountMember;
+
+    if (subtotal === 0) return alert("❌ Keranjang masih kosong!");
+
+    btn.disabled = true;
+    btn.innerText = "MENGUNCI TRX...";
+
+    const pesanan = Object.keys(cart).map(n => `${n} (${cart[n].qty}x)`).join(", ");
+    const mode = document.getElementById('i-mode').value;
+
+    try {
+        // Kirim parameter potonganRedeem berupa jumlah POIN (misal 500, 1000, dst)
+        let url = `${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&pesanan=${encodeURIComponent(pesanan)}&total=${totalAkhir}&mode=${mode}&nama=ADMIN&noHP=${currentMemberHP}&potonganRedeem=${poinAkanDipotong}`;
+
+        await fetch(url);
+        
+        alert("✅ Transaksi Berhasil!");
+        
+        // Reset State
+        cart = {}; 
+        discountMember = 0; 
+        poinAkanDipotong = 0;
+        currentMemberHP = "";
+        document.getElementById('member-info').classList.add('hidden');
+        document.getElementById('m-hp').value = "";
+        
+        updateCartUI();
+        refreshDashboard();
+    } catch(e) {
+        alert("Gagal koneksi ke server");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "BAYAR & KUNCI";
+    }
+}
 
     async function refreshDashboard() {
     try {
