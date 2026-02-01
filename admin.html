@@ -90,7 +90,7 @@
 
 <script>
     const CONFIG = {
-        API: "https://script.google.com/macros/s/AKfycbzdDveudrC9NNPX0XnAE784Cif5pFZLW-tulkKHhMGj41-8KCioaJuj76vjzeWRsoNYgg/exec",
+        API: "https://script.google.com/macros/s/AKfycbwWxtR7eXAKnWdwGxHhSJBSKXrgSPoXddgsYUwIhr9unaCJXjV0YQ8IVXmkruEwviNzvA/exec",
         CSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv",
         TOKEN: "dyg-access-v2"
     };
@@ -175,18 +175,32 @@
     }
 
     async function refreshDashboard() {
-        try {
-            const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance&_=${Date.now()}`);
-            const d = await r.json();
-            document.getElementById('m-modal').innerText = "Rp " + (d.totalModal || 0).toLocaleString();
-            document.getElementById('m-cash').innerText = "Rp " + (d.totalCash || 0).toLocaleString();
-            document.getElementById('m-out').innerText = "- Rp " + (d.totalOut || 0).toLocaleString();
-            document.getElementById('m-qris').innerText = "Rp " + (d.totalQris || 0).toLocaleString();
-            document.getElementById('m-online').innerText = "Rp " + (d.totalOnline || 0).toLocaleString();
-            const sysCash = (d.totalModal + d.totalCash) - d.totalOut;
-            document.getElementById('v-cash').innerText = "Rp " + sysCash.toLocaleString();
-        } catch(e) {}
+    try {
+        // Gunakan timestamp agar data tidak basi (cache)
+        const response = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance&nocache=${Date.now()}`);
+        const d = await response.json();
+        
+        console.log("Data diterima:", d); // Cek di console log tablet jika ada
+
+        // Update Tabel Monitor dengan angka dari server
+        document.getElementById('m-modal').innerText = "Rp " + (Number(d.totalModal) || 0).toLocaleString();
+        document.getElementById('m-cash').innerText = "Rp " + (Number(d.totalCash) || 0).toLocaleString();
+        document.getElementById('m-out').innerText = "- Rp " + (Number(d.totalOut) || 0).toLocaleString();
+        document.getElementById('m-qris').innerText = "Rp " + (Number(d.totalQris) || 0).toLocaleString();
+        document.getElementById('m-online').innerText = "Rp " + (Number(d.totalOnline) || 0).toLocaleString();
+        
+        // Update Header (Uang Fisik Laci)
+        const laciSekarang = (Number(d.totalModal) + Number(d.totalCash)) - Number(d.totalOut);
+        document.getElementById('v-cash').innerText = "Rp " + laciSekarang.toLocaleString();
+
+        // Beri efek kilat kuning sebentar biar admin tahu angka baru masuk
+        document.querySelector('.monitor-table').classList.add('bg-slate-800');
+        setTimeout(() => document.querySelector('.monitor-table').classList.remove('bg-slate-800'), 500);
+
+    } catch(e) {
+        console.error("Gagal update tabel:", e);
     }
+}
 
     // --- FUNGSI POS STANDAR ---
     async function loadMenu() {
