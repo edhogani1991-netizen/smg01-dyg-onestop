@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>dyg++ SECURE POS FINAL</title>
+    <title>dyg++ SECURE POS FINAL V2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -16,9 +16,9 @@
         .sticky-bottom{shrink:0;background:#f8fafc;border-top:4px solid #fff}
         .collapse-content{display:none}
         .swipe-handle{cursor:pointer;background:#1e293b;color:#fbbf24;text-align:center;font-size:9px;padding:10px;font-weight:800;border-radius:8px;margin-bottom:5px}
-        .monitor-table td{padding:4px 0;font-size:10px;font-weight:bold}
         .scroll-custom::-webkit-scrollbar{width:4px}
         .scroll-custom::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
+        .badge-qty { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 99px; font-weight: 800; }
     </style>
 </head>
 <body>
@@ -27,7 +27,7 @@
     <div class="bg-[#1B4332] text-white p-3 flex justify-between items-center shrink-0">
         <h1 class="text-lg font-black italic tracking-tighter text-emerald-400">dyg++ <span class="text-white opacity-50 ml-2">POS SECURE</span></h1>
         <div class="text-right">
-            <p class="text-[8px] uppercase opacity-60 italic">Saldo Laci (Estimasi)</p>
+            <p class="text-[8px] uppercase opacity-60 italic text-white/70">Saldo Laci (Estimasi)</p>
             <p id="v-cash" class="text-lg font-black text-emerald-400">Rp 0</p>
         </div>
     </div>
@@ -47,14 +47,14 @@
             <div class="scroll-area space-y-3">
                 <div onclick="toggleSwipe()" class="swipe-handle">📂 OPERASIONAL FINANCE & SHIFT</div>
                 
-                <div id="collapsible-section" class="collapse-content space-y-3 p-2 bg-slate-100 rounded-xl border">
+                <div id="collapsible-section" class="collapse-content space-y-3 p-2 bg-slate-100 rounded-xl border shadow-inner">
                     <div class="bg-white p-3 rounded-lg border-b-2 shadow-sm">
                         <p class="text-[9px] font-black text-slate-400 uppercase mb-2">Shift Kerja</p>
-                        <div class="flex gap-2 mb-2">
+                        <div id="shift-open-area" class="flex gap-2">
                             <input type="number" id="input-modal" placeholder="Modal Awal" class="flex-1 p-2 bg-slate-50 border rounded text-xs font-bold">
                             <button id="btn-buka-shift" onclick="bukaShift()" class="bg-emerald-600 text-white px-3 rounded font-black text-[9px]">BUKA SHIFT</button>
                         </div>
-                        <button id="btn-tutup-shift" onclick="tutupShift()" class="w-full bg-red-600 text-white py-2 rounded font-black text-[10px] hidden">TUTUP SHIFT & CETAK LAPORAN</button>
+                        <button id="btn-tutup-shift" onclick="tutupShift()" class="w-full mt-2 bg-red-600 text-white py-3 rounded font-black text-[10px] hidden shadow-lg">TUTUP SHIFT & CETAK LAPORAN</button>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
@@ -70,26 +70,26 @@
                         </div>
                     </div>
 
-                    <div class="bg-slate-900 text-white rounded p-3 text-[10px]">
-                        <div class="flex justify-between"><span>Modal:</span><span id="m-modal" class="text-blue-300">Rp 0</span></div>
-                        <div class="flex justify-between"><span>Cash:</span><span id="m-cash" class="text-emerald-400">Rp 0</span></div>
-                        <div class="flex justify-between"><span>QRIS:</span><span id="m-qris" class="text-orange-300">Rp 0</span></div>
-                        <div class="flex justify-between"><span>Out:</span><span id="m-out" class="text-red-400">Rp 0</span></div>
+                    <div class="bg-slate-900 text-white rounded p-3 text-[10px] space-y-1">
+                        <div class="flex justify-between border-b border-slate-700 pb-1"><span>Modal Awal:</span><span id="m-modal" class="text-blue-300">Rp 0</span></div>
+                        <div class="flex justify-between border-b border-slate-700 pb-1"><span>Cash Masuk:</span><span id="m-cash" class="text-emerald-400">Rp 0</span></div>
+                        <div class="flex justify-between border-b border-slate-700 pb-1"><span>QRIS:</span><span id="m-qris" class="text-orange-300">Rp 0</span></div>
+                        <div class="flex justify-between"><span>Total Keluar:</span><span id="m-out" class="text-red-400">Rp 0</span></div>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl p-2 border-2 border-slate-200 min-h-[150px]">
-                    <p class="text-[9px] font-black text-slate-400 mb-2 uppercase italic border-b pb-1 text-center">Pesanan Saat Ini</p>
-                    <div id="cart-list" class="space-y-1"></div>
+                    <p class="text-[9px] font-black text-slate-400 mb-2 uppercase italic border-b pb-1 text-center">Daftar Belanja</p>
+                    <div id="cart-list" class="space-y-2"></div>
                 </div>
             </div>
 
             <div class="sticky-bottom p-4">
                 <div class="flex justify-between text-[#1B4332] mb-2">
-                    <span class="font-black text-[12px]">TOTAL</span>
+                    <span class="font-black text-[12px]">TOTAL TAGIHAN</span>
                     <span id="v-total" class="text-3xl font-black">Rp 0</span>
                 </div>
-                <button onclick="submitOrder()" id="btn-order" class="w-full bg-[#1B4332] text-white py-4 rounded-2xl font-black text-[14px] shadow-lg active:scale-95 transition-all">BAYAR & CETAK</button>
+                <button onclick="submitOrder()" id="btn-order" class="w-full bg-[#1B4332] text-white py-4 rounded-2xl font-black text-[14px] shadow-lg active:scale-95 transition-all">BAYAR & CETAK STRUK</button>
             </div>
         </div>
     </div>
@@ -112,6 +112,15 @@ function toggleSwipe(){
 function addToCart(n,p){
     cart[n]={price:p, qty:(cart[n]?.qty||0)+1};
     updateCartUI();
+    renderMenu(); // Update badge di menu
+}
+
+function changeQty(n, delta) {
+    if(!cart[n]) return;
+    cart[n].qty += delta;
+    if(cart[n].qty <= 0) delete cart[n];
+    updateCartUI();
+    renderMenu();
 }
 
 function updateCartUI(){
@@ -119,18 +128,25 @@ function updateCartUI(){
     const l=document.getElementById("cart-list");
     l.innerHTML="";
     Object.keys(cart).forEach(n=>{
-        total += cart[n].price * cart[n].qty;
-        l.innerHTML+=`<div class="flex justify-between text-[10px] border-b pb-1">
-            <span>${n} (x${cart[n].qty})</span>
-            <span>${(cart[n].price*cart[n].qty).toLocaleString()}</span>
+        const sub = cart[n].price * cart[n].qty;
+        total += sub;
+        l.innerHTML+=`
+        <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+            <div class="flex-1">
+                <p class="text-[10px] font-black text-slate-700">${n}</p>
+                <p class="text-[9px] text-emerald-600 font-bold">Rp ${sub.toLocaleString()}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="changeQty('${n}', -1)" class="w-6 h-6 bg-slate-200 rounded flex items-center justify-center font-black text-slate-600">-</button>
+                <span class="text-[10px] font-black w-4 text-center">${cart[n].qty}</span>
+                <button onclick="changeQty('${n}', 1)" class="w-6 h-6 bg-slate-800 rounded flex items-center justify-center font-black text-white">+</button>
+            </div>
         </div>`;
     });
     document.getElementById("v-total").innerText="Rp "+total.toLocaleString();
 }
 
 function filterCat(val){ activeCat=val; renderMenu(); }
-
-// --- FINANCE & SHIFT LOGIC ---
 
 async function updateMonitor() {
     try {
@@ -144,7 +160,6 @@ async function updateMonitor() {
         document.getElementById("m-qris").innerText = "Rp " + fin.totalQris.toLocaleString();
         document.getElementById("m-out").innerText = "Rp " + fin.totalOut.toLocaleString();
         
-        // Simpan variabel global untuk closing
         window.finData = fin;
     } catch (e) { console.log("Monitor Error"); }
 }
@@ -159,24 +174,21 @@ async function bukaShift() {
         const data = JSON.stringify(["", "Modal Awal", modalVal]);
         await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=modal&data=${encodeURIComponent(data)}`);
         
-        // LOCK UI
         document.getElementById('input-modal').disabled = true;
         document.getElementById('btn-buka-shift').disabled = true;
-        document.getElementById('btn-buka-shift').innerText = "SHIFT OPEN";
+        document.getElementById('btn-buka-shift').innerText = "OPEN";
         document.getElementById('btn-tutup-shift').classList.remove('hidden');
         
         updateMonitor();
-        alert("Shift Dibuka!");
-    } catch (e) { alert("Gagal!"); }
+        alert("Shift Berhasil Dibuka!");
+    } catch (e) { alert("Gagal koneksi server!"); }
 }
 
 async function saveFinance(type, inputId) {
     const val = document.getElementById(inputId).value;
-    if (!val || val <= 0) return alert("Nominal harus diisi!");
-    
+    if (!val || val <= 0) return alert("Nominal kosong!");
     const ket = type === 'pengeluaran' ? "Operasional" : "Online Food";
     const data = JSON.stringify(["", ket, val]);
-
     try {
         await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${type}&data=${encodeURIComponent(data)}`);
         alert("Tersimpan!");
@@ -189,24 +201,21 @@ async function tutupShift() {
     const fin = window.finData;
     const sys = (fin.totalModal + fin.totalCash) - fin.totalOut;
     const fisik = prompt("MASUKKAN TOTAL UANG FISIK DI LACI:", sys);
-    
     if (fisik === null) return;
-
     const selisih = fisik - sys;
     const payload = JSON.stringify({ sys: sys, fisik: fisik, selisih: selisih });
 
-    if (confirm(`KONFIRMASI CLOSING\nSistem: ${sys}\nFisik: ${fisik}\nSelisih: ${selisih}`)) {
+    if (confirm(`SETTLE SHIFT SEKARANG?\nSistem: ${sys}\nFisik: ${fisik}\nSelisih: ${selisih}`)) {
         await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=settle&data=${encodeURIComponent(payload)}`);
         
-        // CETAK STRUK CLOSING
         let esc = "\x1B\x40\x1B\x61\x01";
         esc += "dyg++ LAPORAN CLOSING\n";
         esc += "--------------------------------\n";
         esc += "Waktu: " + new Date().toLocaleString('id-ID') + "\n";
         esc += "--------------------------------\n\x1B\x61\x00";
         esc += `Modal Awal   : Rp ${fin.totalModal.toLocaleString()}\n`;
-        esc += `Penj. Tunai  : Rp ${fin.totalCash.toLocaleString()}\n`;
-        esc += `Penj. QRIS   : Rp ${fin.totalQris.toLocaleString()}\n`;
+        esc += `Tunai Masuk  : Rp ${fin.totalCash.toLocaleString()}\n`;
+        esc += `QRIS Masuk   : Rp ${fin.totalQris.toLocaleString()}\n`;
         esc += `Pengeluaran  : Rp ${fin.totalOut.toLocaleString()}\n`;
         esc += "--------------------------------\n";
         esc += `SALDO SISTEM : Rp ${sys.toLocaleString()}\n`;
@@ -214,51 +223,39 @@ async function tutupShift() {
         esc += `SELISIH      : Rp ${selisih.toLocaleString()}\n`;
         esc += "--------------------------------\n\x1B\x61\x01\nSHIFT SELESAI\n\n\n\n\n";
 
-        if (window.AppInventor) {
-            window.AppInventor.setWebViewString("PRINT|" + esc);
-        }
-
-        alert("Shift Berhasil Ditutup!");
+        if (window.AppInventor) { window.AppInventor.setWebViewString("PRINT|" + esc); }
+        alert("Shift Ditutup!");
         location.reload();
     }
 }
 
-// --- ORDER LOGIC ---
-
 async function submitOrder(){
     const total = Object.values(cart).reduce((s,i)=>s+i.price*i.qty,0);
     if(total <= 0) return alert("Pilih menu dulu!");
-
     const btn = document.getElementById("btn-order");
     btn.innerText = "MENCETAK...";
     btn.disabled = true;
 
     try {
         await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${total}&pesanan=${JSON.stringify(cart)}`);
-
         let esc = "\x1B\x40\x1B\x61\x01";
         esc += "dyg++ POS SECURE\n";
         esc += "--------------------------------\n";
         esc += new Date().toLocaleString('id-ID') + "\n";
         esc += "--------------------------------\n\x1B\x61\x00";
-
         Object.keys(cart).forEach(n => {
             esc += `${n} x${cart[n].qty}\n`;
             esc += `      Rp ${(cart[n].price * cart[n].qty).toLocaleString()}\n`;
         });
-
         esc += "--------------------------------\n";
         esc += `TOTAL BAYAR  : Rp ${total.toLocaleString()}\n`;
-        esc += "--------------------------------\n\x1B\x61\x01\nMATUR NUWUN\n\n\n\n\n";
+        esc += "--------------------------------\n\x1B\x61\x01\nTERIMA KASIH\n\n\n\n\n";
 
-        if (window.AppInventor) {
-            window.AppInventor.setWebViewString("PRINT|" + esc);
-        }
-
-        alert("Transaksi Berhasil!");
+        if (window.AppInventor) { window.AppInventor.setWebViewString("PRINT|" + esc); }
+        alert("Berhasil!");
         location.reload();
     } catch (e) {
-        alert("Gagal koneksi!");
+        alert("Gagal!");
         btn.innerText = "BAYAR & CETAK";
         btn.disabled = false;
     }
@@ -269,16 +266,13 @@ async function loadMenu(){
         const r=await fetch(CONFIG.CSV);
         const t=await r.text();
         const rows = t.split("\n").slice(1);
-        
         menuData = rows.map(r => {
             const c = r.split(",");
             return { kat: c[0]?.trim(), nama: c[1]?.trim(), harga: parseInt(c[2]) || 0 };
         }).filter(m => m.nama);
-
         const cats = [...new Set(menuData.map(m => m.kat))];
         const sel = document.getElementById("cat-select");
         cats.forEach(c => { if(c) sel.innerHTML += `<option value="${c}">${c}</option>`; });
-
         renderMenu();
     } catch(e) { console.error("CSV Load Error"); }
 }
@@ -292,18 +286,17 @@ function renderMenu(){
         const matchSearch = m.nama.toLowerCase().includes(s);
         return matchCat && matchSearch;
     }).forEach(m=>{
+        const qty = cart[m.nama]?.qty || 0;
         c.innerHTML+=`
-            <div onclick="addToCart('${m.nama}',${m.harga})" class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 active:scale-95 transition-all cursor-pointer">
+            <div onclick="addToCart('${m.nama}',${m.harga})" class="relative bg-white p-3 rounded-xl shadow-sm border border-slate-200 active:scale-95 transition-all cursor-pointer">
+                ${qty > 0 ? `<div class="badge-qty">${qty}</div>` : ''}
                 <p class="text-[10px] font-black leading-tight h-8 overflow-hidden">${m.nama}</p>
                 <p class="text-emerald-600 font-bold text-[9px] mt-1">Rp ${m.harga.toLocaleString()}</p>
             </div>`;
     });
 }
 
-window.onload = () => {
-    loadMenu();
-    updateMonitor();
-};
+window.onload = () => { loadMenu(); updateMonitor(); };
 </script>
 </body>
 </html>
