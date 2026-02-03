@@ -153,12 +153,53 @@ async function bukaShift() {
 
 async function tutupShift() {
     const f = window.finData;
+    // Hitung saldo yang seharusnya ada di laci (Modal + Cash - Out)
     const sys = (f.totalModal + f.totalCash) - f.totalOut;
-    const fisik = prompt("Input Uang Fisik:", sys);
-    if(fisik === null) return;
-    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=settle&data=${encodeURIComponent(JSON.stringify({sys, fisik, selisih: fisik-sys}))}`);
-    localStorage.removeItem("shiftActive"); localStorage.removeItem("modalValue");
-    location.reload();
+    
+    const fisik = prompt("Input Total Uang Fisik di Laci saat ini:", sys);
+    if(fisik === null) return; // Batal jika klik cancel
+    
+    const konfirmasi = confirm("Yakin ingin TUTUP SHIFT? Semua angka laporan akan di-restart ke 0.");
+    if(!konfirmasi) return;
+
+    try {
+        const pay = JSON.stringify({ 
+            sys: sys, 
+            fisik: fisik, 
+            selisih: fisik - sys 
+        });
+
+        // 1. Kirim data settle ke server
+        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=settle&data=${encodeURIComponent(pay)}`);
+        
+        // 2. Hapus data lokal di browser
+        localStorage.removeItem("shiftActive");
+        localStorage.removeItem("modalValue");
+
+        // 3. RESTART UI secara manual agar jadi 0 semua tanpa nunggu server
+        resetDashboardUI();
+
+        alert("Shift Berhasil Ditutup & Laporan Di-restart!");
+        
+        // 4. Refresh halaman untuk memastikan kondisi bersih
+        location.reload();
+    } catch(e) {
+        alert("Gagal koneksi saat tutup shift. Coba lagi.");
+    }
+}
+
+function resetDashboardUI() {
+    // Reset angka di Header
+    document.getElementById("v-header-cash").innerText = "Rp 0";
+    
+    // Reset angka di Tabel Dashboard
+    document.getElementById("t-modal").innerText = "0";
+    document.getElementById("t-cash").innerText = "0";
+    document.getElementById("t-qris").innerText = "0";
+    document.getElementById("t-out").innerText = "0";
+    
+    // Reset variabel global
+    window.finData = { totalModal:0, totalCash:0, totalQris:0, totalOut:0, totalOnline:0 };
 }
 
 // --- DASHBOARD MONITOR ---
