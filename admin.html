@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>dyg++ POS SMART PAY</title>
+    <title>dyg++ POS SECURE V6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
@@ -19,6 +19,7 @@
         .badge-qty { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 99px; font-weight: 800; border: 2px solid white; }
         .payment-btn{background:#e2e8f0; padding:8px; border-radius:8px; font-size:10px; font-weight:800; text-align:center; cursor:pointer}
         .payment-btn:active{background:#cbd5e1; scale:0.95}
+        .btn-locked{background:#cbd5e1 !important; color:#94a3b8 !important; cursor:not-allowed !important}
     </style>
 </head>
 <body>
@@ -51,20 +52,34 @@
                             <tr class="text-red-500"><td>BIAYA OUT</td><td id="t-out" class="text-right">0</td></tr>
                         </table>
                     </div>
-                    <button id="btn-tutup-shift" onclick="tutupShift()" class="w-full bg-red-600 text-white py-2 rounded font-black text-[10px] hidden uppercase">Tutup Shift</button>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="saveFinance('pengeluaran', 'Biaya')" class="bg-orange-500 text-white p-2 rounded text-[9px] font-black uppercase">Pengeluaran</button>
-                        <button onclick="saveFinance('online_food', 'Online')" class="bg-purple-500 text-white p-2 rounded text-[9px] font-black uppercase">Online Food</button>
+                    
+                    <div class="space-y-2">
+                        <div class="flex gap-2">
+                            <input type="number" id="input-modal" placeholder="Input Modal..." class="flex-1 p-2 border rounded text-xs font-bold outline-none">
+                            <button id="btn-buka-shift" onclick="bukaShift()" class="bg-emerald-600 text-white px-4 rounded font-black text-[9px]">BUKA</button>
+                        </div>
+                        <button id="btn-tutup-shift" onclick="tutupShift()" class="w-full bg-red-600 text-white py-2 rounded font-black text-[10px] hidden uppercase shadow-md">Tutup Shift & Settle</button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 border-t pt-2">
+                        <button id="btn-out" onclick="saveFinance('pengeluaran', 'Biaya')" class="bg-orange-500 text-white p-2 rounded text-[9px] font-black uppercase shadow-sm">Pengeluaran</button>
+                        <button id="btn-online" onclick="saveFinance('online_food', 'Online')" class="bg-purple-500 text-white p-2 rounded text-[9px] font-black uppercase shadow-sm">Online Food</button>
                     </div>
                 </div>
 
                 <div onclick="toggleSection('sec-member')" class="handle handle-member">🎫 MEMBER & VOUCHER</div>
                 <div id="sec-member" class="collapse-content space-y-3 p-3 bg-blue-50 rounded-xl border border-blue-200 mb-2">
-                    <input type="number" id="member-hp" placeholder="No HP Member" class="w-full p-2 border rounded text-xs font-bold mb-1">
-                    <button onclick="cekMember()" class="w-full bg-blue-600 text-white py-2 rounded font-black text-[9px] uppercase">Cek Member</button>
+                    <div class="bg-white p-2 rounded shadow-sm border">
+                        <input type="number" id="member-hp" placeholder="No HP Member" class="w-full p-2 border rounded text-xs font-bold mb-2 outline-none">
+                        <button onclick="cekMember()" class="w-full bg-blue-600 text-white py-2 rounded font-black text-[9px] uppercase">Cek Poin</button>
+                    </div>
                     <div id="member-info" class="mt-2 hidden p-2 bg-blue-600 text-white rounded text-[10px]">
                         <p id="m-nama" class="font-black"></p><p id="m-poin" class="font-bold text-yellow-300"></p>
-                        <button onclick="applyRedeem()" class="mt-2 w-full bg-white text-blue-700 py-1.5 rounded font-black uppercase">Pakai Poin</button>
+                        <button id="btn-redeem" onclick="applyRedeem()" class="mt-2 w-full bg-white text-blue-700 py-1.5 rounded font-black uppercase">Pakai Poin</button>
+                    </div>
+                    <div class="bg-white p-2 rounded shadow-sm border">
+                        <input type="text" id="voucher-code" placeholder="Kode Voucher..." class="w-full p-2 border rounded text-xs font-bold mb-2 outline-none uppercase">
+                        <button onclick="applyVoucher()" class="w-full bg-slate-800 text-white py-2 rounded font-black text-[9px] uppercase">Gunakan Voucher</button>
                     </div>
                 </div>
 
@@ -75,18 +90,15 @@
 
             <div class="sticky-bottom p-4 border-t-2 bg-white">
                 <div class="flex justify-between items-center mb-3">
-                    <span class="text-[10px] font-black opacity-50 uppercase">Metode:</span>
-                    <select id="pay-method" onchange="togglePayView()" class="p-1 bg-slate-100 border rounded font-black text-[11px] outline-none">
-                        <option value="TUNAI">💵 TUNAI</option>
+                    <select id="pay-method" onchange="togglePayView()" class="w-full p-2 bg-slate-100 border rounded font-black text-[11px] outline-none">
+                        <option value="TUNAI">💵 PEMBAYARAN TUNAI</option>
                         <option value="QRIS">📱 QRIS / TRANSFER</option>
                         <option value="KARTU">💳 KARTU DEBIT/CC</option>
                     </select>
                 </div>
 
                 <div id="cash-input-area" class="space-y-2 mb-3">
-                    <div class="flex gap-2">
-                        <input type="number" id="input-bayar" oninput="hitungKembalian()" placeholder="Jumlah Uang..." class="flex-1 p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl text-lg font-black outline-none">
-                    </div>
+                    <input type="number" id="input-bayar" oninput="hitungKembalian()" placeholder="Jumlah Uang..." class="w-full p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl text-lg font-black outline-none">
                     <div id="smart-chips" class="grid grid-cols-4 gap-1"></div>
                     <div class="flex justify-between text-[11px] font-black text-blue-600 px-1">
                         <span>KEMBALIAN:</span><span id="v-kembali">Rp 0</span>
@@ -112,13 +124,101 @@ const CONFIG={
 
 let cart={}, menuData=[], activeCat='ALL', memberData=null, discount=0, finalTotal=0;
 
+// --- UTILITY ---
 function toggleSection(id){ document.getElementById(id).style.display = (document.getElementById(id).style.display === "block") ? "none" : "block"; }
+function togglePayView(){ document.getElementById("cash-input-area").style.display = (document.getElementById("pay-method").value === "TUNAI") ? "block" : "none"; }
 
-function togglePayView(){
-    const method = document.getElementById("pay-method").value;
-    document.getElementById("cash-input-area").style.display = (method === "TUNAI") ? "block" : "none";
+// --- SHIFT SYSTEM (ANTI REFRESH) ---
+function checkShiftStatus() {
+    const isShiftOpen = localStorage.getItem("shiftActive") === "true";
+    const btnBuka = document.getElementById("btn-buka-shift");
+    const btnTutup = document.getElementById("btn-tutup-shift");
+    const inputModal = document.getElementById("input-modal");
+
+    if(isShiftOpen) {
+        btnBuka.classList.add("btn-locked");
+        btnBuka.disabled = true;
+        btnBuka.innerText = "OPENED";
+        inputModal.disabled = true;
+        inputModal.value = localStorage.getItem("modalValue");
+        btnTutup.classList.remove("hidden");
+    } else {
+        btnBuka.classList.remove("btn-locked");
+        btnBuka.disabled = false;
+        btnBuka.innerText = "BUKA";
+        inputModal.disabled = false;
+        btnTutup.classList.add("hidden");
+    }
 }
 
+async function bukaShift() {
+    const val = document.getElementById("input-modal").value;
+    if(!val || val <= 0) return alert("Isi Modal Awal!");
+    
+    try {
+        const d = JSON.stringify(["", "Modal Awal", val]);
+        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=modal&data=${encodeURIComponent(d)}`);
+        localStorage.setItem("shiftActive", "true");
+        localStorage.setItem("modalValue", val);
+        checkShiftStatus();
+        updateMonitor();
+    } catch(e) { alert("Gagal koneksi ke server!"); }
+}
+
+async function tutupShift() {
+    const f = window.finData;
+    const sys = (f.totalModal + f.totalCash) - f.totalOut;
+    const fisik = prompt("Input Total Uang Fisik di Laci:", sys);
+    if(fisik === null) return;
+    
+    const pay = JSON.stringify({ sys, fisik, selisih: fisik - sys });
+    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=settle&data=${encodeURIComponent(pay)}`);
+    localStorage.removeItem("shiftActive");
+    localStorage.removeItem("modalValue");
+    location.reload();
+}
+
+// --- FINANCE ---
+async function saveFinance(t, l) {
+    if(localStorage.getItem("shiftActive") !== "true") return alert("Buka Shift Dulu!");
+    const v = prompt("Nominal " + l + ":");
+    if(!v) return;
+    const d = JSON.stringify(["", l, v]);
+    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${t}&data=${encodeURIComponent(d)}`);
+    updateMonitor();
+}
+
+async function updateMonitor() {
+    try {
+        const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance`);
+        const f = await r.json();
+        window.finData = f;
+        document.getElementById("v-header-cash").innerText = "Rp " + ((f.totalModal + f.totalCash) - f.totalOut).toLocaleString();
+        document.getElementById("t-modal").innerText = f.totalModal.toLocaleString();
+        document.getElementById("t-cash").innerText = f.totalCash.toLocaleString();
+        document.getElementById("t-qris").innerText = f.totalQris.toLocaleString();
+        document.getElementById("t-out").innerText = f.totalOut.toLocaleString();
+    } catch(e) {}
+}
+
+// --- SMART PAYMENT ---
+function generateSmartChips(){
+    const area = document.getElementById("smart-chips"); area.innerHTML="";
+    if(finalTotal <= 0) return;
+    const chips = [finalTotal];
+    [10000, 20000, 50000, 100000].forEach(n => { if(n > finalTotal) chips.push(n); });
+    [...new Set(chips)].sort((a,b)=>a-b).slice(0,4).forEach(amt => {
+        area.innerHTML += `<div onclick="setCash(${amt})" class="payment-btn">${amt === finalTotal ? 'PAS' : amt.toLocaleString()}</div>`;
+    });
+}
+function setCash(amt){ document.getElementById("input-bayar").value = amt; hitungKembalian(); }
+function hitungKembalian(){
+    const bayar = document.getElementById("input-bayar").value || 0;
+    const kembali = bayar - finalTotal;
+    document.getElementById("v-kembali").innerText = "Rp " + (kembali > 0 ? kembali.toLocaleString() : 0);
+}
+
+// --- CORE TRANSAKSI ---
 function updateCartUI(){
     let sub=0; const l=document.getElementById("cart-list"); l.innerHTML="";
     Object.keys(cart).forEach(n=>{
@@ -130,76 +230,51 @@ function updateCartUI(){
     generateSmartChips();
 }
 
-function generateSmartChips(){
-    const area = document.getElementById("smart-chips"); area.innerHTML="";
-    if(finalTotal <= 0) return;
-    const chips = [finalTotal]; // Uang Pas
-    [10000, 20000, 50000, 100000].forEach(nominal => { if(nominal > finalTotal) chips.push(nominal); });
-    [...new Set(chips)].sort((a,b)=>a-b).slice(0,4).forEach(amt => {
-        area.innerHTML += `<div onclick="setCash(${amt})" class="payment-btn">${amt === finalTotal ? 'PAS' : amt.toLocaleString()}</div>`;
-    });
-}
-
-function setCash(amt){ document.getElementById("input-bayar").value = amt; hitungKembalian(); }
-
-function hitungKembalian(){
-    const bayar = document.getElementById("input-bayar").value || 0;
-    const kembali = bayar - finalTotal;
-    document.getElementById("v-kembali").innerText = "Rp " + (kembali > 0 ? kembali.toLocaleString() : 0);
-}
-
-// --- CORE FUNCTIONS ---
-async function cekMember() {
-    const hp = document.getElementById("member-hp").value;
-    const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${hp}`);
-    const d = await r.json();
-    if(d.exists) {
-        memberData = d; memberData.noHP = hp;
-        document.getElementById("m-nama").innerText = d.nama;
-        document.getElementById("m-poin").innerText = "Poin: " + d.poin;
-        document.getElementById("member-info").classList.remove("hidden");
-    }
-}
-
-function applyRedeem(){ discount = memberData.poin; updateCartUI(); }
-
 async function submitOrder(){
+    if(localStorage.getItem("shiftActive") !== "true") return alert("Buka Shift Dulu!");
     if(finalTotal <= 0) return alert("Keranjang kosong!");
     const method = document.getElementById("pay-method").value;
     const bayar = document.getElementById("input-bayar").value || 0;
     if(method === "TUNAI" && bayar < finalTotal) return alert("Uang kurang!");
 
-    const btn = document.getElementById("btn-order");
-    btn.innerText = "PROSES..."; btn.disabled = true;
-    
+    document.getElementById("btn-order").disabled = true;
     try {
         const hp = memberData ? memberData.noHP : "";
-        // Tambahkan info metode bayar ke GAS
         await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${finalTotal}&noHP=${hp}&poinRedeem=${discount}&pesanan=${encodeURIComponent(JSON.stringify(cart))}&method=${method}`);
         alert("Transaksi Berhasil!"); location.reload();
-    } catch(e){ alert("Gagal!"); btn.disabled = false; }
+    } catch(e){ alert("Gagal!"); document.getElementById("btn-order").disabled = false; }
 }
 
-async function updateMonitor() {
-    const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance`);
-    const f = await r.json();
-    window.finData = f;
-    document.getElementById("v-header-cash").innerText = "Rp " + ((f.totalModal + f.totalCash) - f.totalOut).toLocaleString();
-    document.getElementById("t-modal").innerText = f.totalModal.toLocaleString();
-    document.getElementById("t-cash").innerText = f.totalCash.toLocaleString();
-    document.getElementById("t-qris").innerText = f.totalQris.toLocaleString();
-    document.getElementById("t-out").innerText = f.totalOut.toLocaleString();
+// --- MEMBER ---
+async function cekMember() {
+    const hp = document.getElementById("member-hp").value;
+    if(!hp) return;
+    const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=cekMember&noHP=${hp}`);
+    const d = await r.json();
+    if(d.exists) {
+        memberData = d; memberData.noHP = hp;
+        document.getElementById("m-nama").innerText = d.nama;
+        document.getElementById("m-poin").innerText = "Poin: " + d.poin.toLocaleString();
+        document.getElementById("member-info").classList.remove("hidden");
+        document.getElementById("btn-redeem").style.display = d.poin >= 5000 ? "block" : "none";
+    }
 }
+function applyRedeem(){ discount = memberData.poin; updateCartUI(); }
 
-// Init
+// --- RENDER MENU & INIT ---
 function addToCart(n,p){ cart[n]={price:p, qty:(cart[n]?.qty||0)+1}; updateCartUI(); renderMenu(); }
 function changeQty(n, d) { cart[n].qty += d; if(cart[n].qty <= 0) delete cart[n]; updateCartUI(); renderMenu(); }
+
 async function loadMenu(){
     const r=await fetch(CONFIG.CSV); const t=await r.text();
-    menuData = t.split("\n").slice(1).map(r => { const c = r.split(","); return { kat: c[0]?.trim(), nama: c[1]?.trim(), harga: parseInt(c[2]) || 0 }; }).filter(m => m.nama);
+    menuData = t.split("\n").slice(1).map(r => { 
+        const c = r.split(","); 
+        return { kat: c[0]?.trim(), nama: c[1]?.trim(), harga: parseInt(c[2]) || 0 }; 
+    }).filter(m => m.nama);
     document.getElementById("cat-select").innerHTML = ["ALL", ...new Set(menuData.map(m => m.kat))].map(c => `<option value="${c}">${c}</option>`).join("");
     renderMenu();
 }
+
 function renderMenu(){
     const c=document.getElementById("menu-render"); const s=document.getElementById("menuSearch").value.toLowerCase(); c.innerHTML="";
     menuData.filter(m => (activeCat === 'ALL' || m.kat === activeCat) && m.nama.toLowerCase().includes(s)).forEach(m=>{
@@ -208,7 +283,8 @@ function renderMenu(){
     });
 }
 function filterCat(v){ activeCat=v; renderMenu(); }
-window.onload=()=>{ loadMenu(); updateMonitor(); }
+
+window.onload=()=>{ loadMenu(); updateMonitor(); checkShiftStatus(); }
 </script>
 </body>
 </html>
