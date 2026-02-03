@@ -3,102 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DYG++ ULTIMATE INTELLIGENCE QUAD-CORE</title>
+    <title>DYG++ QUAD-INTELLIGENCE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #020408; color: #f8fafc; }
-        .glass-card { background: rgba(13, 17, 28, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
-        .tab-btn { background: #1e293b; color: #94a3b8; border: 1px solid rgba(255,255,255,0.05); }
-        .tab-btn.active { background: #10b981; color: #000; font-weight: 800; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
-        .chart-container { height: 280px; position: relative; }
-        .gradient-emerald { background: linear-gradient(to right, #10b981, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #010306; color: #f1f5f9; }
+        .glass-card { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.05); border-radius: 1.5rem; }
+        .tab-btn { background: #1e293b; color: #94a3b8; font-size: 9px; padding: 4px 10px; border-radius: 8px; font-weight: 800; transition: 0.2s; }
+        .tab-btn.active { background: #10b981; color: #000; box-shadow: 0 0 10px #10b98155; }
+        /* Kotak grafik diperkecil */
+        .chart-box { height: 180px; position: relative; margin-top: 10px; }
     </style>
 </head>
-<body class="p-4 lg:p-10 pb-20">
+<body class="p-4 lg:p-8">
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <header class="flex justify-between items-center mb-6">
         <div>
-            <h1 class="text-4xl font-black italic tracking-tighter uppercase">DYG++ <span class="gradient-emerald">QUAD-INTELLIGENCE</span></h1>
-            <p class="text-slate-500 text-[10px] font-bold tracking-[0.3em]">MULTI-DIMENSIONAL BUSINESS ANALYTICS</p>
+            <h1 class="text-2xl font-black italic tracking-tighter italic uppercase text-emerald-500">DYG++ <span class="text-white">ULTIMATE</span></h1>
+            <p id="ai-text" class="text-[10px] font-bold text-slate-500 italic uppercase">Syncing neural data...</p>
         </div>
-        <button onclick="refreshData()" class="bg-white text-black px-8 py-3 rounded-2xl font-black text-xs hover:scale-105 transition">SYNC ALL SYSTEMS</button>
-    </div>
+        <button onclick="refreshData()" class="bg-white text-black text-[10px] font-black px-4 py-2 rounded-xl hover:bg-emerald-500 transition">REFRESH</button>
+    </header>
 
-    <div class="glass-card p-6 rounded-[2.5rem] mb-8 border-l-8 border-emerald-500 bg-emerald-500/5">
-        <div class="flex items-center gap-4">
-            <div class="p-3 bg-emerald-500 rounded-full animate-pulse">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            </div>
-            <div>
-                <h4 class="text-xs font-black text-emerald-500 uppercase italic">AI Intelligence Advisor</h4>
-                <p id="ai-text" class="text-sm font-medium italic text-slate-300">"Sistem sedang membaca pola transaksi dan memetakan performa meja..."</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         
-        <div class="glass-card p-6 rounded-[2.5rem]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-sm font-black italic">1. REVENUE <span class="text-emerald-500 italic">VS PREVIOUS</span></h3>
-                <div class="flex gap-1 bg-black/50 p-1 rounded-xl">
-                    <button onclick="updateChart('rev', 'hour')" class="rev-tab tab-btn px-3 py-1 rounded-lg text-[9px]">JAM</button>
-                    <button onclick="updateChart('rev', 'day')" class="rev-tab tab-btn px-3 py-1 rounded-lg text-[9px]">HARI</button>
-                    <button onclick="updateChart('rev', 'week')" class="rev-tab tab-btn px-3 py-1 rounded-lg text-[9px]">MINGGU</button>
-                    <button onclick="updateChart('rev', 'month')" class="rev-tab tab-btn px-3 py-1 rounded-lg text-[9px] active">BULAN</button>
+        <div class="glass-card p-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-[11px] font-black uppercase tracking-widest">1. Revenue VS</h3>
+                <div class="flex gap-1" id="tabs-rev">
+                    <button onclick="changePeriod('rev', 'hour')" class="tab-btn active">JAM</button>
+                    <button onclick="changePeriod('rev', 'month')" class="tab-btn">BLN</button>
                 </div>
             </div>
-            <div class="chart-container"><canvas id="chartRevenue"></canvas></div>
+            <div class="chart-box"><canvas id="chartRev"></canvas></div>
         </div>
 
-        <div class="glass-card p-6 rounded-[2.5rem]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-sm font-black italic">2. TABLE AVG <span class="text-blue-400 italic">PER HOUR</span></h3>
-                <div class="flex gap-1 bg-black/50 p-1 rounded-xl">
-                    <button onclick="updateChart('table', 'hour')" class="table-tab tab-btn px-3 py-1 rounded-lg text-[9px]">SHIFT</button>
-                    <button onclick="updateChart('table', 'week')" class="table-tab tab-btn px-3 py-1 rounded-lg text-[9px]">MINGGU</button>
-                    <button onclick="updateChart('table', 'month')" class="table-tab tab-btn px-3 py-1 rounded-lg text-[9px] active">BULAN</button>
+        <div class="glass-card p-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-[11px] font-black uppercase tracking-widest">2. Table Efficiency</h3>
+                <div class="flex gap-1">
+                    <button class="tab-btn active">PROD/JAM</button>
                 </div>
             </div>
-            <div class="chart-container"><canvas id="chartTable"></canvas></div>
+            <div class="chart-box"><canvas id="chartTable"></canvas></div>
         </div>
 
-        <div class="glass-card p-6 rounded-[2.5rem]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-sm font-black italic">3. MEMBER <span class="text-purple-400 italic">VISIT RATE</span></h3>
-                <div class="flex gap-1 bg-black/50 p-1 rounded-xl">
-                    <button onclick="updateChart('mem', 'day')" class="mem-tab tab-btn px-3 py-1 rounded-lg text-[9px] active">HARI</button>
-                    <button onclick="updateChart('mem', 'month')" class="mem-tab tab-btn px-3 py-1 rounded-lg text-[9px]">BULAN</button>
+        <div class="glass-card p-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-[11px] font-black uppercase tracking-widest">3. Member Traffic</h3>
+                <div class="flex gap-1">
+                    <button class="tab-btn active">LOYALTY</button>
                 </div>
             </div>
-            <div class="chart-container"><canvas id="chartMember"></canvas></div>
+            <div class="chart-box"><canvas id="chartMem"></canvas></div>
         </div>
 
-        <div class="glass-card p-6 rounded-[2.5rem]">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-sm font-black italic">4. GROWTH <span class="text-orange-400 italic">VS PERIOD</span></h3>
-                <div class="flex gap-1 bg-black/50 p-1 rounded-xl">
-                    <button onclick="updateChart('growth', 'week')" class="growth-tab tab-btn px-3 py-1 rounded-lg text-[9px]">MINGGU</button>
-                    <button onclick="updateChart('growth', 'month')" class="growth-tab tab-btn px-3 py-1 rounded-lg text-[9px] active">BULAN</button>
+        <div class="glass-card p-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-[11px] font-black uppercase tracking-widest">4. Growth Index</h3>
+                <div class="flex gap-1">
+                    <button class="tab-btn active">PERIODIC</button>
                 </div>
             </div>
-            <div class="chart-container"><canvas id="chartGrowth"></canvas></div>
+            <div class="chart-box"><canvas id="chartGrowth"></canvas></div>
         </div>
     </div>
 
-    <div class="glass-card p-8 rounded-[3rem]">
-        <h3 class="text-lg font-black mb-6 italic">MEMBER <span class="text-emerald-500">DEEP INSIGHTS</span></h3>
+    <div class="glass-card p-5 overflow-hidden">
+        <h3 class="text-[11px] font-black uppercase mb-4 tracking-widest text-emerald-500">Member Deep Insight</h3>
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead>
-                    <tr class="text-slate-500 border-b border-white/5 uppercase">
-                        <th class="pb-4">Nama Member</th>
-                        <th class="pb-4">Total Belanja</th>
-                        <th class="pb-4">Avg Ticket</th>
-                        <th class="pb-4">Kunjungan/Bulan</th>
-                        <th class="pb-4">Menu Terlaris</th>
+            <table class="w-full text-[10px] text-left">
+                <thead class="text-slate-500 uppercase border-b border-white/5 font-black">
+                    <tr>
+                        <th class="pb-2">Member</th>
+                        <th class="pb-2">Total Belanja</th>
+                        <th class="pb-2">Visit/Bln</th>
+                        <th class="pb-2">Fav Menu</th>
                     </tr>
                 </thead>
                 <tbody id="member-body" class="font-bold"></tbody>
@@ -107,72 +88,86 @@
     </div>
 
     <script>
-        const API = "URL_GAS_ANDA"; // Ganti dengan URL Deployment
+        const API = "https://script.google.com/macros/s/AKfycbz8-i7xL-dhiOB-wyyYzoKMjZfD1eauRuuCLVy9FXbGDDx5EcQ7zx4cF82KJ7VETVVz7Q/exec";
         const TOKEN = "dyg-access-v2";
-        let charts = {};
-        let rawData = null;
+        let dashboardData = null;
+        let chartObjects = {};
 
-        async function refreshData() {
-            try {
-                const resp = await fetch(`${API}?token=${TOKEN}&action=getDashboardData`);
-                rawData = await resp.json();
-                initAllCharts();
-                renderMemberTable();
-                document.getElementById('ai-text').innerText = rawData.aiIntelligence;
-            } catch (e) { console.error("Sync Failed", e); }
-        }
-
+        // Inisialisasi Grafik
         function createChart(id, label, dataCur, dataPrev, labels, color) {
             const ctx = document.getElementById(id).getContext('2d');
-            if (charts[id]) charts[id].destroy();
-            charts[id] = new Chart(ctx, {
+            if (chartObjects[id]) chartObjects[id].destroy();
+            chartObjects[id] = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'CURRENT', data: dataCur, borderColor: color, borderWidth: 3, tension: 0.4, fill: true, backgroundColor: color+'10' },
-                        { label: 'PREVIOUS', data: dataPrev, borderColor: '#475569', borderDash: [5,5], borderWidth: 1, tension: 0.4, pointRadius: 0 }
+                        { label: 'NOW', data: dataCur, borderColor: color, borderWidth: 3, tension: 0.4, pointRadius: 0, fill: true, backgroundColor: color+'11' },
+                        { label: 'PREV', data: dataPrev, borderColor: '#475569', borderDash: [4,4], borderWidth: 1, tension: 0.4, pointRadius: 0 }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { y: { grid: { color: '#ffffff05' }, ticks: { font: { size: 8 } } }, x: { grid: { display: false }, ticks: { font: { size: 8 } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { grid: { color: '#ffffff05' }, ticks: { display: false } },
+                        x: { grid: { display: false }, ticks: { color: '#475569', font: { size: 8 } } }
+                    }
                 }
             });
         }
 
-        function updateChart(type, period) {
-            // Update UI Tab Active
-            document.querySelectorAll(`.${type}-tab`).forEach(b => b.classList.remove('active'));
+        async function refreshData() {
+            document.getElementById('ai-text').innerText = "Processing Data...";
+            try {
+                const resp = await fetch(`${API}?token=${TOKEN}&action=getDashboardData`);
+                dashboardData = await resp.json();
+                renderAll();
+            } catch (e) { alert("Error Syncing!"); }
+        }
+
+        function changePeriod(type, p) {
+            // Update Tab UI
+            const btns = document.querySelectorAll(`#tabs-${type} .tab-btn`);
+            btns.forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
-
-            // Logika ganti data berdasarkan pilihan Bos
-            if(type === 'rev') {
-                const d = rawData.charts[period] || rawData.charts.month;
-                createChart('chartRevenue', 'REVENUE', d.current, d.previous, d.labels, '#10b981');
+            
+            if (type === 'rev') {
+                const d = dashboardData.charts[p];
+                createChart('chartRev', 'REV', d.current, d.previous, d.labels, '#10b981');
             }
-            // Tambahkan logika untuk type lain (table, mem, growth) di sini
         }
 
-        function initAllCharts() {
-            // Inisialisasi default saat load
-            updateChart('rev', 'month');
-            // Mock data untuk 3 grafik lainnya dari dashboardData
-            createChart('chartTable', 'TABLE', [12,19,15,17,14,20], [10,12,14,12,11,15], ['M1','M2','M3','M4','M5','M6'], '#60a5fa');
-            createChart('chartMember', 'MEMBER', [5,8,12,7,10,15], [4,6,8,5,7,10], ['S','S','R','K','J','S'], '#a78bfa');
-            createChart('chartGrowth', 'GROWTH', [10,25,30,45], [5,20,25,35], ['W1','W2','W3','W4'], '#fb923c');
-        }
+        function renderAll() {
+            if(!dashboardData) return;
+            
+            // 1. Chart Revenue (Default Jam)
+            const rev = dashboardData.charts.hour;
+            createChart('chartRev', 'REV', rev.current, rev.previous, rev.labels, '#10b981');
 
-        function renderMemberTable() {
-            const body = document.getElementById('member-body');
-            body.innerHTML = rawData.memberRanking.map(m => `
-                <tr class="border-b border-white/5 hover:bg-white/5 transition">
-                    <td class="py-4 italic text-emerald-400">${m.nama}</td>
-                    <td class="py-4">Rp ${m.spend.toLocaleString()}</td>
-                    <td class="py-4">Rp ${Math.round(m.avgSpend).toLocaleString()}</td>
-                    <td class="py-4">${m.avgVisitMonth.toFixed(1)}x</td>
-                    <td class="py-4 text-slate-400">${m.fav}</td>
+            // 2. Chart Table Performance (Ambil dari dataTable)
+            const tables = Object.values(dashboardData.tablePerformance)[0] || { current: [], prev: [], labels: [] };
+            createChart('chartTable', 'TBL', tables.current, tables.prev, Array.from({length:24},(_,i)=>i+":00"), '#3b82f6');
+
+            // 3. Chart Member (Mock trend visits)
+            createChart('chartMem', 'MEM', [2,5,8,12,10], [1,4,6,8,7], ['W1','W2','W3','W4','W5'], '#a78bfa');
+
+            // 4. Chart Growth
+            createChart('chartGrowth', 'GRO', [10,40,20,60,80], [5,20,15,40,50], ['Jan','Feb','Mar','Apr','Mei'], '#fb923c');
+
+            // Table Member
+            const mBody = document.getElementById('member-body');
+            mBody.innerHTML = dashboardData.memberRanking.map(m => `
+                <tr class="border-b border-white/5">
+                    <td class="py-3 italic text-emerald-400">${m.nama}</td>
+                    <td class="py-3">Rp ${m.spend.toLocaleString()}</td>
+                    <td class="py-3">${m.avgVisitMonth.toFixed(1)}x</td>
+                    <td class="py-3 text-slate-400">${m.fav || '-'}</td>
                 </tr>
             `).join('');
+
+            document.getElementById('ai-text').innerText = dashboardData.aiIntelligence;
         }
 
         window.onload = refreshData;
