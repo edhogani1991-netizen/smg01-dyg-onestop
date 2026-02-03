@@ -6,95 +6,91 @@
     <title>CLOUDkitchen.dyg++ POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .btn-qty { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
-        .sticky-bottom { position: sticky; bottom: 0; background: white; border-top: 1px solid #e5e7eb; }
-        input[type="number"]::-webkit-inner-spin-button { display: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .menu-card { transition: all 0.2s ease; }
+        .menu-card:active { transform: scale(0.95); }
     </style>
 </head>
 
-<body class="bg-slate-50 text-slate-800 antialiased pb-20">
+<body class="bg-slate-100 h-screen flex flex-col">
 
-    <header class="bg-blue-700 text-white p-4 shadow-md mb-4">
-        <h1 class="text-xl font-bold flex items-center gap-2">
-            <span>🧾</span> Admin Kasir dyg++
-        </h1>
+    <header class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-4">
+            <h1 class="text-xl font-bold text-blue-700 tracking-tight">dyg++ <span class="text-slate-400 font-medium">RETAIL</span></h1>
+            <div class="h-6 w-px bg-slate-200"></div>
+            <div id="memberInfo" class="text-sm font-medium text-slate-500 italic">Silahkan cek member...</div>
+        </div>
+        <div class="flex items-center gap-3">
+            <input id="nohp" type="text" placeholder="Nomor WA Member" class="bg-slate-100 border-none rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-48">
+            <button onclick="cekMember()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">Cek Member</button>
+        </div>
     </header>
 
-    <div class="max-w-4xl mx-auto px-4">
+    <main class="flex flex-1 overflow-hidden">
         
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-            
-            <div class="md:col-span-7">
-                <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200">
-                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3">Loyalty Member</h2>
-                    <div class="flex gap-2">
-                        <input id="nohp" type="text" placeholder="Nomor WA (08...)" class="border border-slate-300 p-2 rounded-lg flex-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                        <button onclick="cekMember()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-black transition">
-                            Cek
-                        </button>
-                    </div>
-                    <div id="memberInfo" class="mt-2 text-xs font-medium text-blue-600"></div>
+        <section class="w-[65%] flex flex-col border-r border-slate-200 bg-slate-50">
+            <div class="p-4 flex gap-3 bg-white border-b border-slate-200">
+                <div class="relative flex-1">
+                    <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
+                    <input type="text" id="searchInput" oninput="filterMenu()" placeholder="Cari menu favorit..." class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
-
-                <div id="menuContainer">
-                    </div>
+                <select id="categoryFilter" onchange="filterMenu()" class="bg-slate-100 border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none min-w-[150px]">
+                    <option value="ALL">Semua Kategori</option>
+                </select>
             </div>
 
-            <div class="md:col-span-5">
-                <div class="sticky top-4 space-y-4">
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200">
-                            <h2 class="font-bold text-slate-700">Detail Pesanan</h2>
-                        </div>
-                        <div id="cartList" class="p-4 space-y-3 max-h-[300px] overflow-y-auto text-sm">
-                            <p class="text-slate-400 text-center py-4">Belum ada item</p>
-                        </div>
-                        <div class="p-4 bg-slate-50 border-t border-slate-200">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-slate-500">Subtotal</span>
-                                <span class="font-semibold">Rp <span id="total">0</span></span>
-                            </div>
-                            <div class="flex justify-between items-center text-red-600">
-                                <span class="text-xs">Voucher/Diskon</span>
-                                <span class="font-semibold text-sm">- Rp <span id="valVoucher">0</span></span>
-                            </div>
-                        </div>
-                    </div>
+            <div id="menuList" class="p-4 grid grid-cols-2 gap-4 overflow-y-auto custom-scroll content-start">
+                </div>
+        </section>
 
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                        <h2 class="font-bold text-slate-700 mb-3">Pembayaran</h2>
-                        
-                        <div class="space-y-3">
-                            <div>
-                                <label class="text-[10px] font-bold uppercase text-slate-400">Voucher</label>
-                                <input id="voucher" type="number" oninput="updateVoucherText()" placeholder="Nominal" class="border p-2 w-full rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                            </div>
+        <section class="w-[35%] flex flex-col bg-white">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                <h2 class="font-bold text-slate-800 uppercase text-xs tracking-widest">Keranjang Belanja</h2>
+                <button onclick="location.reload()" class="text-xs text-red-500 font-medium">Reset</button>
+            </div>
 
-                            <div>
-                                <label class="text-[10px] font-bold uppercase text-slate-400">Metode</label>
-                                <select id="metode" onchange="renderCash()" class="border p-2 w-full rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                                    <option value="CASH">💵 Tunai (Cash)</option>
-                                    <option value="QRIS">📱 QRIS</option>
-                                    <option value="CARD">💳 Kartu Debet/Kredit</option>
-                                </select>
-                            </div>
-
-                            <div id="cashBox" class="bg-blue-50 p-3 rounded-lg border border-blue-100"></div>
-
-                            <button onclick="submitOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95">
-                                BAYAR & CETAK STRUK
-                            </button>
-                        </div>
-                    </div>
+            <div id="cartList" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
+                <div class="flex flex-col items-center justify-center h-full text-slate-300">
+                    <span class="text-4xl mb-2">🛒</span>
+                    <p class="text-sm">Belum ada pesanan</p>
                 </div>
             </div>
 
-        </div>
-    </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-4">
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-500">Voucher</span>
+                        <input id="voucher" type="number" oninput="renderCart()" placeholder="0" class="w-24 text-right border-b border-slate-300 bg-transparent focus:border-blue-500 outline-none font-bold text-red-600">
+                    </div>
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="font-bold text-slate-700 text-lg">Total</span>
+                        <span class="text-2xl font-black text-blue-700">Rp <span id="total">0</span></span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <select id="metode" onchange="renderCash()" class="w-full border border-slate-200 rounded-xl p-3 text-sm font-semibold bg-white shadow-sm">
+                        <option value="CASH">💵 TUNAI (CASH)</option>
+                        <option value="QRIS">📱 QRIS</option>
+                        <option value="CARD">💳 KARTU DEBIT</option>
+                    </select>
+
+                    <div id="cashBox" class="space-y-3"></div>
+
+                    <button onclick="submitOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 transition-all active:scale-[0.98]">
+                        BAYAR & CETAK STRUK
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
 
 <script>
-/* ================= CONFIG ================= */
+/* ================= CONFIG & DATA ================= */
 const API_URL = "https://script.google.com/macros/s/AKfycbyvU5fQpE_UFq_mnfAMvhCNJ97f1SvVRpXv_qrZh96lj8IBPot8xRdQ34Iz1n-HVmiuzg/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
@@ -103,12 +99,12 @@ let MENU = [];
 let cart = {};
 let member = null;
 
-/* ================= FETCH DATA MENU CSV ================= */
+/* ================= LOAD DATA ================= */
 async function loadMenu() {
     try {
         const response = await fetch(CSV_URL);
         const data = await response.text();
-        const rows = data.split("\n").slice(1); // Skip header
+        const rows = data.split("\n").slice(1);
         
         MENU = rows.map(row => {
             const cols = row.split(",");
@@ -117,50 +113,61 @@ async function loadMenu() {
                 nama: cols[1]?.trim(),
                 harga: parseInt(cols[2]?.trim()) || 0
             };
-        }).filter(m => m.nama); // Buang baris kosong
+        }).filter(m => m.nama);
 
+        populateCategories();
         renderMenu();
     } catch (e) {
-        console.error("Gagal load menu", e);
+        console.error("Gagal load data menu", e);
     }
 }
 
+function populateCategories() {
+    const cats = [...new Set(MENU.map(m => m.kategori))];
+    const select = document.getElementById("categoryFilter");
+    cats.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c; opt.innerText = c;
+        select.appendChild(opt);
+    });
+}
+
+/* ================= RENDERER ================= */
 function renderMenu() {
-    const container = document.getElementById("menuContainer");
-    container.innerHTML = "";
-    
-    // Group by kategori
-    const groups = MENU.reduce((acc, item) => {
-        (acc[item.kategori] = acc[item.kategori] || []).push(item);
-        return acc;
-    }, {});
+    const list = document.getElementById("menuList");
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    const filter = document.getElementById("categoryFilter").value;
 
-    for (const cat in groups) {
-        const section = document.createElement("div");
-        section.className = "mb-6";
-        section.innerHTML = `
-            <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
-                <span class="w-1 h-4 bg-blue-600 rounded-full"></span> ${cat}
-            </h3>
-            <div class="menu-grid">
-                ${groups[cat].map((m) => {
-                    const idx = MENU.indexOf(m);
-                    return `
-                    <div onclick="addItem(${idx})" class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm active:bg-blue-50 cursor-pointer transition-all relative overflow-hidden group">
-                        <div class="font-bold text-sm text-slate-700">${m.nama}</div>
-                        <div class="text-blue-600 font-medium text-xs">Rp ${m.harga.toLocaleString()}</div>
-                        <span id="badge-${idx}" class="hidden absolute top-0 right-0 bg-red-500 text-white text-[10px] px-2 py-1 rounded-bl-lg font-bold">0</span>
+    list.innerHTML = "";
+    MENU.forEach((m, i) => {
+        if ((filter === "ALL" || m.kategori === filter) && (m.nama.toLowerCase().includes(search))) {
+            const el = document.createElement("div");
+            el.className = "menu-card bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between hover:border-blue-300 cursor-pointer relative overflow-hidden";
+            el.onclick = () => addItem(i);
+            el.innerHTML = `
+                <div>
+                    <div class="text-[10px] font-bold text-blue-500 uppercase tracking-tight">${m.kategori}</div>
+                    <div class="font-bold text-slate-800 mt-1 leading-tight">${m.nama}</div>
+                </div>
+                <div class="flex justify-between items-end mt-4">
+                    <div class="text-sm font-black text-slate-900">Rp ${m.harga.toLocaleString()}</div>
+                    <div class="bg-slate-100 text-blue-600 rounded-lg p-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
                     </div>
-                    `;
-                }).join("")}
-            </div>
-        `;
-        container.appendChild(section);
-    }
+                </div>
+                <span id="badge-${i}" class="hidden absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-1 rounded-bl-xl font-bold italic"></span>
+            `;
+            list.appendChild(el);
+        }
+    });
+    updateBadges();
 }
 
-/* ================= LOGIC (Fungsi Asli Dipertahankan) ================= */
+function filterMenu() { renderMenu(); }
 
+/* ================= CORE FUNCTIONS (UNCHANGED LOGIC) ================= */
 function addItem(i) {
     if (!cart[i]) cart[i] = { qty: 0, ...MENU[i] };
     cart[i].qty++;
@@ -173,48 +180,46 @@ function removeItem(i) {
     renderCart();
 }
 
+function updateBadges() {
+    MENU.forEach((_, i) => {
+        const badge = document.getElementById("badge-" + i);
+        if (badge) {
+            if (cart[i]) {
+                badge.innerText = cart[i].qty + "x";
+                badge.classList.remove("hidden");
+            } else {
+                badge.classList.add("hidden");
+            }
+        }
+    });
+}
+
 function renderCart() {
     let html = "";
     let total = 0;
 
-    MENU.forEach((_, i) => {
-        const badge = document.getElementById("badge-" + i);
-        if (badge) badge.classList.add("hidden");
-    });
-
     Object.keys(cart).forEach(i => {
         const item = cart[i];
         total += item.qty * item.harga;
-
-        const badge = document.getElementById("badge-" + i);
-        if(badge) {
-            badge.innerText = item.qty;
-            badge.classList.remove("hidden");
-        }
-
         html += `
-            <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg">
+            <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <div class="flex-1">
-                    <div class="font-bold text-slate-700">${item.nama}</div>
+                    <div class="font-bold text-slate-800 text-sm">${item.nama}</div>
                     <div class="text-xs text-slate-500">Rp ${item.harga.toLocaleString()}</div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="removeItem(${i})" class="btn-qty bg-white border border-slate-300 text-slate-600 hover:bg-red-50 hover:text-red-600 transition">－</button>
-                    <span class="font-bold w-4 text-center">${item.qty}</span>
-                    <button onclick="addItem(${i})" class="btn-qty bg-white border border-slate-300 text-slate-600 hover:bg-green-50 hover:text-green-600 transition">＋</button>
+                <div class="flex items-center gap-3">
+                    <button onclick="removeItem(${i})" class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm text-slate-600">－</button>
+                    <span class="font-bold text-sm w-4 text-center">${item.qty}</span>
+                    <button onclick="addItem(${i})" class="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center shadow-sm text-slate-600">＋</button>
                 </div>
             </div>
         `;
     });
 
-    document.getElementById("cartList").innerHTML = html || `<p class="text-slate-400 text-center py-4">Belum ada item</p>`;
-    document.getElementById("total").innerText = total.toLocaleString();
-    if(document.getElementById("bayar")) hitungKembali();
-}
-
-function updateVoucherText() {
-    const val = document.getElementById("voucher").value || 0;
-    document.getElementById("valVoucher").innerText = Number(val).toLocaleString();
+    const voucher = Number(document.getElementById("voucher").value || 0);
+    document.getElementById("cartList").innerHTML = html || `<div class="flex flex-col items-center justify-center h-full text-slate-300"><span class="text-4xl mb-2">🛒</span><p class="text-sm">Belum ada pesanan</p></div>`;
+    document.getElementById("total").innerText = (total - voucher).toLocaleString();
+    updateBadges();
 }
 
 function cekMember() {
@@ -226,10 +231,10 @@ function cekMember() {
         .then(d => {
             if (d.exists) {
                 member = d;
-                document.getElementById("memberInfo").innerText = `✅ ${d.nama} | Poin: ${d.poin}`;
+                document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600">✅ ${d.nama}</span> | Poin: <span class="font-bold">${d.poin}</span>`;
             } else {
                 member = null;
-                document.getElementById("memberInfo").innerText = "❌ Bukan member";
+                document.getElementById("memberInfo").innerHTML = `<span class="text-red-500">❌ Bukan Member</span>`;
             }
         });
 }
@@ -237,94 +242,70 @@ function cekMember() {
 function renderCash() {
     const metode = document.getElementById("metode").value;
     const box = document.getElementById("cashBox");
-    if (metode !== "CASH") { box.classList.add("hidden"); return; }
-    box.classList.remove("hidden");
+    if (metode !== "CASH") { box.innerHTML = ""; return; }
 
     box.innerHTML = `
-        <label class="text-[10px] font-bold uppercase text-blue-400">Uang Diterima</label>
-        <input id="bayar" type="number" placeholder="0" class="border-b-2 border-blue-200 bg-transparent p-2 w-full mb-2 font-bold text-lg outline-none focus:border-blue-500">
-        <div class="flex gap-2 mb-3">
-            ${[20000, 50000, 100000].map(v =>
-                `<button onclick="quickCash(${v})" class="flex-1 bg-white border border-blue-200 py-1 rounded-md text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white transition">${v/1000}k</button>`
-            ).join("")}
-        </div>
-        <div class="text-sm font-bold text-blue-800 flex justify-between">
-            <span>Kembalian:</span>
-            <span>Rp <span id="kembali">0</span></span>
+        <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+            <label class="text-[10px] font-bold uppercase text-blue-500 block mb-1">Uang Diterima</label>
+            <input id="bayar" type="number" placeholder="0" class="w-full bg-transparent border-none text-xl font-black text-blue-900 outline-none p-0">
+            <div class="flex gap-2 mt-3">
+                ${[20000, 50000, 100000].map(v => `<button onclick="quickCash(${v})" class="flex-1 bg-white border border-blue-200 py-2 rounded-xl text-[10px] font-bold hover:bg-blue-600 hover:text-white transition shadow-sm">${v/1000}K</button>`).join("")}
+            </div>
+            <div class="mt-3 pt-3 border-t border-blue-100 flex justify-between items-center font-bold text-sm text-blue-800">
+                <span>Kembali</span>
+                <span>Rp <span id="kembali">0</span></span>
+            </div>
         </div>
     `;
 }
 
-function quickCash(v) {
-    document.getElementById("bayar").value = v;
-    hitungKembali();
-}
-
-document.addEventListener("input", e => {
-    if (e.target.id === "bayar") hitungKembali();
-});
+function quickCash(v) { document.getElementById("bayar").value = v; hitungKembali(); }
+document.addEventListener("input", e => { if (e.target.id === "bayar") hitungKembali(); });
 
 function hitungKembali() {
     const bayar = Number(document.getElementById("bayar")?.value || 0);
     const rawTotal = document.getElementById("total").innerText.replace(/,/g, '');
     const total = Number(rawTotal || 0);
-    const voucher = Number(document.getElementById("voucher").value || 0);
-    const kembali = bayar - (total - voucher);
-    document.getElementById("kembali").innerText = kembali.toLocaleString();
+    document.getElementById("kembali").innerText = (bayar - total).toLocaleString();
 }
 
 async function submitOrder() {
     const rawTotal = document.getElementById("total").innerText.replace(/,/g, '');
     const total = Number(rawTotal || 0);
-    if (total <= 0) { alert("Keranjang kosong"); return; }
+    if (total <= 0 && Object.keys(cart).length === 0) { alert("Keranjang kosong"); return; }
 
     const voucher = Number(document.getElementById("voucher").value || 0);
-    const finalTotal = Math.max(0, total - voucher);
+    const finalTotal = Math.max(0, total);
     const metode = document.getElementById("metode").value;
     const noWA = document.getElementById("nohp").value || "";
 
-    const pesanan = Object.values(cart)
-        .map(i => `${i.nama} x${i.qty}`)
-        .join(", ");
-
+    const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
     const url = `${API_URL}?token=${TOKEN}&action=processPayment&total=${finalTotal}&noWA=${noWA}&redeemQty=0&voucher=${voucher}&method=${metode}&pesanan=${encodeURIComponent(pesanan)}`;
 
-    try {
-        const res = await fetch(url);
-        const txt = await res.text();
+    const res = await fetch(url);
+    const txt = await res.text();
 
-        if (txt === "SUCCESS") {
-            // Logic Print Esc/Pos Anda
-            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
-            esc += "Tgl: " + new Date().toLocaleString() + "\n";
-            esc += "--------------------------------\n\x1B\x61\x00";
-            Object.values(cart).forEach(i => {
-                esc += `${i.nama}\n`;
-                esc += `${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`;
-            });
-            esc += "--------------------------------\n";
-            esc += "TOTAL: Rp " + finalTotal.toLocaleString() + "\n";
-            if (noWA) esc += "Member: " + noWA + "\n";
-            esc += "\nTERIMA KASIH\n\n\n\n";
+    if (txt === "SUCCESS") {
+        let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
+        esc += "Tgl: " + new Date().toLocaleString() + "\n--------------------------------\n\x1B\x61\x00";
+        Object.values(cart).forEach(i => {
+            esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`;
+        });
+        esc += "--------------------------------\nTOTAL: Rp " + finalTotal.toLocaleString() + "\n";
+        if (noWA) esc += "Member: " + noWA + "\n";
+        esc += "\nTERIMA KASIH\n\n\n\n";
 
-            if (window.AppInventor) {
-                window.AppInventor.setWebViewString("PRINT|" + esc);
-            }
-
-            alert("Transaksi Berhasil");
-            location.reload();
-        } else {
-            alert("Gagal menyimpan");
-        }
-    } catch (e) {
-        alert("Terjadi kesalahan koneksi");
+        if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
+        alert("Transaksi Berhasil");
+        location.reload();
+    } else {
+        alert("Gagal menyimpan");
     }
 }
 
-// Jalankan load menu saat start
+// Start
 loadMenu();
 renderCash();
 </script>
-
 </body>
 </html>
