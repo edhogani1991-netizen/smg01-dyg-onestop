@@ -3,238 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OWNER DASHBOARD | dyg++</title>
+    <title>OWNER INTELLIGENCE | dyg++</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #f8fafc; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .stat-card { transition: transform 0.3s ease; }
-        .stat-card:hover { transform: translateY(-5px); }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0b0f1a; color: #f8fafc; }
+        .glass-card { background: rgba(17, 24, 39, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        .trend-up { color: #10b981; }
+        .trend-down { color: #f43f5e; }
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4 md:p-6 lg:px-12">
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <header class="flex flex-col md:flex-row justify-between items-end mb-8 gap-6">
         <div>
-            <h1 class="text-2xl font-black text-emerald-400 uppercase tracking-tighter">dyg++ OWNER CONSOLE</h1>
-            <p class="text-slate-400 text-sm">Monitoring Bisnis Real-Time</p>
+            <div class="flex items-center gap-2 mb-1">
+                <div class="h-3 w-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                <h1 class="text-3xl font-black text-white tracking-tighter">DYG++ <span class="text-emerald-500">INSIGHTS</span></h1>
+            </div>
+            <p class="text-slate-400 text-sm">Real-time Business Monitoring & AI Advisor</p>
         </div>
-        <div class="flex gap-2 bg-slate-800 p-1 rounded-lg">
-            <button onclick="refreshData()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-md text-xs font-bold transition">REFRESH DATA</button>
-            <div id="last-update" class="px-4 py-2 text-[10px] text-slate-400 self-center font-mono">Loading...</div>
+        <div class="flex flex-col items-end">
+            <div class="flex gap-3 mb-2">
+                <button onclick="refreshData()" class="group flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-900/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-active:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    REFRESH DATA
+                </button>
+            </div>
+            <p id="last-update" class="text-[10px] font-mono text-slate-500 uppercase tracking-widest">System Standby</p>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="glass-card p-6 rounded-[2rem] border-b-4 border-emerald-500 shadow-xl">
+            <div class="flex justify-between items-start mb-4">
+                <p class="text-slate-400 text-xs font-bold uppercase">Omzet Hari Ini</p>
+                <span id="trend-day" class="text-[10px] font-black px-2 py-1 rounded-lg bg-slate-800">--</span>
+            </div>
+            <h3 id="rev-day" class="text-3xl font-black text-white mb-1">Rp 0</h3>
+            <p class="text-[10px] text-slate-500">vs Rata-rata harian</p>
+        </div>
+
+        <div class="glass-card p-6 rounded-[2rem] border-b-4 border-blue-500 shadow-xl">
+            <p class="text-slate-400 text-xs font-bold uppercase mb-4">Minggu Ini</p>
+            <h3 id="rev-week" class="text-3xl font-black text-white mb-1">Rp 0</h3>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full mt-3">
+                <div id="progress-week" class="bg-blue-500 h-1.5 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="glass-card p-6 rounded-[2rem] border-b-4 border-purple-500 shadow-xl">
+            <p class="text-slate-400 text-xs font-bold uppercase mb-4">Estimasi Profit (Gross)</p>
+            <h3 id="est-profit" class="text-3xl font-black text-purple-400 mb-1">Rp 0</h3>
+            <p class="text-[10px] text-slate-500 italic">Sudah potong pengeluaran harian</p>
+        </div>
+
+        <div class="glass-card p-6 rounded-[2rem] border-b-4 border-red-500 shadow-xl">
+            <p class="text-slate-400 text-xs font-bold uppercase mb-4">Pengeluaran Bulan Ini</p>
+            <h3 id="exp-month" class="text-3xl font-black text-red-400 mb-1">Rp 0</h3>
+            <p id="exp-ratio" class="text-[10px] text-slate-500">0% dari total omzet</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div class="glass-card p-5 rounded-2xl stat-card">
-            <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Hari Ini</p>
-            <h3 id="rev-day" class="text-xl font-black text-white">Rp 0</h3>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <div class="lg:col-span-2 glass-card p-8 rounded-[2.5rem]">
+            <div class="flex justify-between items-center mb-6">
+                <h4 class="font-bold text-lg tracking-tight">TRAFIK PENDAPATAN <span class="text-emerald-500 text-xs ml-2">PER JAM</span></h4>
+                <div class="flex gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 bg-emerald-500 rounded-sm"></div>
+                        <span class="text-[10px] text-slate-400 uppercase font-bold">Revenue</span>
+                    </div>
+                </div>
+            </div>
+            <div class="h-[300px]">
+                <canvas id="hourChart"></canvas>
+            </div>
         </div>
-        <div class="glass-card p-5 rounded-2xl stat-card border-l-4 border-l-blue-500">
-            <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Minggu Ini</p>
-            <h3 id="rev-week" class="text-xl font-black text-white">Rp 0</h3>
-        </div>
-        <div class="glass-card p-5 rounded-2xl stat-card border-l-4 border-l-purple-500">
-            <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Bulan Ini</p>
-            <h3 id="rev-month" class="text-xl font-black text-white">Rp 0</h3>
-        </div>
-        <div class="glass-card p-5 rounded-2xl stat-card border-l-4 border-l-emerald-500">
-            <p class="text-slate-400 text-[10px] font-bold uppercase mb-1">Tahun Ini</p>
-            <h3 id="rev-year" class="text-xl font-black text-white">Rp 0</h3>
-        </div>
-    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div class="lg:col-span-2 glass-card p-6 rounded-3xl">
-            <h4 class="text-sm font-bold mb-4 flex justify-between">
-                <span>TREN PENDAPATAN PER JAM</span>
-                <span class="text-emerald-400 text-[10px] uppercase">Real-Time</span>
+        <div class="glass-card p-8 rounded-[2.5rem] bg-gradient-to-br from-slate-900 to-slate-800 border-t-4 border-emerald-400/30">
+            <h4 class="font-bold text-lg mb-6 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                </svg>
+                DASHBOARD ADVISOR
             </h4>
-            <canvas id="hourChart" height="150"></canvas>
-        </div>
-
-        <div class="glass-card p-6 rounded-3xl">
-            <h4 class="text-sm font-bold mb-4">MODE TRANSAKSI</h4>
-            <canvas id="payChart"></canvas>
-            <div id="online-total" class="mt-4 p-3 bg-slate-800 rounded-xl text-center">
-                <p class="text-[10px] text-slate-400">TOTAL ORDER ONLINE</p>
-                <p id="rev-online" class="text-sm font-bold text-orange-400">Rp 0</p>
+            <div id="ai-advice" class="space-y-4">
+                <div class="animate-pulse flex space-x-4">
+                    <div class="flex-1 space-y-4 py-1">
+                        <div class="h-4 bg-slate-700 rounded w-3/4"></div>
+                        <div class="space-y-2">
+                            <div class="h-4 bg-slate-700 rounded"></div>
+                            <div class="h-4 bg-slate-700 rounded w-5/6"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div class="glass-card p-6 rounded-3xl overflow-hidden">
-            <h4 class="text-sm font-bold mb-4">ITEM PALING LARIS</h4>
-            <div id="top-items" class="space-y-3">
-                <p class="text-xs text-slate-500 italic">Memuat data...</p>
-            </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="glass-card p-6 rounded-[2rem]">
+            <h4 class="text-xs font-black text-slate-500 uppercase mb-5 tracking-widest">Produk Terlaris</h4>
+            <div id="top-items" class="space-y-4"></div>
         </div>
 
-        <div class="glass-card p-6 rounded-3xl overflow-hidden">
-            <h4 class="text-sm font-bold mb-4">PERFORMA MEJA & LAYANAN</h4>
-            <div id="table-performance" class="space-y-3">
-                </div>
+        <div class="glass-card p-6 rounded-[2rem]">
+            <h4 class="text-xs font-black text-slate-500 uppercase mb-5 tracking-widest">Revenue Per Meja</h4>
+            <div id="table-performance" class="space-y-3"></div>
         </div>
 
-        <div class="glass-card p-6 rounded-3xl">
-            <h4 class="text-sm font-bold mb-4 uppercase">Operational & Expense</h4>
+        <div class="glass-card p-6 rounded-[2rem]">
+            <h4 class="text-xs font-black text-slate-500 uppercase mb-5 tracking-widest">Payment Split</h4>
+            <canvas id="payChart" height="200"></canvas>
+            <div id="pay-detail" class="mt-4 grid grid-cols-2 gap-2 text-[10px] font-bold"></div>
+        </div>
+
+        <div class="glass-card p-6 rounded-[2rem]">
+            <h4 class="text-xs font-black text-slate-500 uppercase mb-5 tracking-widest">Shift Status</h4>
             <div class="space-y-4">
-                <div class="flex justify-between p-3 bg-slate-800 rounded-xl">
-                    <div>
-                        <p class="text-[9px] text-slate-400">SHIFT BUKA</p>
-                        <p id="shift-start" class="text-xs font-bold text-emerald-400">--:--</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[9px] text-slate-400">SHIFT TUTUP</p>
-                        <p id="shift-end" class="text-xs font-bold text-red-400">--:--</p>
-                    </div>
+                <div class="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+                    <p class="text-[10px] text-emerald-500 font-bold mb-1">BUKA SHIFT</p>
+                    <p id="shift-start" class="text-xl font-black italic">--:--</p>
                 </div>
-                <div class="p-4 border border-slate-700 rounded-2xl">
-                    <p class="text-[10px] font-bold text-slate-400 mb-2">PENGELUARAN (OUT)</p>
-                    <div class="grid grid-cols-2 gap-2 text-center">
-                        <div class="bg-red-500/10 p-2 rounded-lg">
-                            <p class="text-[8px]">HARIAN</p>
-                            <p id="exp-day" class="text-xs font-bold">Rp 0</p>
-                        </div>
-                        <div class="bg-red-500/10 p-2 rounded-lg">
-                            <p class="text-[8px]">BULANAN</p>
-                            <p id="exp-month" class="text-xs font-bold">Rp 0</p>
-                        </div>
-                    </div>
+                <div class="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+                    <p class="text-[10px] text-blue-500 font-bold mb-1">ORDER PERTAMA</p>
+                    <p id="first-order" class="text-xl font-black italic">--:--</p>
+                </div>
+                <div class="p-4 bg-red-500/10 rounded-2xl border border-red-500/20">
+                    <p class="text-[10px] text-red-500 font-bold mb-1">ORDER TERAKHIR</p>
+                    <p id="last-order" class="text-xl font-black italic">--:--</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- KONFIGURASI API ---
         const CONFIG = {
-            API: "GANTI_DENGAN_URL_GAS_ANDA",
-            TOKEN: "GANTI_DENGAN_TOKEN_ANDA"
+            API: "https://script.google.com/macros/s/AKfycbyTXmCpMI2mz-6hLEN8GcL96kCVYnTYB0oyzCujgjeefUdjF3NAaqYC-VvA4D4jskRENw/exec",
+            TOKEN: "dyg-access-v2",
+            OWNER_TOKEN: "OWNER123" // Harus sama dengan di GAS
         };
 
         let charts = {};
 
         async function refreshData() {
-            document.getElementById('last-update').innerText = "Syncing...";
-            
+            document.getElementById('last-update').innerText = "CALCULATING DATA...";
             try {
-                // Fetch Data dari Apps Script (Action: getDashboardData)
-                const resp = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getDashboardData`);
+                const resp = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getDashboardData&ownerToken=${CONFIG.OWNER_TOKEN}`);
                 const data = await resp.json();
-
                 updateUI(data);
-                document.getElementById('last-update').innerText = "Last Update: " + new Date().toLocaleTimeString();
+                document.getElementById('last-update').innerText = "LAST SYNC: " + new Date().toLocaleTimeString();
             } catch (e) {
-                console.error("Gagal ambil data", e);
-                document.getElementById('last-update').innerText = "Offline/Error";
+                document.getElementById('last-update').innerText = "CONNECTION FAILED";
             }
         }
 
         function updateUI(data) {
-            // Update Angka Pendapatan
-            document.getElementById('rev-day').innerText = "Rp " + data.income.day.toLocaleString();
-            document.getElementById('rev-week').innerText = "Rp " + data.income.week.toLocaleString();
-            document.getElementById('rev-month').innerText = "Rp " + data.income.month.toLocaleString();
-            document.getElementById('rev-year').innerText = "Rp " + data.income.year.toLocaleString();
-            document.getElementById('rev-online').innerText = "Rp " + data.income.online.toLocaleString();
+            // Stats Dasar
+            document.getElementById('rev-day').innerText = formatIDR(data.income.day);
+            document.getElementById('rev-week').innerText = formatIDR(data.income.week);
+            document.getElementById('rev-month').innerText = formatIDR(data.income.month);
+            document.getElementById('rev-year').innerText = formatIDR(data.income.year);
+            document.getElementById('exp-month').innerText = formatIDR(data.expense.month);
+            
+            // Estimasi Profit (Revenue Day - Expense Day)
+            const dailyProfit = data.income.day - data.expense.day;
+            document.getElementById('est-profit').innerText = formatIDR(dailyProfit);
 
-            // Update Pengeluaran
-            document.getElementById('exp-day').innerText = "Rp " + data.expense.day.toLocaleString();
-            document.getElementById('exp-month').innerText = "Rp " + data.expense.month.toLocaleString();
+            // Expense Ratio
+            const ratio = ((data.expense.month / data.income.month) * 100).toFixed(1);
+            document.getElementById('exp-ratio').innerText = `${ratio}% dari total omzet`;
+            document.getElementById('exp-ratio').className = ratio > 30 ? "text-[10px] text-red-500 font-bold" : "text-[10px] text-slate-500";
 
-            // Shift Log
+            // Trend Indicator (Dummy logic: Compare with 1/30 of Monthly Revenue)
+            const avgDay = data.income.month / 30;
+            const trendEl = document.getElementById('trend-day');
+            if(data.income.day > avgDay) {
+                trendEl.innerText = "▲ GOOD";
+                trendEl.className = "text-[10px] font-black px-2 py-1 rounded-lg bg-emerald-500/20 text-emerald-400";
+            } else {
+                trendEl.innerText = "▼ LOW";
+                trendEl.className = "text-[10px] font-black px-2 py-1 rounded-lg bg-red-500/20 text-red-400";
+            }
+
+            // Progress Week (Target 10jt misal)
+            const weekProgress = Math.min((data.income.week / 10000000) * 100, 100);
+            document.getElementById('progress-week').style.width = weekProgress + "%";
+
+            // Operational
             document.getElementById('shift-start').innerText = data.shift.start || "--:--";
-            document.getElementById('shift-end').innerText = data.shift.end || "--:--";
+            document.getElementById('first-order').innerText = data.shift.firstOrder || "--:--";
+            document.getElementById('last-order').innerText = data.shift.lastOrder || "--:--";
 
-            // Chart Per Jam
-            updateHourChart(data.charts.hours);
-
-            // Chart Pembayaran
-            updatePayChart(data.charts.payments);
-
-            // Top Items Render
-            renderTopItems(data.topItems);
-
-            // Performa Meja
-            renderMeja(data.tables);
+            // Charts & Lists
+            updateCharts(data.charts);
+            renderLists(data);
+            generateAdvice(data);
         }
 
-        function updateHourChart(hourData) {
-            const ctx = document.getElementById('hourChart').getContext('2d');
-            if(charts.hour) charts.hour.destroy();
+        function generateAdvice(data) {
+            const container = document.getElementById('ai-advice');
+            let advices = [];
 
-            charts.hour = new Chart(ctx, {
+            // Analisis Waktu Ramai
+            const maxIdx = data.charts.hours.values.indexOf(Math.max(...data.charts.hours.values));
+            const peakHour = data.charts.hours.labels[maxIdx];
+            advices.push(`<div class="p-4 bg-emerald-500/10 rounded-2xl border-l-4 border-emerald-500"><p class="text-[10px] font-bold text-emerald-400 mb-1">PEAK TIME</p><p class="text-xs">Jam ramai terpantau pukul <b>${peakHour}</b>. Pastikan stok bahan siap sebelum jam ini.</p></div>`);
+
+            // Analisis Pengeluaran
+            if((data.expense.month / data.income.month) > 0.4) {
+                advices.push(`<div class="p-4 bg-red-500/10 rounded-2xl border-l-4 border-red-500"><p class="text-[10px] font-bold text-red-400 mb-1">WASPADA BIAYA</p><p class="text-xs">Pengeluaran bulan ini sudah tembus 40% omzet. Evaluasi belanja bahan baku segera.</p></div>`);
+            } else {
+                advices.push(`<div class="p-4 bg-blue-500/10 rounded-2xl border-l-4 border-blue-500"><p class="text-[10px] font-bold text-blue-400 mb-1">EFFICIENCY</p><p class="text-xs">Margin operasional sehat. Pertahankan rasio belanja Anda.</p></div>`);
+            }
+
+            // Item Strategy
+            const items = Object.entries(data.topItems).sort((a,b)=>b[1]-a[1]);
+            if(items.length > 0) {
+                advices.push(`<div class="p-4 bg-purple-500/10 rounded-2xl border-l-4 border-purple-500"><p class="text-[10px] font-bold text-purple-400 mb-1">MENU HITS</p><p class="text-xs"><b>${items[0][0]}</b> paling laris hari ini. Pertimbangkan buat paket bundling dengan menu ini.</p></div>`);
+            }
+
+            container.innerHTML = advices.join('');
+        }
+
+        function updateCharts(chartData) {
+            // Hour Chart
+            const ctxH = document.getElementById('hourChart').getContext('2d');
+            if(charts.hour) charts.hour.destroy();
+            charts.hour = new Chart(ctxH, {
                 type: 'line',
                 data: {
-                    labels: hourData.labels,
+                    labels: chartData.hours.labels,
                     datasets: [{
-                        label: 'Pendapatan',
-                        data: hourData.values,
+                        data: chartData.hours.values,
                         borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 4,
+                        backgroundColor: (context) => {
+                            const bg = context.chart.ctx.createLinearGradient(0, 0, 0, 400);
+                            bg.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+                            bg.addColorStop(1, 'transparent');
+                            return bg;
+                        },
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        pointRadius: 0
                     }]
                 },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { ticks: { color: '#64748b' }, grid: { color: '#334155' } },
-                        x: { ticks: { color: '#64748b' }, grid: { display: false } }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 9 } } },
+                             x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } } } }
             });
-        }
 
-        function updatePayChart(payData) {
-            const ctx = document.getElementById('payChart').getContext('2d');
+            // Pay Chart
+            const ctxP = document.getElementById('payChart').getContext('2d');
             if(charts.pay) charts.pay.destroy();
-
-            charts.pay = new Chart(ctx, {
+            const payValues = [chartData.payments.cash, chartData.payments.qris, chartData.payments.card];
+            charts.pay = new Chart(ctxP, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Cash', 'QRIS', 'Kartu'],
-                    datasets: [{
-                        data: [payData.cash, payData.qris, payData.card],
-                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
-                        borderWidth: 0
-                    }]
+                    labels: ['CASH', 'QRIS', 'CARD'],
+                    datasets: [{ data: payValues, backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'], borderWidth: 0 }]
                 },
-                options: {
-                    plugins: { legend: { position: 'bottom', labels: { color: '#f8fafc', font: { size: 10 } } } }
-                }
+                options: { cutout: '80%', plugins: { legend: { display: false } } }
             });
+            
+            document.getElementById('pay-detail').innerHTML = `
+                <div class="text-emerald-500">CASH: ${((chartData.payments.cash/chartData.payments.total)*100 || 0).toFixed(0)}%</div>
+                <div class="text-blue-500 text-right">QRIS: ${((chartData.payments.qris/chartData.payments.total)*100 || 0).toFixed(0)}%</div>
+            `;
         }
 
-        function renderTopItems(items) {
-            const container = document.getElementById('top-items');
-            container.innerHTML = items.map((item, i) => `
-                <div class="flex justify-between items-center p-2 bg-slate-800/50 rounded-lg">
-                    <span class="text-xs font-bold text-slate-300">${i+1}. ${item.nama}</span>
-                    <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full font-black">${item.qty} Pcs</span>
+        function renderLists(data) {
+            // Top Items (Object to Array)
+            const topArr = Object.entries(data.topItems).sort((a,b)=>b[1]-a[1]).slice(0,5);
+            document.getElementById('top-items').innerHTML = topArr.map(([name, qty], i) => `
+                <div class="flex justify-between items-center group cursor-default">
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] font-black text-slate-700">#${i+1}</span>
+                        <span class="text-xs font-bold text-slate-300 group-hover:text-emerald-400 transition-colors">${name}</span>
+                    </div>
+                    <span class="text-[10px] font-black bg-slate-800 px-3 py-1 rounded-full">${qty} <span class="text-slate-500">x</span></span>
+                </div>
+            `).join('');
+
+            // Meja Performance
+            const tableArr = Object.entries(data.tables).sort((a,b)=>b[1]-a[1]);
+            document.getElementById('table-performance').innerHTML = tableArr.map(([no, total]) => `
+                <div class="flex justify-between items-center p-3 bg-slate-900/50 rounded-xl">
+                    <span class="text-xs font-bold">Meja ${no}</span>
+                    <span class="text-xs font-black text-white">${formatIDR(total)}</span>
                 </div>
             `).join('');
         }
 
-        function renderMeja(tables) {
-            const container = document.getElementById('table-performance');
-            container.innerHTML = tables.map(t => `
-                <div class="flex justify-between text-xs border-b border-slate-800 pb-2">
-                    <span class="text-slate-400">Meja ${t.no}</span>
-                    <span class="font-bold">Rp ${t.total.toLocaleString()}</span>
-                </div>
-            `).join('');
+        function formatIDR(num) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
         }
 
-        // Jalankan Refresh Pertama Kali
         refreshData();
-        // Auto Refresh tiap 5 Menit
         setInterval(refreshData, 300000);
     </script>
 </body>
