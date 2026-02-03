@@ -222,11 +222,16 @@ function render(data){
   }).join("");
 
   // Re-inisialisasi Hammer (Swipe)
+  // Inisialisasi Hammer setelah render agar swipe berfungsi
   document.querySelectorAll(".card").forEach(card => {
     const mc = new Hammer(card);
     mc.on("swipeleft", () => {
         const rowId = card.getAttribute("data-row");
-        alert("Swipe terdeteksi untuk row: " + rowId);
+        
+        // Ganti alert dengan fungsi finish
+        if (confirm("Selesaikan pesanan #" + card.querySelector(".no").innerText + "?")) {
+            finish(rowId);
+        }
     });
   });
 }
