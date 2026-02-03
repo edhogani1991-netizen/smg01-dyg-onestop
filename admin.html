@@ -40,7 +40,6 @@
 
         <div class="admin-side">
             <div class="scroll-area space-y-2">
-                
                 <div onclick="toggleSection('sec-finance')" class="handle">📊 FINANCE DASHBOARD</div>
                 <div id="sec-finance" class="collapse-content space-y-3 p-3 bg-slate-100 rounded-xl border mb-2">
                     <div class="bg-white p-2 rounded-lg shadow-sm border text-[10px] font-bold">
@@ -76,10 +75,6 @@
                         <p id="m-nama" class="font-black"></p><p id="m-poin" class="font-bold text-yellow-300"></p>
                         <button id="btn-redeem" onclick="applyRedeem()" class="mt-2 w-full bg-white text-blue-700 py-1.5 rounded font-black uppercase">Tukar Poin</button>
                     </div>
-                    <div class="bg-white p-2 rounded shadow-sm border">
-                        <input type="text" id="voucher-code" placeholder="Kode Voucher..." class="w-full p-2 border rounded text-xs font-bold mb-2 outline-none uppercase">
-                        <button onclick="applyVoucher()" class="w-full bg-slate-800 text-white py-2 rounded font-black text-[9px] uppercase">Gunakan Voucher</button>
-                    </div>
                 </div>
 
                 <div class="bg-white rounded-xl p-2 border-2 border-slate-200 min-h-[140px]">
@@ -87,15 +82,13 @@
                 </div>
             </div>
 
-            <div class="sticky-bottom p-4 border-t-2 bg-white">
-                <div class="flex justify-between items-center mb-3">
+            <div class="p-4 border-t-2 bg-white">
+                <div class="mb-3">
                     <select id="pay-method" onchange="togglePayView()" class="w-full p-2 bg-slate-100 border rounded font-black text-[11px] outline-none">
                         <option value="TUNAI">💵 PEMBAYARAN TUNAI</option>
                         <option value="QRIS">📱 QRIS / TRANSFER</option>
-                        <option value="KARTU">💳 KARTU DEBIT/CC</option>
                     </select>
                 </div>
-
                 <div id="cash-input-area" class="space-y-2 mb-3">
                     <input type="number" id="input-bayar" oninput="hitungKembalian()" placeholder="Jumlah Uang..." class="w-full p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl text-lg font-black outline-none">
                     <div id="smart-chips" class="grid grid-cols-4 gap-1"></div>
@@ -103,7 +96,6 @@
                         <span>KEMBALIAN:</span><span id="v-kembali">Rp 0</span>
                     </div>
                 </div>
-
                 <div class="flex justify-between text-[#1B4332] mb-1">
                     <span class="font-black text-[11px] uppercase">Total</span>
                     <span id="v-total" class="text-3xl font-black">Rp 0</span>
@@ -126,12 +118,10 @@ const CONFIG={
 
 let cart={}, menuData=[], activeCat='ALL', memberData=null, discount=0, finalTotal=0;
 
-// --- UTILITY ---
 function toggleSection(id){ document.getElementById(id).style.display = (document.getElementById(id).style.display === "block") ? "none" : "block"; }
 function togglePayView(){ document.getElementById("cash-input-area").style.display = (document.getElementById("pay-method").value === "TUNAI") ? "block" : "none"; }
 function btConnect(){ if(window.AppInventor) window.AppInventor.setWebViewString("CONNECT"); }
 
-// --- SHIFT SYSTEM ---
 function checkShiftStatus() {
     const isShiftOpen = localStorage.getItem("shiftActive") === "true";
     const btnBuka = document.getElementById("btn-buka-shift");
@@ -144,76 +134,34 @@ function checkShiftStatus() {
 }
 
 async function bukaShift() {
-    const val = document.getElementById("input-modal").value;
-    if(!val || val <= 0) return alert("Isi Modal!");
-    
-    // Ini akan menambah baris baru di sheet 'modal' dengan jam SEKARANG
-    // Jam ini yang akan jadi patokan getFinance untuk menghitung transaksi ke depan
-    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=modal&data=${encodeURIComponent(JSON.stringify(["","Modal Awal",val]))}`);
-    
-    localStorage.setItem("shiftActive", "true"); 
-    localStorage.setItem("modalValue", val);
-    location.reload(); 
+    const val = document.getElementById("input-modal").value;
+    if(!val || val <= 0) return alert("Isi Modal!");
+    await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=modal&data=${encodeURIComponent(JSON.stringify(["","Modal Awal",val]))}`);
+    localStorage.setItem("shiftActive", "true"); localStorage.setItem("modalValue", val);
+    location.reload();
 }
 
-lalu ini sudah sesuai kan,,aku tinggal ganti saja yg lama dengan ini?
 async function tutupShift() {
+    if(!window.finData) return alert("Sabar, data dashboard belum sinkron...");
     const f = window.finData;
-    // Hitung saldo yang seharusnya ada di laci (Modal + Cash - Out)
-    const sys = (f.totalModal + f.totalCash) - f.totalOut;
-    
+    const sys = (Number(f.totalModal) + Number(f.totalCash)) - Number(f.totalOut);
     const fisik = prompt("Input Total Uang Fisik di Laci saat ini:", sys);
-    if(fisik === null) return; // Batal jika klik cancel
-    
-    const konfirmasi = confirm("Yakin ingin TUTUP SHIFT? Semua angka laporan akan di-restart ke 0.");
-    if(!konfirmasi) return;
+    if(fisik === null) return;
+    if(!confirm("Yakin TUTUP SHIFT? Laporan akan restart.")) return;
 
     try {
-        const pay = JSON.stringify({ 
-            sys: sys, 
-            fisik: fisik, 
-            selisih: fisik - sys 
-        });
-
-        // 1. Kirim data settle ke server
+        const pay = JSON.stringify({ sys: sys, fisik: Number(fisik), selisih: Number(fisik) - sys });
         await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=settle&data=${encodeURIComponent(pay)}`);
-        
-        // 2. Hapus data lokal di browser
-        localStorage.removeItem("shiftActive");
-        localStorage.removeItem("modalValue");
-
-        // 3. RESTART UI secara manual agar jadi 0 semua tanpa nunggu server
-        resetDashboardUI();
-
-        alert("Shift Berhasil Ditutup & Laporan Di-restart!");
-        
-        // 4. Refresh halaman untuk memastikan kondisi bersih
-        location.reload();
-    } catch(e) {
-        alert("Gagal koneksi saat tutup shift. Coba lagi.");
-    }
+        localStorage.removeItem("shiftActive"); localStorage.removeItem("modalValue");
+        alert("Berhasil!"); location.reload();
+    } catch(e) { alert("Gagal koneksi server."); }
 }
 
-function resetDashboardUI() {
-    // Reset angka di Header
-    document.getElementById("v-header-cash").innerText = "Rp 0";
-    
-    // Reset angka di Tabel Dashboard
-    document.getElementById("t-modal").innerText = "0";
-    document.getElementById("t-cash").innerText = "0";
-    document.getElementById("t-qris").innerText = "0";
-    document.getElementById("t-out").innerText = "0";
-    
-    // Reset variabel global
-    window.finData = { totalModal:0, totalCash:0, totalQris:0, totalOut:0, totalOnline:0 };
-}
-
-// --- DASHBOARD MONITOR ---
 async function updateMonitor() {
     try {
         const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=getFinance&ts=${new Date().getTime()}`);
         const f = await r.json(); window.finData = f;
-        document.getElementById("v-header-cash").innerText = "Rp " + ((f.totalModal + f.totalCash) - f.totalOut).toLocaleString();
+        document.getElementById("v-header-cash").innerText = "Rp " + ((Number(f.totalModal) + Number(f.totalCash)) - Number(f.totalOut)).toLocaleString();
         document.getElementById("t-modal").innerText = Number(f.totalModal).toLocaleString();
         document.getElementById("t-cash").innerText = Number(f.totalCash).toLocaleString();
         document.getElementById("t-qris").innerText = Number(f.totalQris).toLocaleString();
@@ -223,13 +171,11 @@ async function updateMonitor() {
 
 async function saveFinance(t, l) {
     if(localStorage.getItem("shiftActive") !== "true") return alert("Buka Shift Dulu!");
-    const v = prompt("Nominal " + l + ":");
-    if(!v) return;
+    const v = prompt("Nominal " + l + ":"); if(!v) return;
     await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=saveFinance&type=${t}&data=${encodeURIComponent(JSON.stringify(["",l,v]))}`);
     updateMonitor();
 }
 
-// --- TRANSAKSI & PRINT ---
 async function submitOrder(){
     if(localStorage.getItem("shiftActive") !== "true") return alert("Buka Shift Dulu!");
     if(finalTotal <= 0) return alert("Keranjang kosong!");
@@ -242,21 +188,17 @@ async function submitOrder(){
         const hp = memberData ? memberData.noHP : "";
         await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${finalTotal}&noHP=${hp}&poinRedeem=${discount}&pesanan=${encodeURIComponent(JSON.stringify(cart))}&method=${method}`);
         
-        // FUNGSI PRINT ESC/POS
-        let esc = "\x1B\x40\x1B\x61\x01dyg++ POS SECURE\n--------------------------------\n\x1B\x61\x00";
-        Object.keys(cart).forEach(n => {
-            esc += `${n.toUpperCase()}\n${cart[n].qty} x ${cart[n].price.toLocaleString()} = ${(cart[n].qty*cart[n].price).toLocaleString()}\n`;
-        });
-        if(discount > 0) esc += `POTONGAN: -${discount.toLocaleString()}\n`;
-        esc += `--------------------------------\nTOTAL  : Rp ${finalTotal.toLocaleString()}\nBAYAR  : Rp ${Number(bayar).toLocaleString()}\nMETODE : ${method}\n\x1B\x61\x01\nTERIMA KASIH\n\n\n\n\n`;
-        
+        // PRINTING MIT APP INVENTOR
+        let esc = "\x1B\x40\x1B\x61\x01dyg++ POS\n--------------------------------\n\x1B\x61\x00";
+        Object.keys(cart).forEach(n => { esc += `${n.toUpperCase()}\n${cart[n].qty} x ${cart[n].price.toLocaleString()} = ${(cart[n].qty*cart[n].price).toLocaleString()}\n`; });
+        if(discount > 0) esc += `DISCOUNT: -${discount.toLocaleString()}\n`;
+        esc += `--------------------------------\nTOTAL  : Rp ${finalTotal.toLocaleString()}\nMETODE : ${method}\n\nTERIMA KASIH\n\n\n\n`;
         if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
         
         alert("Berhasil!"); location.reload();
     } catch(e){ alert("Gagal!"); document.getElementById("btn-order").disabled = false; }
 }
 
-// --- SISTEM KERANJANG & SMART CHIPS ---
 function updateCartUI(){
     let sub=0; const l=document.getElementById("cart-list"); l.innerHTML="";
     Object.keys(cart).forEach(n=>{
@@ -279,12 +221,13 @@ function hitungKembalian(){
 function changeQty(n, d) { cart[n].qty += d; if(cart[n].qty <= 0) delete cart[n]; updateCartUI(); renderMenu(); }
 function addToCart(n,p){ cart[n]={price:p, qty:(cart[n]?.qty||0)+1}; updateCartUI(); renderMenu(); }
 
-// --- DATA & MENU ---
 async function loadMenu(){
-    const r=await fetch(CONFIG.CSV); const t=await r.text();
-    menuData = t.split("\n").slice(1).map(r => { const c = r.split(","); return { kat: c[0]?.trim(), nama: c[1]?.trim(), harga: parseInt(c[2]) || 0 }; }).filter(m => m.nama);
-    document.getElementById("cat-select").innerHTML = ["ALL", ...new Set(menuData.map(m => m.kat))].map(c => `<option value="${c}">${c}</option>`).join("");
-    renderMenu();
+    try {
+        const r=await fetch(CONFIG.CSV); const t=await r.text();
+        menuData = t.split("\n").slice(1).map(r => { const c = r.split(","); return { kat: c[0]?.trim(), nama: c[1]?.trim(), harga: parseInt(c[2]) || 0 }; }).filter(m => m.nama);
+        document.getElementById("cat-select").innerHTML = ["ALL", ...new Set(menuData.map(m => m.kat))].map(c => `<option value="${c}">${c}</option>`).join("");
+        renderMenu();
+    } catch(e) { console.error("Menu CSV Error"); }
 }
 function renderMenu(){
     const c=document.getElementById("menu-render"); const s=document.getElementById("menuSearch").value.toLowerCase(); c.innerHTML="";
@@ -303,10 +246,9 @@ async function cekMember() {
         document.getElementById("m-nama").innerText = d.nama; document.getElementById("m-poin").innerText = "Poin: " + d.poin.toLocaleString();
         document.getElementById("member-info").classList.remove("hidden");
         document.getElementById("btn-redeem").style.display = d.poin >= 5000 ? "block" : "none";
-    }
+    } else { alert("Member Tidak Ditemukan"); }
 }
 function applyRedeem(){ discount = memberData.poin; updateCartUI(); }
-function applyVoucher(){ alert("Voucher sedang divalidasi..."); }
 
 window.onload=()=>{ loadMenu(); updateMonitor(); checkShiftStatus(); }
 </script>
