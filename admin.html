@@ -1,252 +1,329 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Kasir dyg++</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLOUDkitchen.dyg++ POS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .btn-qty { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; }
+        .sticky-bottom { position: sticky; bottom: 0; background: white; border-top: 1px solid #e5e7eb; }
+        input[type="number"]::-webkit-inner-spin-button { display: none; }
+    </style>
 </head>
 
-<body class="bg-gray-100 p-4">
+<body class="bg-slate-50 text-slate-800 antialiased pb-20">
 
-<h1 class="text-2xl font-bold mb-4">🧾 Admin Kasir dyg++</h1>
+    <header class="bg-blue-700 text-white p-4 shadow-md mb-4">
+        <h1 class="text-xl font-bold flex items-center gap-2">
+            <span>🧾</span> Admin Kasir dyg++
+        </h1>
+    </header>
 
-<!-- MEMBER -->
-<div class="bg-white p-4 rounded shadow mb-4">
-  <h2 class="font-semibold mb-2">Member</h2>
-  <div class="flex gap-2">
-    <input id="nohp" type="text" placeholder="Nomor WA" class="border p-2 flex-1">
-    <button onclick="cekMember()" class="bg-green-600 text-white px-4 rounded">
-      Cek Poin
-    </button>
-  </div>
-  <div id="memberInfo" class="mt-2 text-sm"></div>
-</div>
+    <div class="max-w-4xl mx-auto px-4">
+        
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+            
+            <div class="md:col-span-7">
+                <div class="bg-white p-4 rounded-xl shadow-sm mb-4 border border-slate-200">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-3">Loyalty Member</h2>
+                    <div class="flex gap-2">
+                        <input id="nohp" type="text" placeholder="Nomor WA (08...)" class="border border-slate-300 p-2 rounded-lg flex-1 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <button onclick="cekMember()" class="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-black transition">
+                            Cek
+                        </button>
+                    </div>
+                    <div id="memberInfo" class="mt-2 text-xs font-medium text-blue-600"></div>
+                </div>
 
-<!-- MENU -->
-<div id="menuList" class="grid grid-cols-2 gap-3 mb-4"></div>
+                <div id="menuContainer">
+                    </div>
+            </div>
 
-<!-- KERANJANG -->
-<div class="bg-white p-4 rounded shadow mb-4">
-  <h2 class="font-semibold mb-2">Keranjang</h2>
-  <div id="cartList" class="text-sm"></div>
-  <div class="mt-2 font-bold">
-    Total: Rp <span id="total">0</span>
-  </div>
-</div>
+            <div class="md:col-span-5">
+                <div class="sticky top-4 space-y-4">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                            <h2 class="font-bold text-slate-700">Detail Pesanan</h2>
+                        </div>
+                        <div id="cartList" class="p-4 space-y-3 max-h-[300px] overflow-y-auto text-sm">
+                            <p class="text-slate-400 text-center py-4">Belum ada item</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 border-t border-slate-200">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-slate-500">Subtotal</span>
+                                <span class="font-semibold">Rp <span id="total">0</span></span>
+                            </div>
+                            <div class="flex justify-between items-center text-red-600">
+                                <span class="text-xs">Voucher/Diskon</span>
+                                <span class="font-semibold text-sm">- Rp <span id="valVoucher">0</span></span>
+                            </div>
+                        </div>
+                    </div>
 
-<!-- VOUCHER -->
-<div class="bg-white p-4 rounded shadow mb-4">
-  <h2 class="font-semibold mb-2">Voucher</h2>
-  <input id="voucher" type="number" placeholder="Nominal voucher"
-         class="border p-2 w-full">
-</div>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                        <h2 class="font-bold text-slate-700 mb-3">Pembayaran</h2>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-[10px] font-bold uppercase text-slate-400">Voucher</label>
+                                <input id="voucher" type="number" oninput="updateVoucherText()" placeholder="Nominal" class="border p-2 w-full rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
 
-<!-- PEMBAYARAN -->
-<div class="bg-white p-4 rounded shadow">
-  <h2 class="font-semibold mb-2">Pembayaran</h2>
+                            <div>
+                                <label class="text-[10px] font-bold uppercase text-slate-400">Metode</label>
+                                <select id="metode" onchange="renderCash()" class="border p-2 w-full rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                                    <option value="CASH">💵 Tunai (Cash)</option>
+                                    <option value="QRIS">📱 QRIS</option>
+                                    <option value="CARD">💳 Kartu Debet/Kredit</option>
+                                </select>
+                            </div>
 
-  <select id="metode" onchange="renderCash()" class="border p-2 w-full mb-2">
-    <option value="CASH">Tunai</option>
-    <option value="QRIS">QRIS</option>
-    <option value="CARD">Kartu</option>
-  </select>
+                            <div id="cashBox" class="bg-blue-50 p-3 rounded-lg border border-blue-100"></div>
 
-  <div id="cashBox"></div>
+                            <button onclick="submitOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95">
+                                BAYAR & CETAK STRUK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-  <button onclick="submitOrder()"
-          class="mt-4 bg-blue-600 text-white w-full py-2 rounded font-semibold">
-    BAYAR & CETAK
-  </button>
-</div>
+        </div>
+    </div>
 
 <script>
 /* ================= CONFIG ================= */
 const API_URL = "https://script.google.com/macros/s/AKfycbyvU5fQpE_UFq_mnfAMvhCNJ97f1SvVRpXv_qrZh96lj8IBPot8xRdQ34Iz1n-HVmiuzg/exec";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
-/* ================= DATA MENU ================= */
-const MENU = [
-  { nama: "Nasi Goreng", harga: 20000 },
-  { nama: "Mie Goreng", harga: 18000 },
-  { nama: "Es Teh", harga: 5000 },
-  { nama: "Kopi", harga: 8000 }
-];
-
+let MENU = [];
 let cart = {};
 let member = null;
 
-/* ================= RENDER MENU ================= */
-const menuList = document.getElementById("menuList");
+/* ================= FETCH DATA MENU CSV ================= */
+async function loadMenu() {
+    try {
+        const response = await fetch(CSV_URL);
+        const data = await response.text();
+        const rows = data.split("\n").slice(1); // Skip header
+        
+        MENU = rows.map(row => {
+            const cols = row.split(",");
+            return {
+                kategori: cols[0]?.trim() || "Lainnya",
+                nama: cols[1]?.trim(),
+                harga: parseInt(cols[2]?.trim()) || 0
+            };
+        }).filter(m => m.nama); // Buang baris kosong
 
-MENU.forEach((m, i) => {
-  const el = document.createElement("div");
-  el.className = "bg-white p-3 rounded shadow relative";
-  el.innerHTML = `
-    <div class="font-bold">${m.nama}</div>
-    <div>Rp ${m.harga.toLocaleString()}</div>
-    <button onclick="addItem(${i})"
-            class="mt-2 bg-green-500 text-white px-3 rounded">
-      Tambah
-    </button>
-    <span id="badge-${i}"
-          class="hidden absolute top-1 right-2 bg-red-600
-                 text-white text-xs px-2 rounded-full"></span>
-  `;
-  menuList.appendChild(el);
-});
+        renderMenu();
+    } catch (e) {
+        console.error("Gagal load menu", e);
+    }
+}
 
-/* ================= CART ================= */
+function renderMenu() {
+    const container = document.getElementById("menuContainer");
+    container.innerHTML = "";
+    
+    // Group by kategori
+    const groups = MENU.reduce((acc, item) => {
+        (acc[item.kategori] = acc[item.kategori] || []).push(item);
+        return acc;
+    }, {});
+
+    for (const cat in groups) {
+        const section = document.createElement("div");
+        section.className = "mb-6";
+        section.innerHTML = `
+            <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <span class="w-1 h-4 bg-blue-600 rounded-full"></span> ${cat}
+            </h3>
+            <div class="menu-grid">
+                ${groups[cat].map((m) => {
+                    const idx = MENU.indexOf(m);
+                    return `
+                    <div onclick="addItem(${idx})" class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm active:bg-blue-50 cursor-pointer transition-all relative overflow-hidden group">
+                        <div class="font-bold text-sm text-slate-700">${m.nama}</div>
+                        <div class="text-blue-600 font-medium text-xs">Rp ${m.harga.toLocaleString()}</div>
+                        <span id="badge-${idx}" class="hidden absolute top-0 right-0 bg-red-500 text-white text-[10px] px-2 py-1 rounded-bl-lg font-bold">0</span>
+                    </div>
+                    `;
+                }).join("")}
+            </div>
+        `;
+        container.appendChild(section);
+    }
+}
+
+/* ================= LOGIC (Fungsi Asli Dipertahankan) ================= */
+
 function addItem(i) {
-  if (!cart[i]) cart[i] = { qty: 0, ...MENU[i] };
-  cart[i].qty++;
-  renderCart();
+    if (!cart[i]) cart[i] = { qty: 0, ...MENU[i] };
+    cart[i].qty++;
+    renderCart();
 }
 
 function removeItem(i) {
-  cart[i].qty--;
-  if (cart[i].qty <= 0) delete cart[i];
-  renderCart();
+    cart[i].qty--;
+    if (cart[i].qty <= 0) delete cart[i];
+    renderCart();
 }
 
 function renderCart() {
-  let html = "";
-  let total = 0;
+    let html = "";
+    let total = 0;
 
-  MENU.forEach((_, i) => {
-    const badge = document.getElementById("badge-" + i);
-    if (badge) badge.classList.add("hidden");
-  });
-
-  Object.keys(cart).forEach(i => {
-    const item = cart[i];
-    total += item.qty * item.harga;
-
-    const badge = document.getElementById("badge-" + i);
-    badge.innerText = item.qty;
-    badge.classList.remove("hidden");
-
-    html += `
-      <div class="flex justify-between mb-1">
-        ${item.nama} x${item.qty}
-        <div>
-          <button onclick="addItem(${i})">➕</button>
-          <button onclick="removeItem(${i})">➖</button>
-        </div>
-      </div>
-    `;
-  });
-
-  document.getElementById("cartList").innerHTML = html || "-";
-  document.getElementById("total").innerText = total;
-}
-
-/* ================= MEMBER ================= */
-function cekMember() {
-  const nohp = document.getElementById("nohp").value.trim();
-  if (!nohp) return;
-
-  fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${nohp}`)
-    .then(r => r.json())
-    .then(d => {
-      if (d.exists) {
-        member = d;
-        document.getElementById("memberInfo").innerText =
-          `Nama: ${d.nama} | Poin: ${d.poin}`;
-      } else {
-        member = null;
-        document.getElementById("memberInfo").innerText = "Bukan member";
-      }
+    MENU.forEach((_, i) => {
+        const badge = document.getElementById("badge-" + i);
+        if (badge) badge.classList.add("hidden");
     });
+
+    Object.keys(cart).forEach(i => {
+        const item = cart[i];
+        total += item.qty * item.harga;
+
+        const badge = document.getElementById("badge-" + i);
+        if(badge) {
+            badge.innerText = item.qty;
+            badge.classList.remove("hidden");
+        }
+
+        html += `
+            <div class="flex justify-between items-center bg-slate-50 p-2 rounded-lg">
+                <div class="flex-1">
+                    <div class="font-bold text-slate-700">${item.nama}</div>
+                    <div class="text-xs text-slate-500">Rp ${item.harga.toLocaleString()}</div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="removeItem(${i})" class="btn-qty bg-white border border-slate-300 text-slate-600 hover:bg-red-50 hover:text-red-600 transition">－</button>
+                    <span class="font-bold w-4 text-center">${item.qty}</span>
+                    <button onclick="addItem(${i})" class="btn-qty bg-white border border-slate-300 text-slate-600 hover:bg-green-50 hover:text-green-600 transition">＋</button>
+                </div>
+            </div>
+        `;
+    });
+
+    document.getElementById("cartList").innerHTML = html || `<p class="text-slate-400 text-center py-4">Belum ada item</p>`;
+    document.getElementById("total").innerText = total.toLocaleString();
+    if(document.getElementById("bayar")) hitungKembali();
 }
 
-/* ================= CASH ================= */
-function renderCash() {
-  const metode = document.getElementById("metode").value;
-  const box = document.getElementById("cashBox");
-  if (metode !== "CASH") { box.innerHTML = ""; return; }
+function updateVoucherText() {
+    const val = document.getElementById("voucher").value || 0;
+    document.getElementById("valVoucher").innerText = Number(val).toLocaleString();
+}
 
-  box.innerHTML = `
-    <input id="bayar" type="number"
-           placeholder="Uang diterima"
-           class="border p-2 w-full mb-2">
-    <div class="flex gap-2 mb-2">
-      ${[20000, 50000, 100000].map(v =>
-        `<button onclick="quickCash(${v})"
-                 class="border px-3 py-1 rounded">${v}</button>`
-      ).join("")}
-    </div>
-    <div>Kembalian: Rp <span id="kembali">0</span></div>
-  `;
+function cekMember() {
+    const nohp = document.getElementById("nohp").value.trim();
+    if (!nohp) return;
+    document.getElementById("memberInfo").innerText = "Mengecek...";
+    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${nohp}`)
+        .then(r => r.json())
+        .then(d => {
+            if (d.exists) {
+                member = d;
+                document.getElementById("memberInfo").innerText = `✅ ${d.nama} | Poin: ${d.poin}`;
+            } else {
+                member = null;
+                document.getElementById("memberInfo").innerText = "❌ Bukan member";
+            }
+        });
+}
+
+function renderCash() {
+    const metode = document.getElementById("metode").value;
+    const box = document.getElementById("cashBox");
+    if (metode !== "CASH") { box.classList.add("hidden"); return; }
+    box.classList.remove("hidden");
+
+    box.innerHTML = `
+        <label class="text-[10px] font-bold uppercase text-blue-400">Uang Diterima</label>
+        <input id="bayar" type="number" placeholder="0" class="border-b-2 border-blue-200 bg-transparent p-2 w-full mb-2 font-bold text-lg outline-none focus:border-blue-500">
+        <div class="flex gap-2 mb-3">
+            ${[20000, 50000, 100000].map(v =>
+                `<button onclick="quickCash(${v})" class="flex-1 bg-white border border-blue-200 py-1 rounded-md text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white transition">${v/1000}k</button>`
+            ).join("")}
+        </div>
+        <div class="text-sm font-bold text-blue-800 flex justify-between">
+            <span>Kembalian:</span>
+            <span>Rp <span id="kembali">0</span></span>
+        </div>
+    `;
 }
 
 function quickCash(v) {
-  document.getElementById("bayar").value = v;
-  hitungKembali();
+    document.getElementById("bayar").value = v;
+    hitungKembali();
 }
 
 document.addEventListener("input", e => {
-  if (e.target.id === "bayar") hitungKembali();
+    if (e.target.id === "bayar") hitungKembali();
 });
 
 function hitungKembali() {
-  const bayar = Number(document.getElementById("bayar")?.value || 0);
-  const total = Number(document.getElementById("total").innerText || 0);
-  document.getElementById("kembali").innerText = bayar - total;
+    const bayar = Number(document.getElementById("bayar")?.value || 0);
+    const rawTotal = document.getElementById("total").innerText.replace(/,/g, '');
+    const total = Number(rawTotal || 0);
+    const voucher = Number(document.getElementById("voucher").value || 0);
+    const kembali = bayar - (total - voucher);
+    document.getElementById("kembali").innerText = kembali.toLocaleString();
 }
 
-/* ================= SUBMIT + PRINT ================= */
 async function submitOrder() {
-  const total = Number(document.getElementById("total").innerText || 0);
-  if (total <= 0) { alert("Keranjang kosong"); return; }
+    const rawTotal = document.getElementById("total").innerText.replace(/,/g, '');
+    const total = Number(rawTotal || 0);
+    if (total <= 0) { alert("Keranjang kosong"); return; }
 
-  const voucher = Number(document.getElementById("voucher").value || 0);
-  const finalTotal = Math.max(0, total - voucher);
-  const metode = document.getElementById("metode").value;
-  const noWA = document.getElementById("nohp").value || "";
+    const voucher = Number(document.getElementById("voucher").value || 0);
+    const finalTotal = Math.max(0, total - voucher);
+    const metode = document.getElementById("metode").value;
+    const noWA = document.getElementById("nohp").value || "";
 
-  const pesanan = Object.values(cart)
-    .map(i => `${i.nama} x${i.qty}`)
-    .join(", ");
+    const pesanan = Object.values(cart)
+        .map(i => `${i.nama} x${i.qty}`)
+        .join(", ");
 
-  const url =
-    `${API_URL}?token=${TOKEN}` +
-    `&action=processPayment` +
-    `&total=${finalTotal}` +
-    `&noWA=${noWA}` +
-    `&redeemQty=0` +
-    `&voucher=${voucher}` +
-    `&method=${metode}` +
-    `&pesanan=${encodeURIComponent(pesanan)}`;
+    const url = `${API_URL}?token=${TOKEN}&action=processPayment&total=${finalTotal}&noWA=${noWA}&redeemQty=0&voucher=${voucher}&method=${metode}&pesanan=${encodeURIComponent(pesanan)}`;
 
-  const res = await fetch(url);
-  const txt = await res.text();
+    try {
+        const res = await fetch(url);
+        const txt = await res.text();
 
-  if (txt === "SUCCESS") {
-    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
-    esc += "Tgl: " + new Date().toLocaleString() + "\n";
-    esc += "--------------------------------\n\x1B\x61\x00";
+        if (txt === "SUCCESS") {
+            // Logic Print Esc/Pos Anda
+            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
+            esc += "Tgl: " + new Date().toLocaleString() + "\n";
+            esc += "--------------------------------\n\x1B\x61\x00";
+            Object.values(cart).forEach(i => {
+                esc += `${i.nama}\n`;
+                esc += `${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`;
+            });
+            esc += "--------------------------------\n";
+            esc += "TOTAL: Rp " + finalTotal.toLocaleString() + "\n";
+            if (noWA) esc += "Member: " + noWA + "\n";
+            esc += "\nTERIMA KASIH\n\n\n\n";
 
-    Object.values(cart).forEach(i => {
-      esc += `${i.nama}\n`;
-      esc += `${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`;
-    });
+            if (window.AppInventor) {
+                window.AppInventor.setWebViewString("PRINT|" + esc);
+            }
 
-    esc += "--------------------------------\n";
-    esc += "TOTAL: Rp " + finalTotal.toLocaleString() + "\n";
-    if (noWA) esc += "Member: " + noWA + "\n";
-    esc += "\nTERIMA KASIH\n\n\n\n";
-
-    if (window.AppInventor) {
-      window.AppInventor.setWebViewString("PRINT|" + esc);
+            alert("Transaksi Berhasil");
+            location.reload();
+        } else {
+            alert("Gagal menyimpan");
+        }
+    } catch (e) {
+        alert("Terjadi kesalahan koneksi");
     }
-
-    alert("Transaksi Berhasil");
-    location.reload();
-  } else {
-    alert("Gagal menyimpan");
-  }
 }
+
+// Jalankan load menu saat start
+loadMenu();
+renderCash();
 </script>
 
 </body>
