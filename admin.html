@@ -2,67 +2,87 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>dyg++ SECURE POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body{font-family:'Plus Jakarta Sans',sans-serif;background:#0f172a;display:flex;justify-content:center;height:100dvh;overflow:hidden}
-        .pos-container{width:100%;max-width:1100px;background:#F1F5F9;display:flex;flex-direction:column}
+        .pos-container{width:100%;max-width:1000px;background:#F1F5F9;display:flex;flex-direction:column}
         .main-content{display:flex;flex:1;overflow:hidden}
         .menu-side{flex:1;display:flex;flex-direction:column;background:#F8FAFC;border-right:1px solid #e2e8f0}
-        .admin-side{width:360px;display:flex;flex-direction:column;background:white;border-left:2px solid #cbd5e1;height:100%}
-        .scroll-area{flex:1;overflow-y:auto;padding:12px}
-        .sticky-bottom{shrink:0;background:#f8fafc;border-top:4px solid #fff}
-        .collapse-content{display:none}
-        .swipe-handle{cursor:pointer;background:#1e293b;color:#fbbf24;text-align:center;font-size:9px;padding:10px;font-weight:800;border-radius:8px;margin-bottom:5px}
-        .monitor-table td{padding:4px 0;font-size:10px;font-weight:bold}
+        .cart-side{width:340px;display:flex;flex-direction:column;background:white;height:100%}
         .scroll-custom::-webkit-scrollbar{width:4px}
         .scroll-custom::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
+        .badge-count { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid white; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <div class="pos-container shadow-2xl">
     <div class="bg-[#1B4332] text-white p-3 flex justify-between items-center shrink-0">
-        <h1 class="text-lg font-black italic tracking-tighter text-emerald-400">dyg++ <span class="text-white opacity-50 ml-2">POS SECURE</span></h1>
-        <div class="text-right">
-            <p class="text-[8px] uppercase opacity-60">Fisik Laci (Sistem)</p>
-            <p id="v-cash" class="text-lg font-black text-emerald-400">Rp 0</p>
+        <h1 class="text-lg font-black italic tracking-tighter text-emerald-400">dyg++ <span class="text-white opacity-50 ml-1 text-xs uppercase">Retail</span></h1>
+        <div class="flex gap-4">
+            <div class="text-right border-r pr-3 border-emerald-800">
+                <p class="text-[7px] uppercase opacity-60 italic">Estimasi Poin</p>
+                <p id="v-earn-pts" class="text-sm font-black text-emerald-400">+0</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[7px] uppercase opacity-60 italic">Saldo Poin Member</p>
+                <p id="v-member-pts" class="text-sm font-black text-yellow-400">0 Pts</p>
+            </div>
         </div>
     </div>
 
     <div class="main-content">
         <div class="menu-side overflow-y-auto scroll-custom">
-            <div class="p-2 border-b bg-white flex gap-2">
-                <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari menu..." class="flex-1 p-2 bg-slate-100 border rounded-lg text-[10px] font-bold">
+            <div class="p-2 border-b bg-white">
+                <input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari menu..." class="w-full p-2 bg-slate-100 border rounded-lg text-xs font-bold outline-none focus:ring-1 ring-emerald-500">
             </div>
-            <div id="menu-render" class="grid grid-cols-4 gap-2 p-3"></div>
+            <div id="menu-render" class="grid grid-cols-3 gap-2 p-3"></div>
         </div>
 
-        <div class="admin-side">
-            <div class="scroll-area space-y-3">
-                <div onclick="toggleSwipe()" class="swipe-handle">📂 KLIK UNTUK MONITOR & FINANCE</div>
-                <div id="collapsible-section" class="collapse-content space-y-3">
-                    <div class="bg-slate-900 text-white rounded-xl p-3 shadow-lg border-b-4 border-emerald-500">
-                        <table class="w-full monitor-table">
-                            <tr><td>Modal Awal</td><td id="m-modal" class="text-right text-blue-300">Rp 0</td></tr>
-                            <tr><td>Cash Masuk</td><td id="m-cash" class="text-right text-emerald-400">Rp 0</td></tr>
-                        </table>
-                    </div>
+        <div class="cart-side border-l-2 border-slate-200">
+            <div class="p-3 bg-slate-50 border-b space-y-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="memberID" placeholder="ID Member" class="p-2 text-[10px] border rounded font-bold" onchange="checkMember()">
+                    <input type="text" id="voucherCode" placeholder="Voucher" class="p-2 text-[10px] border rounded font-bold uppercase" onchange="updateUI()">
                 </div>
-                <div class="bg-white rounded-xl p-2 border-2 border-slate-200 min-h-[150px]">
-                    <p class="text-[9px] font-black text-slate-400 mb-2 uppercase italic border-b pb-1 text-center">Keranjang</p>
-                    <div id="cart-list" class="space-y-1"></div>
+                
+                <div id="redeem-section" class="hidden bg-yellow-50 p-2 rounded border border-yellow-200">
+                    <p class="text-[8px] font-black text-yellow-700 mb-1 uppercase text-center italic">Redeem Kelipatan 1.000 Pts</p>
+                    <div class="flex items-center justify-between px-4">
+                        <button onclick="adjustRedeem(-1)" class="w-8 h-8 bg-white border-2 border-yellow-200 rounded-lg font-black shadow-sm active:bg-yellow-100">-</button>
+                        <div class="text-center">
+                            <span id="v-redeem-qty" class="text-lg font-black text-yellow-800 leading-none">0</span>
+                            <p class="text-[7px] text-yellow-600 font-bold uppercase tracking-widest">Pilihan</p>
+                        </div>
+                        <button onclick="adjustRedeem(1)" class="w-8 h-8 bg-white border-2 border-yellow-200 rounded-lg font-black shadow-sm active:bg-yellow-100">+</button>
+                    </div>
+                    <p id="redeem-warning" class="text-[7px] text-red-500 font-bold mt-1 text-center hidden">! Belanja min. 20% di atas redeem</p>
                 </div>
             </div>
 
-            <div class="sticky-bottom p-4">
-                <div class="flex justify-between text-[#1B4332] mb-2">
-                    <span class="font-black text-[12px]">TOTAL</span>
-                    <span id="v-total" class="text-3xl font-black">Rp 0</span>
+            <div class="flex-1 overflow-y-auto p-3 space-y-1 scroll-custom" id="cart-list"></div>
+
+            <div class="p-3 border-t bg-slate-50 space-y-3">
+                <div class="space-y-1 px-1">
+                    <div class="flex justify-between text-[10px] font-bold text-slate-400"><span>Subtotal</span><span id="v-subtotal">Rp 0</span></div>
+                    <div class="flex justify-between text-[10px] font-bold text-red-500 italic"><span>Redeem Poin</span><span id="v-discount">- Rp 0</span></div>
+                    <div class="flex justify-between items-end pt-1">
+                        <span class="font-black text-xs text-slate-700">GRAND TOTAL</span>
+                        <span id="v-total" class="text-2xl font-black text-[#1B4332]">Rp 0</span>
+                    </div>
                 </div>
-                <button onclick="submitOrder()" id="btn-order" class="w-full bg-[#1B4332] text-white py-4 rounded-2xl font-black text-[14px] shadow-lg">BAYAR & CETAK</button>
+
+                <div class="space-y-2">
+                    <select id="payment-method" class="w-full p-2 bg-white border-2 border-slate-200 rounded-xl text-xs font-black focus:border-emerald-500 outline-none">
+                        <option value="CASH">💵 TUNAI (CASH)</option>
+                        <option value="QRIS">📱 QRIS / E-WALLET</option>
+                        <option value="CARD">💳 KARTU DEBIT</option>
+                    </select>
+                    <button onclick="submitOrder()" id="btn-order" class="w-full bg-[#1B4332] text-white py-3 rounded-2xl font-black text-sm shadow-lg active:scale-95 transition-all">BAYAR & CETAK</button>
+                </div>
             </div>
         </div>
     </div>
@@ -72,65 +92,114 @@
 const CONFIG={
     API:"https://script.google.com/macros/s/AKfycbzRpOLXhNcj1mTREegiLrk9rJonURlLc_A_NpQyTCpWfN4Ptv_-BEeFAfdzubzxt_iw/exec",
     CSV:"https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv",
-    TOKEN:"dyg-access-v2"
+    TOKEN:"dyg-access-v2",
+    SYARAT_DAPAT_POIN: 20000,
+    POIN_PER_KELIPATAN: 100,
+    SYARAT_REDEEM_POIN: 1000,
+    NILAI_REDEEM_RP: 10000, // 1000 poin = 10rb
+    MIN_MARGIN: 1.2 // Syarat belanja 20% di atas redeem (Redeem * 1.2)
 };
 
-let cart={}, menuData=[], discountMember=0;
+let cart={}, menuData=[], redeemQty=0, memberPts=0;
 
-function toggleSwipe(){
-    const s=document.getElementById("collapsible-section");
-    s.style.display=s.style.display==="block"?"none":"block";
+function checkMember(){
+    const id = document.getElementById("memberID").value;
+    if(id === "123"){ 
+        memberPts = 5000; // Contoh punya 5000 poin
+        document.getElementById("v-member-pts").innerText = memberPts.toLocaleString() + " Pts";
+        document.getElementById("redeem-section").classList.remove("hidden");
+        alert("Member Terdeteksi!");
+    }
 }
 
-function addToCart(n,p){
-    cart[n]={price:p, qty:(cart[n]?.qty||0)+1};
-    updateCartUI();
+function adjustRedeem(delta){
+    const sub = Object.values(cart).reduce((s,i)=>s+i.price*i.qty,0);
+    const maxRedeemByPoints = Math.floor(memberPts / CONFIG.SYARAT_REDEEM_POIN);
+    
+    // Syarat 20%: Subtotal harus > (Nilai Redeem * 1.2)
+    // Berarti Nilai Redeem maksimal = Subtotal / 1.2
+    const maxRedeemByValue = Math.floor(sub / (CONFIG.NILAI_REDEEM_RP * CONFIG.MIN_MARGIN));
+    
+    const maxAllowed = Math.min(maxRedeemByPoints, maxRedeemByValue);
+    const newVal = redeemQty + delta;
+
+    if(newVal >= 0 && newVal <= maxAllowed){
+        redeemQty = newVal;
+        document.getElementById("v-redeem-qty").innerText = redeemQty;
+        document.getElementById("redeem-warning").classList.add("hidden");
+        updateUI();
+    } else if (newVal > maxAllowed) {
+        document.getElementById("redeem-warning").classList.remove("hidden");
+    }
 }
 
-function updateCartUI(){
-    let total=0; 
-    const l=document.getElementById("cart-list"); 
-    l.innerHTML="";
-    Object.keys(cart).forEach(n=>{
-        total += cart[n].price * cart[n].qty;
-        l.innerHTML+=`<div class="flex justify-between text-[9px]"><span>${n} x${cart[n].qty}</span><span>${(cart[n].price*cart[n].qty).toLocaleString()}</span></div>`;
+function addToCart(n, p){
+    if(cart[n]) cart[n].qty += 1;
+    else cart[n] = { price: p, qty: 1 };
+    updateUI();
+}
+
+function updateQty(n, delta){
+    if(!cart[n]) return;
+    cart[n].qty += delta;
+    if(cart[n].qty <= 0) delete cart[n];
+    
+    // Reset redeem jika belanjaan berkurang drastis
+    redeemQty = 0;
+    document.getElementById("v-redeem-qty").innerText = "0";
+    updateUI();
+}
+
+function updateUI(){
+    renderMenu();
+    const list = document.getElementById("cart-list");
+    list.innerHTML = "";
+    let sub = 0;
+    
+    Object.keys(cart).forEach(n => {
+        sub += cart[n].price * cart[n].qty;
+        list.innerHTML += `<div class="bg-slate-50 p-2 rounded-lg border border-slate-100 flex justify-between items-center">
+            <div class="w-1/2"><p class="text-[9px] font-black uppercase truncate">${n}</p><p class="text-[8px] font-bold text-emerald-600">Rp ${cart[n].price.toLocaleString()}</p></div>
+            <div class="flex items-center gap-2">
+                <button onclick="updateQty('${n}',-1)" class="w-5 h-5 bg-white border rounded font-bold">-</button>
+                <span class="text-[10px] font-black w-3 text-center">${cart[n].qty}</span>
+                <button onclick="updateQty('${n}',1)" class="w-5 h-5 bg-white border rounded font-bold">+</button>
+            </div>
+        </div>`;
     });
-    document.getElementById("v-total").innerText="Rp "+total.toLocaleString();
+
+    const pot = redeemQty * CONFIG.NILAI_REDEEM_RP;
+    const total = Math.max(0, sub - pot);
+    const earn = Math.floor(total / CONFIG.SYARAT_DAPAT_POIN) * CONFIG.POIN_PER_KELIPATAN;
+
+    document.getElementById("v-subtotal").innerText = "Rp " + sub.toLocaleString();
+    document.getElementById("v-discount").innerText = "- Rp " + pot.toLocaleString();
+    document.getElementById("v-total").innerText = "Rp " + total.toLocaleString();
+    document.getElementById("v-earn-pts").innerText = "+" + earn.toLocaleString();
 }
 
 async function submitOrder(){
-    const total = Object.values(cart).reduce((s,i)=>s+i.price*i.qty,0);
-    if(total <= 0) return;
+    const sub = Object.values(cart).reduce((s,i)=>s+i.price*i.qty,0);
+    const pot = redeemQty * CONFIG.NILAI_REDEEM_RP;
+    const total = sub - pot;
+    if(sub <= 0) return;
 
     const btn = document.getElementById("btn-order");
-    btn.innerText = "PROCESSING...";
+    btn.innerText = "PROSES...";
     btn.disabled = true;
 
     try {
-        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${total}`);
+        await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${total}&method=${document.getElementById("payment-method").value}`);
+        
+        let esc = "\x1B\x40\x1B\x61\x01dyg++ SECURE POS\n" + new Date().toLocaleString() + "\n--------------------------------\n\x1B\x61\x00";
+        Object.keys(cart).forEach(n => esc += `${n} x${cart[n].qty} Rp ${(cart[n].price*cart[n].qty).toLocaleString()}\n`);
+        esc += `--------------------------------\nSUBTOTAL   : Rp ${sub.toLocaleString()}\nREDEEM POIN: Rp ${pot.toLocaleString()}\nGRAND TOTAL: Rp ${total.toLocaleString()}\n--------------------------------\nEST. POIN BARU: ${document.getElementById("v-earn-pts").innerText}\n\x1B\x61\x01TERIMA KASIH\n\n\n\n\n`;
 
-        let esc = "\x1B\x40\x1B\x61\x01"; // Reset & Center
-        esc += "dyg++ POS SECURE\n";
-        esc += new Date().toLocaleString('id-ID') + "\n";
-        esc += "--------------------------------\n\x1B\x61\x00"; // Left
-
-        Object.keys(cart).forEach(n => {
-            esc += `${n} x${cart[n].qty}\n`;
-            esc += `      Rp ${(cart[n].price * cart[n].qty).toLocaleString()}\n`;
-        });
-
-        esc += "--------------------------------\n";
-        esc += `TOTAL    : Rp ${total.toLocaleString()}\n`;
-        esc += "--------------------------------\n\x1B\x61\x01THANK YOU\n\n\n\n\n"; 
-
-        if (window.AppInventor) {
-            window.AppInventor.setWebViewString("PRINT|" + esc);
-        }
-
+        if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
         alert("Transaksi Berhasil!");
         location.reload();
     } catch (e) {
-        alert("Gagal kirim data!");
+        alert("Gagal Kirim!");
         btn.innerText = "BAYAR & CETAK";
         btn.disabled = false;
     }
@@ -145,19 +214,20 @@ async function loadMenu(){
             return {nama:c[1], harga:parseInt(c[2])||0}
         }).filter(m=>m.nama);
         renderMenu();
-    } catch(e) { console.error("Gagal muat menu"); }
+    } catch(e) {}
 }
 
 function renderMenu(){
     const c=document.getElementById("menu-render");
-    const search = document.getElementById("menuSearch").value.toLowerCase();
+    const s=document.getElementById("menuSearch").value.toLowerCase();
     c.innerHTML="";
-    menuData.filter(m => m.nama.toLowerCase().includes(search)).forEach(m=>{
-        c.innerHTML+=`
-            <div onclick="addToCart('${m.nama}',${m.harga})" class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 active:scale-95 transition-transform cursor-pointer">
-                <p class="text-[10px] font-black leading-tight h-8 overflow-hidden">${m.nama}</p>
-                <p class="text-emerald-600 font-bold text-[9px] mt-1">Rp ${m.harga.toLocaleString()}</p>
-            </div>`;
+    menuData.filter(m=>m.nama.toLowerCase().includes(s)).forEach(m=>{
+        const q = cart[m.nama]?.qty || 0;
+        c.innerHTML+=`<div onclick="addToCart('${m.nama}',${m.harga})" class="relative bg-white p-2 rounded-xl border border-slate-200 cursor-pointer active:scale-95">
+            ${q > 0 ? `<div class="badge-count">${q}</div>` : ''}
+            <p class="text-[9px] font-black leading-tight h-6 overflow-hidden uppercase">${m.nama}</p>
+            <p class="text-emerald-600 font-bold text-[9px]">Rp ${m.harga.toLocaleString()}</p>
+        </div>`;
     });
 }
 window.onload=loadMenu;
