@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>dyg++ RETAIL POS</title>
+    <title>CLOUDkitchen.dyg++ POS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
@@ -74,7 +74,7 @@
 
 <script>
 const CONFIG = {
-    API: "https://script.google.com/macros/s/AKfycbwgqC7owTxVAoJz-FHVFJpKzi0J7CBKnwPbjOjLgNBmQEfTbAhJ7rxkHsaIhfIY2chV/exec",
+    API: "https://script.google.com/macros/s/AKfycbzs0X1yPt9NReX3fWJYx6LUukaYXYmfYsxCpcNvJUbI6EXC9wGxSmPcY29S-vIZnNejJQ/exec",
     CSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv",
     TOKEN: "dyg-access-v2"
 };
@@ -162,25 +162,48 @@ function setCash(v) {
 function toggleCashUI() { document.getElementById("cash-ui").style.display = (document.getElementById("pay-method").value === "CASH") ? "grid" : "none"; }
 
 async function submitOrder() {
-    const grand = parseInt(document.getElementById("v-total").innerText.replace(/[^0-9]/g, ''));
+    const totalRaw = document.getElementById("v-total").innerText.replace(/[^0-9]/g, '');
+    const grand = parseInt(totalRaw);
     if (grand <= 0 && Object.keys(cart).length === 0) return;
-    const btn = document.getElementById("btn-order"); btn.innerText = "PROSES..."; btn.disabled = true;
+
+    const btn = document.getElementById("btn-order");
+    btn.innerText = "MENYIMPAN...";
+    btn.disabled = true;
 
     try {
         const p = Object.keys(cart).map(n => `${n} (x${cart[n].qty})`).join(", ");
         const url = `${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${grand}&noWA=${activeWA}&redeemQty=${redeemQty}&method=${document.getElementById("pay-method").value}&pesanan=${encodeURIComponent(p)}`;
-        await fetch(url);
         
-        let esc = "\x1B\x40\x1B\x61\x01dyg++ RETAIL POS\n" + new Date().toLocaleString() + "\n--------------------------------\n\x1B\x61\x00";
-        Object.keys(cart).forEach(n => esc += `${n} x${cart[n].qty}\n`);
-        esc += `--------------------------------\nTOTAL: Rp ${grand.toLocaleString()}\nPOIN BARU: ${document.getElementById("v-earn-pts").innerText}\n\x1B\x61\x01TERIMA KASIH\n\n\n\n\n`;
+        const res = await fetch(url);
+        const result = await res.text();
 
-        if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-        alert("Transaksi Berhasil!");
-        location.reload();
+        if (result === "SUCCESS") {
+            // STRUK RETAIL (TANPA NOMOR ANTREAN)
+            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
+            esc += "Tgl: " + new Date().toLocaleString() + "\n";
+            esc += "--------------------------------\n\x1B\x61\x00";
+            
+            Object.keys(cart).forEach(n => {
+                esc += `${n}\n`;
+                esc += `${cart[n].qty} x ${cart[n].price.toLocaleString()} = ${(cart[n].qty * cart[n].price).toLocaleString()}\n`;
+            });
+
+            esc += "--------------------------------\n";
+            esc += "TOTAL: Rp " + grand.toLocaleString() + "\n";
+            if (activeWA) {
+                esc += "Member: " + activeWA + "\n";
+                esc += "Poin Baru: " + document.getElementById("v-earn-pts").innerText + "\n";
+            }
+            esc += "\x1B\x61\x01\nTERIMA KASIH\n\x1B\x61\x01dyg.com\n\n\n\n\n";
+
+            if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
+            alert("Transaksi Berhasil & Tersimpan!");
+            location.reload();
+        }
     } catch (e) {
-        alert("Gagal Kirim!");
-        btn.innerText = "BAYAR & CETAK"; btn.disabled = false;
+        alert("Gagal Koneksi ke Server!");
+        btn.innerText = "BAYAR & CETAK";
+        btn.disabled = false;
     }
 }
 window.onload = loadMenu;
