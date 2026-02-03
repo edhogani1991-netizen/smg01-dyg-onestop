@@ -1,212 +1,253 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CLOUDkitchen.dyg++ POS</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; height: 100dvh; display: flex; justify-content: center; overflow: hidden; }
-        .pos-container { width: 100%; max-width: 1000px; background: #F1F5F9; display: flex; flex-direction: column; }
-        .menu-item { position: relative; background: white; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s; }
-        .menu-item:active { transform: scale(0.95); background: #f0fdf4; }
-        .badge-count { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid white; }
-        .scroll-custom::-webkit-scrollbar { width: 4px; }
-        .scroll-custom::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .btn-pay-opt { padding: 6px; font-size: 10px; font-weight: 800; border-radius: 6px; border: 1px solid #e2e8f0; background: white; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Kasir dyg++</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
 
-<div class="pos-container shadow-2xl">
-    <div class="bg-[#1B4332] text-white p-2 flex justify-between items-center">
-        <h1 class="text-sm font-black italic text-emerald-400">dyg++ <span class="text-white opacity-50">RETAIL</span></h1>
-        <div class="flex gap-4 text-right">
-            <div><p class="text-[7px] uppercase opacity-60">Poin Member</p><p id="v-member-pts" class="text-xs font-black text-yellow-400">0 Pts</p></div>
-            <div class="border-l pl-3"><p class="text-[7px] uppercase opacity-60">Est. Poin</p><p id="v-earn-pts" class="text-xs font-black text-emerald-400">+0</p></div>
-        </div>
-    </div>
+<body class="bg-gray-100 p-4">
 
-    <div class="flex flex-1 overflow-hidden">
-        <div class="flex-1 flex flex-col bg-white">
-            <div class="p-2 border-b"><input type="text" id="menuSearch" oninput="renderMenu()" placeholder="Cari..." class="w-full p-2 bg-slate-100 rounded text-xs outline-none focus:ring-1 ring-emerald-500"></div>
-            <div id="menu-render" class="grid grid-cols-4 gap-2 p-2 overflow-y-auto scroll-custom"></div>
-        </div>
+<h1 class="text-2xl font-bold mb-4">🧾 Admin Kasir dyg++</h1>
 
-        <div class="w-80 border-l bg-white flex flex-col">
-            <div class="p-3 bg-slate-50 border-b space-y-2">
-                <input type="text" id="noWA" placeholder="WA Member (Enter)" class="w-full p-2 text-xs border rounded font-bold" onkeypress="if(event.key==='Enter') checkMember()">
-                <div id="redeem-area" class="hidden flex items-center justify-between bg-yellow-100 p-2 rounded border border-yellow-200">
-                    <button onclick="adjRedeem(-1)" class="w-6 h-6 bg-white rounded font-bold">-</button>
-                    <div class="text-center"><span id="v-redeem-qty" class="text-xs font-black">0</span><p class="text-[7px] uppercase">Redeem (x1000)</p></div>
-                    <button onclick="adjRedeem(1)" class="w-6 h-6 bg-white rounded font-bold">+</button>
-                </div>
-            </div>
+<!-- MEMBER -->
+<div class="bg-white p-4 rounded shadow mb-4">
+  <h2 class="font-semibold mb-2">Member</h2>
+  <div class="flex gap-2">
+    <input id="nohp" type="text" placeholder="Nomor WA" class="border p-2 flex-1">
+    <button onclick="cekMember()" class="bg-green-600 text-white px-4 rounded">
+      Cek Poin
+    </button>
+  </div>
+  <div id="memberInfo" class="mt-2 text-sm"></div>
+</div>
 
-            <div id="cart-list" class="flex-1 overflow-y-auto p-2 space-y-1 scroll-custom"></div>
+<!-- MENU -->
+<div id="menuList" class="grid grid-cols-2 gap-3 mb-4"></div>
 
-            <div class="p-3 border-t bg-slate-50 space-y-2">
-                <div class="text-[10px] font-bold space-y-1">
-                    <div class="flex justify-between text-slate-400"><span>Subtotal</span><span id="v-subtotal">0</span></div>
-                    <div class="flex justify-between text-red-500 italic"><span>Redeem</span><span id="v-discount">0</span></div>
-                    <div class="flex justify-between text-base font-black text-[#1B4332] pt-1 border-t"><span>TOTAL</span><span id="v-total">0</span></div>
-                </div>
+<!-- KERANJANG -->
+<div class="bg-white p-4 rounded shadow mb-4">
+  <h2 class="font-semibold mb-2">Keranjang</h2>
+  <div id="cartList" class="text-sm"></div>
+  <div class="mt-2 font-bold">
+    Total: Rp <span id="total">0</span>
+  </div>
+</div>
 
-                <select id="pay-method" onchange="toggleCashUI()" class="w-full p-2 bg-white border rounded text-xs font-black outline-none">
-                    <option value="CASH">💵 TUNAI</option>
-                    <option value="QRIS">📱 QRIS</option>
-                    <option value="CARD">💳 KARTU</option>
-                </select>
+<!-- VOUCHER -->
+<div class="bg-white p-4 rounded shadow mb-4">
+  <h2 class="font-semibold mb-2">Voucher</h2>
+  <input id="voucher" type="number" placeholder="Nominal voucher"
+         class="border p-2 w-full">
+</div>
 
-                <div id="cash-ui" class="grid grid-cols-2 gap-1">
-                    <button onclick="setCash('pas')" class="btn-pay-opt bg-emerald-50 text-emerald-700">UANG PAS</button>
-                    <button onclick="setCash(50000)" class="btn-pay-opt">50.000</button>
-                    <button onclick="setCash(100000)" class="btn-pay-opt">100.000</button>
-                    <input type="number" id="cash-input" placeholder="Bayar..." class="p-1 border rounded text-xs font-bold">
-                </div>
+<!-- PEMBAYARAN -->
+<div class="bg-white p-4 rounded shadow">
+  <h2 class="font-semibold mb-2">Pembayaran</h2>
 
-                <button onclick="submitOrder()" id="btn-order" class="w-full bg-[#1B4332] text-white py-2.5 rounded-lg font-black text-xs shadow-lg active:scale-95 transition-all">BAYAR & CETAK</button>
-            </div>
-        </div>
-    </div>
+  <select id="metode" onchange="renderCash()" class="border p-2 w-full mb-2">
+    <option value="CASH">Tunai</option>
+    <option value="QRIS">QRIS</option>
+    <option value="CARD">Kartu</option>
+  </select>
+
+  <div id="cashBox"></div>
+
+  <button onclick="submitOrder()"
+          class="mt-4 bg-blue-600 text-white w-full py-2 rounded font-semibold">
+    BAYAR & CETAK
+  </button>
 </div>
 
 <script>
-const CONFIG = {
-    API: "https://script.google.com/macros/s/AKfycbzs0X1yPt9NReX3fWJYx6LUukaYXYmfYsxCpcNvJUbI6EXC9wGxSmPcY29S-vIZnNejJQ/exec",
-    CSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv",
-    TOKEN: "dyg-access-v2"
-};
+/* ================= CONFIG ================= */
+const API_URL = "https://script.google.com/macros/s/AKfycbyvU5fQpE_UFq_mnfAMvhCNJ97f1SvVRpXv_qrZh96lj8IBPot8xRdQ34Iz1n-HVmiuzg/exec";
+const TOKEN = "dyg-access-v2";
 
-let cart = {}, menuData = [], redeemQty = 0, memberPts = 0, activeWA = "";
+/* ================= DATA MENU ================= */
+const MENU = [
+  { nama: "Nasi Goreng", harga: 20000 },
+  { nama: "Mie Goreng", harga: 18000 },
+  { nama: "Es Teh", harga: 5000 },
+  { nama: "Kopi", harga: 8000 }
+];
 
-async function loadMenu() {
-    const r = await fetch(CONFIG.CSV);
-    const t = await r.text();
-    menuData = t.split("\n").slice(1).map(l => { const c = l.split(","); return { nama: c[1], harga: parseInt(c[2]) || 0 }; }).filter(m => m.nama);
-    renderMenu();
+let cart = {};
+let member = null;
+
+/* ================= RENDER MENU ================= */
+const menuList = document.getElementById("menuList");
+
+MENU.forEach((m, i) => {
+  const el = document.createElement("div");
+  el.className = "bg-white p-3 rounded shadow relative";
+  el.innerHTML = `
+    <div class="font-bold">${m.nama}</div>
+    <div>Rp ${m.harga.toLocaleString()}</div>
+    <button onclick="addItem(${i})"
+            class="mt-2 bg-green-500 text-white px-3 rounded">
+      Tambah
+    </button>
+    <span id="badge-${i}"
+          class="hidden absolute top-1 right-2 bg-red-600
+                 text-white text-xs px-2 rounded-full"></span>
+  `;
+  menuList.appendChild(el);
+});
+
+/* ================= CART ================= */
+function addItem(i) {
+  if (!cart[i]) cart[i] = { qty: 0, ...MENU[i] };
+  cart[i].qty++;
+  renderCart();
 }
 
-function renderMenu() {
-    const cont = document.getElementById("menu-render");
-    const search = document.getElementById("menuSearch").value.toLowerCase();
-    cont.innerHTML = "";
-    menuData.filter(m => m.nama.toLowerCase().includes(search)).forEach(m => {
-        const q = cart[m.nama]?.qty || 0;
-        cont.innerHTML += `<div onclick="addCart('${m.nama}', ${m.harga})" class="menu-item">
-            ${q > 0 ? `<div class="badge-count">${q}</div>` : ''}
-            <p class="text-[9px] font-extrabold uppercase leading-tight h-6 overflow-hidden">${m.nama}</p>
-            <p class="text-emerald-600 font-bold text-[10px]">Rp ${m.harga.toLocaleString()}</p>
-        </div>`;
+function removeItem(i) {
+  cart[i].qty--;
+  if (cart[i].qty <= 0) delete cart[i];
+  renderCart();
+}
+
+function renderCart() {
+  let html = "";
+  let total = 0;
+
+  MENU.forEach((_, i) => {
+    const badge = document.getElementById("badge-" + i);
+    if (badge) badge.classList.add("hidden");
+  });
+
+  Object.keys(cart).forEach(i => {
+    const item = cart[i];
+    total += item.qty * item.harga;
+
+    const badge = document.getElementById("badge-" + i);
+    badge.innerText = item.qty;
+    badge.classList.remove("hidden");
+
+    html += `
+      <div class="flex justify-between mb-1">
+        ${item.nama} x${item.qty}
+        <div>
+          <button onclick="addItem(${i})">➕</button>
+          <button onclick="removeItem(${i})">➖</button>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById("cartList").innerHTML = html || "-";
+  document.getElementById("total").innerText = total;
+}
+
+/* ================= MEMBER ================= */
+function cekMember() {
+  const nohp = document.getElementById("nohp").value.trim();
+  if (!nohp) return;
+
+  fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${nohp}`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.exists) {
+        member = d;
+        document.getElementById("memberInfo").innerText =
+          `Nama: ${d.nama} | Poin: ${d.poin}`;
+      } else {
+        member = null;
+        document.getElementById("memberInfo").innerText = "Bukan member";
+      }
     });
 }
 
-function addCart(n, p) {
-    if (cart[n]) cart[n].qty++; else cart[n] = { price: p, qty: 1 };
-    updateUI();
+/* ================= CASH ================= */
+function renderCash() {
+  const metode = document.getElementById("metode").value;
+  const box = document.getElementById("cashBox");
+  if (metode !== "CASH") { box.innerHTML = ""; return; }
+
+  box.innerHTML = `
+    <input id="bayar" type="number"
+           placeholder="Uang diterima"
+           class="border p-2 w-full mb-2">
+    <div class="flex gap-2 mb-2">
+      ${[20000, 50000, 100000].map(v =>
+        `<button onclick="quickCash(${v})"
+                 class="border px-3 py-1 rounded">${v}</button>`
+      ).join("")}
+    </div>
+    <div>Kembalian: Rp <span id="kembali">0</span></div>
+  `;
 }
 
-function updateQty(n, delta) {
-    cart[n].qty += delta;
-    if (cart[n].qty <= 0) delete cart[n];
-    redeemQty = 0; updateUI();
+function quickCash(v) {
+  document.getElementById("bayar").value = v;
+  hitungKembali();
 }
 
-async function checkMember() {
-    const wa = document.getElementById("noWA").value;
-    const r = await fetch(`${CONFIG.API}?token=${CONFIG.TOKEN}&action=cekMember&noWA=${wa}`);
-    const d = await r.json();
-    if (d.exists) {
-        memberPts = d.poin; activeWA = wa;
-        document.getElementById("v-member-pts").innerText = memberPts.toLocaleString() + " Pts";
-        document.getElementById("redeem-area").classList.remove("hidden");
-    } else { alert("Member Tidak Ada!"); }
+document.addEventListener("input", e => {
+  if (e.target.id === "bayar") hitungKembali();
+});
+
+function hitungKembali() {
+  const bayar = Number(document.getElementById("bayar")?.value || 0);
+  const total = Number(document.getElementById("total").innerText || 0);
+  document.getElementById("kembali").innerText = bayar - total;
 }
 
-function adjRedeem(d) {
-    const sub = Object.values(cart).reduce((s, i) => s + i.price * i.qty, 0);
-    const limit = Math.min(Math.floor(memberPts/1000), Math.floor(sub/(10000*1.2)));
-    const nv = redeemQty + d;
-    if (nv >= 0 && nv <= limit) { redeemQty = nv; updateUI(); }
-}
-
-function updateUI() {
-    renderMenu();
-    const list = document.getElementById("cart-list"); list.innerHTML = "";
-    let sub = 0;
-    Object.keys(cart).forEach(n => {
-        sub += cart[n].price * cart[n].qty;
-        list.innerHTML += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-100">
-            <span class="text-[9px] font-black uppercase w-2/3 truncate">${n}</span>
-            <div class="flex items-center gap-2">
-                <button onclick="updateQty('${n}',-1)" class="w-4 h-4 bg-white border rounded text-[10px]">-</button>
-                <span class="text-[10px] font-bold">${cart[n].qty}</span>
-                <button onclick="updateQty('${n}',1)" class="w-4 h-4 bg-white border rounded text-[10px]">+</button>
-            </div>
-        </div>`;
-    });
-    const pot = redeemQty * 10000; const grand = Math.max(0, sub - pot);
-    document.getElementById("v-subtotal").innerText = "Rp " + sub.toLocaleString();
-    document.getElementById("v-discount").innerText = "- Rp " + pot.toLocaleString();
-    document.getElementById("v-total").innerText = "Rp " + grand.toLocaleString();
-    document.getElementById("v-earn-pts").innerText = "+" + (Math.floor(grand / 20000) * 100);
-    document.getElementById("v-redeem-qty").innerText = redeemQty;
-}
-
-function setCash(v) { 
-    const g = parseInt(document.getElementById("v-total").innerText.replace(/[^0-9]/g, ''));
-    document.getElementById("cash-input").value = (v === 'pas') ? g : v;
-}
-
-function toggleCashUI() { document.getElementById("cash-ui").style.display = (document.getElementById("pay-method").value === "CASH") ? "grid" : "none"; }
-
+/* ================= SUBMIT + PRINT ================= */
 async function submitOrder() {
-    const totalRaw = document.getElementById("v-total").innerText.replace(/[^0-9]/g, '');
-    const grand = parseInt(totalRaw);
-    if (grand <= 0 && Object.keys(cart).length === 0) return;
+  const total = Number(document.getElementById("total").innerText || 0);
+  if (total <= 0) { alert("Keranjang kosong"); return; }
 
-    const btn = document.getElementById("btn-order");
-    btn.innerText = "MENYIMPAN...";
-    btn.disabled = true;
+  const voucher = Number(document.getElementById("voucher").value || 0);
+  const finalTotal = Math.max(0, total - voucher);
+  const metode = document.getElementById("metode").value;
+  const noWA = document.getElementById("nohp").value || "";
 
-    try {
-        const p = Object.keys(cart).map(n => `${n} (x${cart[n].qty})`).join(", ");
-        const url = `${CONFIG.API}?token=${CONFIG.TOKEN}&action=processOrder&total=${grand}&noWA=${activeWA}&redeemQty=${redeemQty}&method=${document.getElementById("pay-method").value}&pesanan=${encodeURIComponent(p)}`;
-        
-        const res = await fetch(url);
-        const result = await res.text();
+  const pesanan = Object.values(cart)
+    .map(i => `${i.nama} x${i.qty}`)
+    .join(", ");
 
-        if (result === "SUCCESS") {
-            // STRUK RETAIL (TANPA NOMOR ANTREAN)
-            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
-            esc += "Tgl: " + new Date().toLocaleString() + "\n";
-            esc += "--------------------------------\n\x1B\x61\x00";
-            
-            Object.keys(cart).forEach(n => {
-                esc += `${n}\n`;
-                esc += `${cart[n].qty} x ${cart[n].price.toLocaleString()} = ${(cart[n].qty * cart[n].price).toLocaleString()}\n`;
-            });
+  const url =
+    `${API_URL}?token=${TOKEN}` +
+    `&action=processPayment` +
+    `&total=${finalTotal}` +
+    `&noWA=${noWA}` +
+    `&redeemQty=0` +
+    `&voucher=${voucher}` +
+    `&method=${metode}` +
+    `&pesanan=${encodeURIComponent(pesanan)}`;
 
-            esc += "--------------------------------\n";
-            esc += "TOTAL: Rp " + grand.toLocaleString() + "\n";
-            if (activeWA) {
-                esc += "Member: " + activeWA + "\n";
-                esc += "Poin Baru: " + document.getElementById("v-earn-pts").innerText + "\n";
-            }
-            esc += "\x1B\x61\x01\nTERIMA KASIH\n\x1B\x61\x01dyg.com\n\n\n\n\n";
+  const res = await fetch(url);
+  const txt = await res.text();
 
-            if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-            alert("Transaksi Berhasil & Tersimpan!");
-            location.reload();
-        }
-    } catch (e) {
-        alert("Gagal Koneksi ke Server!");
-        btn.innerText = "BAYAR & CETAK";
-        btn.disabled = false;
+  if (txt === "SUCCESS") {
+    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
+    esc += "Tgl: " + new Date().toLocaleString() + "\n";
+    esc += "--------------------------------\n\x1B\x61\x00";
+
+    Object.values(cart).forEach(i => {
+      esc += `${i.nama}\n`;
+      esc += `${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`;
+    });
+
+    esc += "--------------------------------\n";
+    esc += "TOTAL: Rp " + finalTotal.toLocaleString() + "\n";
+    if (noWA) esc += "Member: " + noWA + "\n";
+    esc += "\nTERIMA KASIH\n\n\n\n";
+
+    if (window.AppInventor) {
+      window.AppInventor.setWebViewString("PRINT|" + esc);
     }
+
+    alert("Transaksi Berhasil");
+    location.reload();
+  } else {
+    alert("Gagal menyimpan");
+  }
 }
-window.onload = loadMenu;
 </script>
+
 </body>
 </html>
