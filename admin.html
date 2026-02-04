@@ -3,84 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>dyg++ POS Compact</title>
+    <title>dyg++ POS Premium</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #f1f5f9; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; overflow: hidden; }
+        
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .main-container { height: calc(100vh - 56px); display: flex; }
-        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; align-content: start; }
-        @media (max-width: 640px) {
-            .menu-grid { grid-template-columns: repeat(2, 1fr); }
-            .main-container { flex-direction: column; overflow-y: auto; height: calc(100vh - 60px); }
-            .cart-panel { width: 100% !important; height: auto !important; border-l: none; border-t: 2px solid #e2e8f0; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
+        .main-container { height: calc(100vh - 64px); }
+        
+        .menu-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 12px; 
         }
-        .menu-card { transition: transform 0.1s; border: 1px solid #e2e8f0; }
-        .menu-card:active { transform: scale(0.96); }
-        #voucherSection { transition: all 0.3s ease-in-out; max-height: 0; overflow: hidden; opacity: 0; }
-        #voucherSection.open { max-height: 100px; opacity: 1; margin-top: 4px; }
+
+        .menu-card { 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #f1f5f9;
+        }
+        .menu-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .menu-card:active { transform: scale(0.95); }
+
+        .cart-item { animation: slideIn 0.2s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+
+        #voucherSection { transition: all 0.3s ease; max-height: 0; overflow: hidden; opacity: 0; }
+        #voucherSection.open { max-height: 120px; opacity: 1; margin-top: 8px; }
+
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="h-screen flex flex-col">
 
-<header class="h-[52px] bg-white border-b border-slate-200 px-4 flex justify-between items-center shrink-0">
-    <div class="flex items-center gap-3">
-        <h1 class="text-lg font-extrabold text-blue-700 tracking-tighter">dyg++ <span class="text-slate-400 font-medium">RETAIL</span></h1>
-        <div id="memberInfo" class="hidden md:block text-[10px] text-slate-500 italic truncate max-w-[150px]">Cek member...</div>
+<header class="h-16 bg-white border-b border-slate-200 px-6 flex justify-between items-center shrink-0 shadow-sm z-10">
+    <div class="flex items-center gap-4">
+        <div class="bg-indigo-600 p-2 rounded-lg">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+        </div>
+        <div>
+            <h1 class="text-xl font-extrabold text-slate-800 tracking-tight leading-none">dyg++ <span class="text-indigo-600">RETAIL</span></h1>
+            <div id="memberInfo" class="text-[10px] text-slate-400 font-medium mt-1">Ready to serve</div>
+        </div>
     </div>
-    <div class="flex items-center gap-2">
-        <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 border-none rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none w-24 md:w-36">
-        <button onclick="cekMember()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold transition">Cek</button>
+    
+    <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+        <input id="nohp" type="number" placeholder="No. WhatsApp Member" class="bg-transparent border-none px-3 py-1 text-sm focus:ring-0 outline-none w-32 md:w-48 font-semibold">
+        <button onclick="cekMember()" class="bg-white hover:bg-indigo-600 hover:text-white text-indigo-600 shadow-sm px-4 py-1.5 rounded-lg text-xs font-bold transition-all">CEK</button>
     </div>
 </header>
 
 <main class="flex flex-1 overflow-hidden main-container">
-    <section class="flex-1 flex flex-col bg-slate-50 overflow-hidden">
-        <div class="p-2 flex gap-2 bg-white border-b border-slate-200">
-            <input type="text" id="searchInput" oninput="filterMenu()" placeholder="Cari menu..." class="flex-1 px-3 py-1.5 bg-slate-100 border-none rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">
-            <select id="categoryFilter" onchange="filterMenu()" class="bg-slate-100 border-none rounded-lg px-2 py-1.5 text-xs font-semibold outline-none w-28">
-                <option value="ALL">Semua</option>
+    <section class="flex-1 flex flex-col overflow-hidden">
+        <div class="p-4 flex gap-3 bg-white/50 backdrop-blur-md border-b border-slate-200">
+            <div class="relative flex-1">
+                <span class="absolute inset-y-0 left-3 flex items-center text-slate-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </span>
+                <input type="text" id="searchInput" oninput="filterMenu()" placeholder="Cari produk..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all">
+            </div>
+            <select id="categoryFilter" onchange="filterMenu()" class="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20 w-40">
+                <option value="ALL">Semua Kategori</option>
             </select>
         </div>
-        <div id="menuList" class="menu-grid p-2 overflow-y-auto custom-scroll flex-1"></div>
+        
+        <div id="menuList" class="menu-grid p-6 overflow-y-auto custom-scroll flex-1">
+            </div>
     </section>
 
-    <section class="cart-panel w-[310px] flex flex-col bg-white border-l border-slate-200 shrink-0">
-        <div class="p-2 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <h2 class="font-bold text-slate-700 text-[10px] uppercase tracking-widest flex items-center gap-1"><span>🛒</span> KERANJANG</h2>
-            <button onclick="location.reload()" class="text-[9px] text-red-500 font-bold hover:underline">RESET</button>
-        </div>
-        <div id="cartList" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1.5">
-            <div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[10px]">Kosong</p></div>
+    <section class="w-[380px] flex flex-col bg-white border-l border-slate-200 shadow-2xl z-20">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-lg">🛒</span>
+                <h2 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Keranjang</h2>
+            </div>
+            <button onclick="location.reload()" class="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
         </div>
 
-        <div class="p-2 bg-white border-t border-slate-200">
-            <div class="mb-1">
-                <button onclick="toggleVoucher()" class="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                    <span>🏷️</span> VOUCHER <span id="vouchArrow">▼</span>
+        <div id="cartList" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
+            <div class="flex flex-col items-center justify-center h-full text-slate-300 opacity-60">
+                <div class="bg-slate-100 p-4 rounded-full mb-2">🛒</div>
+                <p class="text-xs font-medium">Belum ada pesanan</p>
+            </div>
+        </div>
+
+        <div class="p-6 bg-slate-50 border-t border-slate-200 space-y-4">
+            <div>
+                <button onclick="toggleVoucher()" class="flex items-center justify-between w-full text-[11px] font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 p-2.5 rounded-lg transition-all">
+                    <span class="flex items-center gap-2">🏷️ GUNAKAN VOUCHER</span>
+                    <span id="vouchArrow">▼</span>
                 </button>
                 <div id="voucherSection">
-                    <div class="flex justify-between items-center py-1 px-1">
-                        <span class="text-[10px] text-slate-500 italic">Input nominal (Rp)</span>
-                        <input id="voucher" type="number" oninput="renderCart()" placeholder="0" class="w-20 text-right border-b border-blue-300 bg-transparent outline-none font-bold text-red-600 text-xs">
+                    <div class="flex items-center bg-white border border-indigo-200 rounded-lg p-2 mt-2 shadow-sm">
+                        <span class="text-[10px] font-bold text-slate-400 px-2 border-r">Rp</span>
+                        <input id="voucher" type="number" oninput="renderCart()" placeholder="0" class="flex-1 text-right outline-none font-bold text-red-600 text-sm px-2">
                     </div>
                 </div>
             </div>
-            <div class="flex justify-between items-center mb-1 px-1">
-                <span class="font-bold text-slate-700 text-[11px]">TOTAL</span>
-                <span class="text-lg font-black text-blue-700 leading-none">Rp <span id="total">0</span></span>
+
+            <div class="flex justify-between items-end pb-2">
+                <span class="font-bold text-slate-500 text-xs">TOTAL TAGIHAN</span>
+                <div class="text-right">
+                    <span class="block text-[10px] text-slate-400 font-bold uppercase leading-none mb-1">Total Net</span>
+                    <span class="text-3xl font-black text-slate-900 tracking-tighter">Rp <span id="total">0</span></span>
+                </div>
             </div>
-            <div class="space-y-1.5">
-                <select id="metode" onchange="renderCash()" class="w-full border border-slate-200 rounded-md p-1.5 text-[11px] font-bold bg-white outline-none">
-                    <option value="CASH">💵 TUNAI</option>
-                    <option value="QRIS">📱 QRIS</option>
-                    <option value="CARD">💳 KARTU</option>
-                </select>
-                <div id="cashBox" class="empty:hidden"></div>
-                <button onclick="submitOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-[12px] shadow-sm transition active:scale-95 uppercase">Bayar & Cetak</button>
+
+            <div class="space-y-3">
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setMethod('CASH')" id="btn-CASH" class="method-btn py-2 rounded-xl border-2 border-indigo-600 bg-indigo-600 text-white font-bold text-[10px] transition-all">TUNAI</button>
+                    <button onclick="setMethod('QRIS')" id="btn-QRIS" class="method-btn py-2 rounded-xl border-2 border-slate-200 bg-white text-slate-400 font-bold text-[10px] transition-all">QRIS</button>
+                    <button onclick="setMethod('CARD')" id="btn-CARD" class="method-btn py-2 rounded-xl border-2 border-slate-200 bg-white text-slate-400 font-bold text-[10px] transition-all">KARTU</button>
+                </div>
+                <input type="hidden" id="metode" value="CASH">
+
+                <div id="cashBox" class="space-y-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all animate-in fade-in">
+                    </div>
+
+                <button onclick="submitOrder()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-extrabold text-sm shadow-lg shadow-indigo-200 transition-all active:scale-95 uppercase tracking-widest">
+                    Konfirmasi & Cetak
+                </button>
             </div>
         </div>
     </section>
@@ -92,13 +139,6 @@ const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0
 const TOKEN = "dyg-access-v2";
 
 let MENU = [], cart = {}, member = null;
-
-function toggleVoucher() {
-    const v = document.getElementById('voucherSection');
-    const a = document.getElementById('vouchArrow');
-    v.classList.toggle('open');
-    a.innerText = v.classList.contains('open') ? '▲' : '▼';
-}
 
 async function loadMenu() {
     try {
@@ -132,24 +172,37 @@ function renderMenu() {
     MENU.forEach((m, i) => {
         if ((filter === "ALL" || m.kategori === filter) && (m.nama.toLowerCase().includes(search))) {
             const el = document.createElement("div");
-            el.className = "menu-card bg-white p-2 rounded-lg shadow-sm flex flex-col justify-between cursor-pointer relative";
+            el.className = "menu-card bg-white p-4 rounded-2xl shadow-sm flex flex-col justify-between cursor-pointer relative overflow-hidden";
             el.onclick = () => addItem(i);
-            el.innerHTML = `<div><div class="text-[7px] font-bold text-blue-500 uppercase">${m.kategori}</div><div class="font-bold text-slate-800 text-[10px] leading-tight line-clamp-2">${m.nama}</div></div>
-                <div class="flex justify-between items-center mt-1.5"><div class="text-[10px] font-black text-slate-900">Rp${m.harga.toLocaleString()}</div><div class="bg-blue-50 text-blue-600 rounded p-0.5"><svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/></svg></div></div>
-                <span id="badge-${i}" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full font-bold border-white border"></span>`;
+            el.innerHTML = `
+                <div class="z-10">
+                    <span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[8px] font-bold rounded-full uppercase mb-2 inline-block">${m.kategori}</span>
+                    <h3 class="font-bold text-slate-800 text-xs leading-tight line-clamp-2 h-8">${m.nama}</h3>
+                </div>
+                <div class="flex justify-between items-center mt-4 z-10">
+                    <div class="text-sm font-black text-indigo-600">Rp${m.harga.toLocaleString()}</div>
+                    <div class="bg-indigo-600 text-white rounded-lg p-1 shadow-md shadow-indigo-100">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+                    </div>
+                </div>
+                <span id="badge-${i}" class="hidden absolute top-2 right-2 bg-red-500 text-white text-[9px] w-5 h-5 flex items-center justify-center rounded-full font-black border-2 border-white shadow-sm"></span>
+            `;
             list.appendChild(el);
         }
     });
     updateBadges();
 }
 
-function filterMenu() { renderMenu(); }
 function addItem(i) { if (!cart[i]) cart[i] = { qty: 0, ...MENU[i] }; cart[i].qty++; renderCart(); }
 function removeItem(i) { cart[i].qty--; if (cart[i].qty <= 0) delete cart[i]; renderCart(); }
+
 function updateBadges() {
     MENU.forEach((_, i) => {
         const b = document.getElementById("badge-" + i);
-        if (b) { if (cart[i]) { b.innerText = cart[i].qty; b.classList.remove("hidden"); } else { b.classList.add("hidden"); } }
+        if (b) {
+            if (cart[i]) { b.innerText = cart[i].qty; b.classList.remove("hidden"); }
+            else { b.classList.add("hidden"); }
+        }
     });
 }
 
@@ -157,73 +210,159 @@ function renderCart() {
     let h = ""; let t = 0;
     Object.keys(cart).forEach(i => {
         const item = cart[i]; t += item.qty * item.harga;
-        h += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-md border border-slate-100"><div class="flex-1 min-w-0 pr-1"><div class="font-bold text-slate-800 text-[10px] truncate">${item.nama}</div></div><div class="flex items-center gap-1.5"><button onclick="removeItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">－</button><span class="font-bold text-[10px] w-3 text-center">${item.qty}</span><button onclick="addItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">＋</button></div></div>`;
+        h += `<div class="cart-item flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+            <div class="flex-1 min-w-0 pr-2">
+                <div class="font-bold text-slate-800 text-[11px] truncate">${item.nama}</div>
+                <div class="text-[9px] font-bold text-slate-400">Rp${(item.harga * item.qty).toLocaleString()}</div>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-lg">
+                <button onclick="removeItem(${i})" class="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors">－</button>
+                <span class="font-black text-xs w-4 text-center text-slate-700">${item.qty}</span>
+                <button onclick="addItem(${i})" class="w-6 h-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">＋</button>
+            </div>
+        </div>`;
     });
     const v = Number(document.getElementById("voucher").value || 0);
     const final = Math.max(0, t - v);
-    document.getElementById("cartList").innerHTML = h || `<div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[9px]">Kosong</p></div>`;
+    document.getElementById("cartList").innerHTML = h || `<div class="flex flex-col items-center justify-center h-full text-slate-300 opacity-60"><div class="bg-slate-100 p-4 rounded-full mb-2">🛒</div><p class="text-xs font-medium">Belum ada pesanan</p></div>`;
     document.getElementById("total").innerText = final.toLocaleString();
     updateBadges();
-    if(document.getElementById("metode").value === "CASH") renderCash();
+    renderCash();
+}
+
+function setMethod(m) {
+    document.getElementById("metode").value = m;
+    document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.classList.replace('bg-indigo-600', 'bg-white');
+        btn.classList.replace('text-white', 'text-slate-400');
+        btn.classList.replace('border-indigo-600', 'border-slate-200');
+    });
+    const active = document.getElementById('btn-' + m);
+    active.classList.replace('bg-white', 'bg-indigo-600');
+    active.classList.replace('text-slate-400', 'text-white');
+    active.classList.replace('border-slate-200', 'border-indigo-600');
+    renderCash();
 }
 
 function renderCash() {
     const m = document.getElementById("metode").value;
     const b = document.getElementById("cashBox");
-    if (m !== "CASH") { b.innerHTML = ""; return; }
+    if (m !== "CASH") { b.classList.add('hidden'); return; }
+    b.classList.remove('hidden');
+
     const currentTotal = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
-    const denoms = [1000, 2000, 5000, 10000, 20000, 50000, 100000];
-    let btns = `<button onclick="quickCash(${currentTotal})" class="flex-1 bg-blue-600 text-white border py-0.5 rounded text-[8px] font-bold">Uang Pas</button>`;
-    denoms.forEach(v => { if (v > currentTotal) btns += `<button onclick="quickCash(${v})" class="flex-1 bg-white border py-0.5 rounded text-[8px] font-bold hover:bg-blue-600 hover:text-white">${v/1000}K</button>`; });
-    b.innerHTML = `<div class="bg-blue-50 p-1.5 rounded-md border border-blue-100 space-y-1">
-        <div class="flex justify-between items-center px-1"><label class="text-[8px] font-bold text-blue-700">TUNAI</label><input id="bayar" type="number" oninput="hitungKembali()" placeholder="0" class="w-20 bg-transparent border-b border-blue-400 text-right text-[11px] font-black outline-none"></div>
-        <div class="flex flex-wrap gap-1">${btns}</div>
-        <div id="kembaliWrapper" class="flex justify-between items-center text-[9px] font-bold px-1 text-blue-700"><span>KEMBALI</span><span>Rp <span id="kembali">0</span></span></div>
-    </div>`;
+    const denoms = [10000, 20000, 50000, 100000];
+    
+    let btns = `<button onclick="quickCash(${currentTotal})" class="flex-1 bg-slate-800 text-white py-2 rounded-lg text-[9px] font-bold">UANG PAS</button>`;
+    denoms.forEach(v => {
+        if (v > currentTotal) {
+            btns += `<button onclick="quickCash(${v})" class="flex-1 bg-indigo-50 text-indigo-600 border border-indigo-100 py-2 rounded-lg text-[9px] font-black hover:bg-indigo-600 hover:text-white transition-all">${v/1000}K</button>`;
+        }
+    });
+
+    b.innerHTML = `
+        <div class="flex justify-between items-center bg-indigo-50/50 p-2 rounded-xl mb-2">
+            <span class="text-[10px] font-black text-indigo-900 ml-2">DITERIMA (RP)</span>
+            <input id="bayar" type="number" oninput="hitungKembali()" placeholder="0" class="w-32 bg-white border border-indigo-200 rounded-lg px-3 py-1.5 text-right text-sm font-black text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-500/20">
+        </div>
+        <div class="flex flex-wrap gap-2 mb-3">${btns}</div>
+        <div id="kembaliWrapper" class="flex justify-between items-center p-3 rounded-xl bg-slate-900 transition-all">
+            <span class="text-[9px] font-bold text-slate-400">KEMBALIAN</span>
+            <span class="text-base font-black text-white">Rp <span id="kembali">0</span></span>
+        </div>
+    `;
+    hitungKembali();
 }
 
-function quickCash(v) { 
+function quickCash(v) {
     const input = document.getElementById("bayar");
     if(input) { input.value = v; hitungKembali(); }
 }
 
 function hitungKembali() {
-    const b = Number(document.getElementById("bayar")?.value || 0);
+    const bInput = document.getElementById("bayar");
     const t = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
+    const b = Number(bInput?.value || 0);
     const s = b - t;
     const d = document.getElementById("kembali");
     const w = document.getElementById("kembaliWrapper");
-    if (s < 0) { d.innerText = "Kurang " + Math.abs(s).toLocaleString(); w.classList.replace("text-blue-700", "text-red-600"); }
-    else { d.innerText = s.toLocaleString(); w.classList.replace("text-red-600", "text-blue-700"); }
+
+    if(!d) return;
+
+    if (s < 0) {
+        d.innerText = "Kurang " + Math.abs(s).toLocaleString();
+        w.classList.replace("bg-slate-900", "bg-red-600");
+    } else {
+        d.innerText = s.toLocaleString();
+        w.classList.replace("bg-red-600", "bg-slate-900");
+    }
 }
 
 async function submitOrder() {
     const total = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
-    if (total <= 0 && Object.keys(cart).length === 0) return alert("Kosong");
+    if (total <= 0 && Object.keys(cart).length === 0) return alert("Pilih menu dulu!");
+    
+    const bayar = Number(document.getElementById("bayar")?.value || total);
+    const kembali = document.getElementById("kembali")?.innerText || "0";
+
     const btn = document.querySelector("button[onclick='submitOrder()']");
-    btn.innerText = "PROSES..."; btn.disabled = true;
+    btn.innerText = "SEDANG MENCETAK..."; btn.disabled = true;
+
     try {
         const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
-        const res = await fetch(`${API_URL}?token=${TOKEN}&action=processPayment&total=${total}&noWA=${document.getElementById("nohp").value}&redeemQty=0&voucher=${document.getElementById("voucher").value || 0}&method=${document.getElementById("metode").value}&pesanan=${encodeURIComponent(pesanan)}`);
+        const url = `${API_URL}?token=${TOKEN}&action=processPayment&total=${total}&noWA=${document.getElementById("nohp").value}&redeemQty=0&voucher=${document.getElementById("voucher").value || 0}&method=${document.getElementById("metode").value}&pesanan=${encodeURIComponent(pesanan)}`;
+        const res = await fetch(url);
+        
         if (await res.text() === "SUCCESS") {
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
             esc += "Tgl: " + new Date().toLocaleString() + "\n--------------------------------\n\x1B\x61\x00";
-            Object.values(cart).forEach(i => { esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`; });
-            esc += "--------------------------------\nTOTAL: Rp " + total.toLocaleString() + "\nMember: " + (document.getElementById("nohp").value || "-") + "\n\nTERIMA KASIH\n\n\n\n";
+            Object.values(cart).forEach(i => {
+                esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`;
+            });
+            esc += "--------------------------------\n";
+            esc += "TOTAL    : Rp " + total.toLocaleString() + "\n";
+            if(document.getElementById("metode").value === "CASH") {
+                esc += "BAYAR    : Rp " + bayar.toLocaleString() + "\n";
+                esc += "KEMBALI  : Rp " + kembali + "\n";
+            }
+            esc += "METODE   : " + document.getElementById("metode").value + "\n";
+            esc += "MEMBER   : " + (document.getElementById("nohp").value || "-") + "\n";
+            esc += "\x1B\x61\x01\nTERIMA KASIH\nSelamat Belanja Kembali\n\n\n\n";
+
             if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-            alert("Berhasil!"); location.reload();
-        } else { alert("Gagal"); btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
-    } catch (e) { alert("Error"); btn.disabled = false; }
+            alert("Transaksi Berhasil!"); 
+            location.reload();
+        } else {
+            alert("Gagal koneksi ke database!");
+            btn.innerText = "KONFIRMASI & CETAK"; btn.disabled = false;
+        }
+    } catch (e) {
+        alert("Sistem error!");
+        btn.innerText = "KONFIRMASI & CETAK"; btn.disabled = false;
+    }
 }
 
 function cekMember() {
     const no = document.getElementById("nohp").value.trim(); if (!no) return;
-    document.getElementById("memberInfo").innerText = "Mengecek...";
+    document.getElementById("memberInfo").innerText = "⏳ Mengecek...";
     fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`)
         .then(r => r.json()).then(d => {
-            if (d.exists) { member = d; document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin || 0})</span>`; }
-            else { member = null; document.getElementById("memberInfo").innerHTML = `<span class="text-red-500 font-bold">❌ Bukan Member</span>`; }
+            if (d.exists) { 
+                member = d; 
+                document.getElementById("memberInfo").innerHTML = `<span class="text-indigo-600 font-bold">✅ ${d.nama} (${d.poin || 0} Poin)</span>`; 
+            } else { 
+                member = null; 
+                document.getElementById("memberInfo").innerHTML = `<span class="text-red-500 font-bold">❌ Bukan Member</span>`; 
+            }
         });
+}
+
+function filterMenu() { renderMenu(); }
+function toggleVoucher() {
+    const v = document.getElementById('voucherSection');
+    const a = document.getElementById('vouchArrow');
+    v.classList.toggle('open');
+    a.innerText = v.classList.contains('open') ? '▲' : '▼';
 }
 
 loadMenu();
