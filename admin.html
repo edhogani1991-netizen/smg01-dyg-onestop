@@ -91,7 +91,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyvU5fQpE_UFq_mnfAMvhCN
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
-let MENU = [], cart = {}, member = null;
+let MENU = [], cart = {}, member = null, redeemQty = 0; // Tambah variabel redeemQty
 
 function toggleVoucher() {
     const v = document.getElementById('voucherSection');
@@ -164,8 +164,6 @@ function renderCart() {
     document.getElementById("total").innerText = final.toLocaleString();
     document.getElementById("cartList").innerHTML = h || `<div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[9px]">Kosong</p></div>`;
     updateBadges();
-    
-    // Pastikan box kembalian update jika barang ditambah/dikurang saat mode CASH aktif
     if(document.getElementById("metode").value === "CASH") renderCash();
 }
 
@@ -173,15 +171,12 @@ function renderCash() {
     const m = document.getElementById("metode").value;
     const b = document.getElementById("cashBox");
     if (m !== "CASH") { b.innerHTML = ""; return; }
-    
     const currentTotal = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
     const denoms = [1000, 2000, 5000, 10000, 20000, 50000, 100000];
-    
     let btns = `<button onclick="quickCash(${currentTotal})" class="flex-1 bg-blue-600 text-white border py-0.5 rounded text-[8px] font-bold">Uang Pas</button>`;
     denoms.forEach(v => { 
         if (v > currentTotal) btns += `<button onclick="quickCash(${v})" class="flex-1 bg-white border py-0.5 rounded text-[8px] font-bold hover:bg-blue-600 hover:text-white">${v/1000}K</button>`; 
     });
-    
     b.innerHTML = `<div class="bg-blue-50 p-1.5 rounded-md border border-blue-100 space-y-1">
         <div class="flex justify-between items-center px-1">
             <label class="text-[8px] font-bold text-blue-700">TUNAI</label>
@@ -199,7 +194,7 @@ function quickCash(v) {
     const input = document.getElementById("bayar");
     if(input) { 
         input.value = v; 
-        hitungKembali(); // Langsung jalankan fungsi hitung
+        hitungKembali(); 
     }
 }
 
@@ -207,13 +202,10 @@ function hitungKembali() {
     const inputBayar = document.getElementById("bayar");
     const displayKembali = document.getElementById("kembali");
     const wrapper = document.getElementById("kembaliWrapper");
-    
     if (!inputBayar || !displayKembali) return;
-
     const t = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
     const b = Number(inputBayar.value || 0);
     const s = b - t;
-
     if (s < 0) { 
         displayKembali.innerText = "Kurang " + Math.abs(s).toLocaleString(); 
         wrapper.classList.remove("text-blue-700");
@@ -232,12 +224,13 @@ async function submitOrder() {
     btn.innerText = "PROSES..."; btn.disabled = true;
     try {
         const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
-        const res = await fetch(`${API_URL}?token=${TOKEN}&action=processPayment&total=${total}&noWA=${document.getElementById("nohp").value}&redeemQty=0&voucher=${document.getElementById("voucher").value || 0}&method=${document.getElementById("metode").value}&pesanan=${encodeURIComponent(pesanan)}`);
+        // redeemQty dikirim secara dinamis
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=processPayment&total=${total}&noWA=${document.getElementById("nohp").value}&redeemQty=${redeemQty}&voucher=${document.getElementById("voucher").value || 0}&method=${document.getElementById("metode").value}&pesanan=${encodeURIComponent(pesanan)}`);
         if (await res.text() === "SUCCESS") {
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
             esc += "Tgl: " + new Date().toLocaleString() + "\n--------------------------------\n\x1B\x61\x00";
             Object.values(cart).forEach(i => { esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`; });
-            esc += "--------------------------------\nTOTAL: Rp " + total.toLocaleString() + "\nMember: " + (document.getElementById("nohp").value || "-") + "\n\nTERIMA KASIH\n\n\n\n";
+            esc += "--------------------------------\nTOTAL: Rp " + total.toLocaleString() + "\nMember: " + (document.getElementById("nohp").value || "-") + (redeemQty > 0 ? "\nRedeem: " + redeemQty : "") + "\n\nTERIMA KASIH\n\n\n\n";
             if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
             alert("Berhasil!"); location.reload();
         } else { alert("Gagal"); btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
@@ -249,8 +242,25 @@ function cekMember() {
     document.getElementById("memberInfo").innerText = "Mengecek...";
     fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`)
         .then(r => r.json()).then(d => {
-            if (d.exists) { member = d; document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin || 0})</span>`; }
-            else { member = null; document.getElementById("memberInfo").innerHTML = `<span class="text-red-500 font-bold">❌ Bukan Member</span>`; }
+            if (d.exists) { 
+                member = d; 
+                document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin || 0})</span>`;
+                
+                // LOGIKA AUTO REDEEM 5000
+                if (d.poin >= 5000) {
+                    if (confirm(`Member memiliki ${d.poin} poin. Gunakan 5000 poin untuk diskon?`)) {
+                        redeemQty = 5000;
+                        document.getElementById("voucher").value = 5000;
+                        renderCart();
+                        alert("Poin diterapkan! Total dipotong Rp5.000");
+                    }
+                }
+            }
+            else { 
+                member = null; 
+                redeemQty = 0;
+                document.getElementById("memberInfo").innerHTML = `<span class="text-red-500 font-bold">❌ Bukan Member</span>`; 
+            }
         });
 }
 
