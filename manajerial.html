@@ -3,82 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>dyg++ Closing System</title>
+    <title>dyg++ Financial System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .hidden { display: none; }
-        .bg-dyg { background-color: #1B4332; }
+        input:disabled { background-color: #f3f4f6; cursor: not-allowed; }
+        .card { background: white; border-radius: 1rem; padding: 1.5rem; shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 1rem; }
+        .btn-dyg { background: #1B4332; color: white; font-weight: bold; border-radius: 0.5rem; transition: all 0.2s; }
+        .btn-dyg:disabled { background: #9ca3af; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans">
+<body class="bg-gray-50 pb-20">
 
-    <header class="bg-dyg text-white p-4 shadow-lg text-center">
-        <h1 class="text-xl font-bold tracking-widest">dyg++ MANAGEMENT</h1>
-        <p class="text-xs opacity-70">Premium Coffee & System</p>
+    <header class="bg-[#1B4332] text-white p-6 text-center shadow-lg">
+        <h1 class="text-2xl font-black tracking-tighter italic">dyg++ DASHBOARD</h1>
+        <p class="text-xs opacity-80 uppercase tracking-widest">Financial Integrity System</p>
     </header>
 
-    <div class="max-w-md mx-auto p-4">
-        
-        <div id="setup_section" class="bg-white rounded-2xl p-6 shadow-sm mb-4">
-            <h2 class="font-bold text-gray-700 mb-4 border-b pb-2">Status Shift</h2>
-            <div id="status_indicator" class="flex items-center mb-4">
-                <span id="dot" class="h-3 w-3 rounded-full bg-red-500 mr-2"></span>
-                <span id="status_text" class="text-sm font-medium text-gray-600">Checking status...</span>
-            </div>
+    <div class="max-w-2xl mx-auto p-4">
 
-            <div id="open_shift_form" class="hidden">
-                <label class="block text-xs font-bold text-gray-500 mb-1">MODAL AWAL (WAJIB SESUAI LACI)</label>
-                <input type="number" id="input_modal_awal" class="w-full border-2 border-gray-200 rounded-xl p-3 mb-4 focus:border-green-500 outline-none" placeholder="Rp 0">
-                <p id="msg_modal_wajib" class="text-xs text-orange-600 mb-4 italic"></p>
-                <button onclick="handleBukaShift()" class="w-full bg-dyg text-white font-bold py-3 rounded-xl shadow-md hover:bg-green-900 transition">BUKA SHIFT SEKARANG</button>
+        <div class="card border-t-4 border-blue-500">
+            <label class="block text-xs font-bold text-gray-500 mb-2 uppercase">Saldo Awal (Modal)</label>
+            <div class="flex gap-2">
+                <input type="number" id="modal_awal" class="flex-1 border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-400" placeholder="Rp 0">
+                <button id="btn_buka" onclick="bukaShift()" class="btn-dyg px-6 py-3">BUKA</button>
             </div>
         </div>
 
-        <div id="closing_panel" class="hidden space-y-4">
+        <div class="card border-t-4 border-orange-500">
+            <h3 class="text-xs font-bold text-gray-500 mb-4 uppercase">Input Pengeluaran</h3>
+            <div class="space-y-3">
+                <div class="flex gap-2">
+                    <input type="text" id="item_out" class="flex-1 border p-2 rounded-lg text-sm" placeholder="Nama Barang">
+                    <input type="number" id="price_out" class="w-24 border p-2 rounded-lg text-sm" placeholder="Harga">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="inputKeluar()" id="btn_input_keluar" class="flex-1 bg-orange-500 text-white font-bold py-2 rounded-lg text-sm">INPUT</button>
+                    <button onclick="modalLihatKeluar()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-2 rounded-lg text-sm">LIHAT</button>
+                </div>
+                <div class="pt-2 border-t mt-2">
+                    <p class="text-[10px] text-gray-400 uppercase">Total Keluar Berjalan</p>
+                    <p id="total_keluar" class="text-xl font-bold text-red-600">Rp 0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-t-4 border-green-500">
+            <h3 class="text-xs font-bold text-gray-500 mb-4 uppercase">Online Food (Kotor)</h3>
+            <div class="grid grid-cols-3 gap-2">
+                <div><label class="text-[10px]">GOFOOD</label><input type="number" id="in_gf" oninput="calcOnline()" class="w-full border p-2 rounded text-sm"></div>
+                <div><label class="text-[10px]">GRAB</label><input type="number" id="in_gr" oninput="calcOnline()" class="w-full border p-2 rounded text-sm"></div>
+                <div><label class="text-[10px]">SHOPEE</label><input type="number" id="in_sh" oninput="calcOnline()" class="w-full border p-2 rounded text-sm"></div>
+            </div>
+            <div class="mt-4 bg-green-50 p-3 rounded-lg flex justify-between items-center">
+                <span class="text-xs font-bold text-green-700">TOTAL ONLINE (NET 25%)</span>
+                <span id="label_online_bersih" class="font-bold text-green-700">Rp 0</span>
+            </div>
+        </div>
+
+        <div class="card border-t-4 border-purple-500">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] text-gray-400 uppercase">QRIS Kotor</p>
+                    <p id="sys_qris_kotor" class="font-bold">Rp 0</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-gray-400 uppercase">QRIS Bersih (-0.7%)</p>
+                    <p id="sys_qris_bersih" class="font-bold text-purple-600">Rp 0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-t-4 border-red-600">
+            <div class="mb-4">
+                <p class="text-[10px] text-gray-400 uppercase">Estimasi Tunai di APK (WA)</p>
+                <p id="sys_cash_apk" class="text-lg font-bold">Rp 0</p>
+            </div>
+            <label class="block text-xs font-bold text-gray-500 mb-2 uppercase">Saldo Akhir Tunai (Laci)</label>
+            <div class="flex gap-2 mb-4">
+                <input type="number" id="tunai_laci" class="flex-1 border-2 border-red-100 p-3 rounded-lg outline-none text-xl font-bold" placeholder="Rp 0">
+                <button id="btn_tutup" onclick="tutupShift()" class="bg-red-600 text-white px-6 py-3 font-bold rounded-lg">TUTUP</button>
+            </div>
             
-            <div class="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 class="font-bold text-gray-700 mb-4 border-b pb-2">Data Penjualan (Sistem)</h2>
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <p class="text-gray-400">Total Cash</p>
-                        <p id="sys_cash" class="font-bold text-lg">Rp 0</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-400">Total QRIS</p>
-                        <p id="sys_qris" class="font-bold text-lg text-blue-600">Rp 0</p>
-                    </div>
-                </div>
+            <div class="bg-gray-900 text-white p-4 rounded-xl mb-4">
+                <p class="text-[10px] text-gray-400 uppercase mb-1">Audit AI Feedback:</p>
+                <p id="ai_audit" class="text-xs italic text-yellow-300">Menunggu data tutup...</p>
             </div>
 
-            <div class="bg-white rounded-2xl p-6 shadow-sm border-t-4 border-dyg">
-                <h2 class="font-bold text-gray-700 mb-4">Laporan Akhir</h2>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">TOTAL PENGELUARAN (BON/PARKIR/DLL)</label>
-                        <input type="number" id="input_pengeluaran" class="w-full bg-gray-50 border rounded-lg p-2" placeholder="0">
-                    </div>
+            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Uang Yang Disetor</label>
+            <input type="number" id="tunai_setor" class="w-full border p-3 rounded-lg text-lg font-bold text-blue-600 mb-4" placeholder="Rp 0">
 
-                    <div>
-                        <label class="block text-xs font-bold text-red-500 mb-1 italic text-center uppercase border-b">Uang di Setor (Masuk Kantong Admin)</label>
-                        <input type="number" id="input_setoran" oninput="hitungSisaLaci()" class="w-full border-2 border-red-200 rounded-xl p-4 text-2xl font-bold text-center text-red-600" placeholder="Rp 0">
-                    </div>
-
-                    <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                        <p class="text-xs text-yellow-700 font-bold uppercase text-center">Sisa Uang di Laci (Modal Shift Depan)</p>
-                        <p id="label_sisa_laci" class="text-center text-xl font-black text-gray-800">Rp 0</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">UPLOAD FOTO UANG LACI</label>
-                        <input type="file" id="foto_bukti" accept="image/*" class="text-xs">
-                    </div>
-
-                    <button onclick="handleTutupShift()" class="w-full bg-red-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-red-700 transition">KIRIM LAPORAN & TUTUP SHIFT</button>
-                </div>
+            <div class="pt-4 border-t">
+                <p class="text-[10px] text-gray-400 uppercase">Estimasi Pendapatan Bersih (Net)</p>
+                <p id="label_net_profit" class="text-2xl font-black text-gray-800">Rp 0</p>
             </div>
         </div>
 
+        <button id="btn_kirim" onclick="finalKirim()" class="w-full bg-[#1B4332] text-white py-4 rounded-2xl font-black shadow-xl hover:scale-[1.02] transition transform active:scale-95">KIRIM LAPORAN (WA & EMAIL)</button>
+
+    </div>
+
+    <div id="modal_keluar" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-xs p-6">
+            <h2 class="font-bold mb-4 border-b pb-2">Daftar Pengeluaran</h2>
+            <div id="list_keluar" class="text-sm space-y-1 mb-4 max-h-40 overflow-y-auto"></div>
+            <button onclick="document.getElementById('modal_keluar').classList.add('hidden')" class="w-full py-2 bg-gray-200 rounded-lg font-bold text-gray-700">TUTUP</button>
+        </div>
     </div>
 
     <script>
@@ -89,113 +118,133 @@ function kirimLaporanKeWA(pesan) {
     const urlWA = `https://api.whatsapp.com/send?phone=${NOMOR_WA_ADMIN}&text=${encodeURIComponent(pesan)}`;
     window.open(urlWA, '_blank');
 }
-        // KONFIGURASI - GANTI DENGAN URL WEB APP KAMU
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTHsPnM-ISlu8woOFoGEbNvqnJ3AHyLGY1i5zU-C-WugzsM5uFH3gXMbSXAB0PXK22Jg/exec";
         const TOKEN = "dyg-access-v2";
+        
+        let state = {
+            status: "CLOSED",
+            modalAwal: 0,
+            sysCash: 0,
+            sysQris: 0,
+            sysRedeem: 0,
+            totalKeluar: 0,
+            detailKeluar: []
+        };
 
-        let currentStatus = "CLOSED";
-        let modalWajibSistem = 0;
-        let sysCash = 0;
-        let sysQris = 0;
-        let modalAwalAktif = 0;
+        // 1. CEK STATUS & PERSISTENCE
+        async function sync() {
+            const resp = await fetch(`${SCRIPT_URL}?token=${TOKEN}&action=getShiftStatusData`);
+            const data = await resp.json();
+            
+            state.status = data.status;
+            state.modalAwal = data.lastModal;
+            state.sysCash = data.sysCash;
+            state.sysQris = data.sysQris;
+            state.sysRedeem = data.sysRedeem;
+            
+            // Tarik data pengeluaran (Pastikan GAS mengirim ini)
+            state.totalKeluar = data.totalKeluar || 0;
+            state.detailKeluar = data.detailKeluar || [];
 
-        // 1. CEK STATUS SAAT HALAMAN DIBUKA
-        async function checkStatus() {
-            try {
-                const resp = await fetch(`${SCRIPT_URL}?token=${TOKEN}&action=getShiftStatusData`);
-                const data = await resp.json();
-                
-                currentStatus = data.status;
-                modalWajibSistem = data.modalSeharusnya;
-                sysCash = data.sysCash;
-                sysQris = data.sysQris;
-                modalAwalAktif = data.lastModal;
-
-                updateUI();
-            } catch (e) {
-                alert("Gagal terhubung ke server. Cek koneksi!");
-            }
+            updateUI();
         }
 
         function updateUI() {
-            const dot = document.getElementById("dot");
-            const statusText = document.getElementById("status_text");
-            const setupSec = document.getElementById("open_shift_form");
-            const closingPanel = document.getElementById("closing_panel");
+            const isBuka = state.status === "OPEN";
+            
+            // Lock Modal Awal
+            document.getElementById("modal_awal").value = state.modalAwal;
+            document.getElementById("modal_awal").disabled = isBuka;
+            document.getElementById("btn_buka").disabled = isBuka;
 
-            if (currentStatus === "OPEN") {
-                dot.className = "h-3 w-3 rounded-full bg-green-500 mr-2";
-                statusText.innerText = "Shift Sedang Berjalan";
-                setupSec.classList.add("hidden");
-                closingPanel.classList.remove("hidden");
-                
-                document.getElementById("sys_cash").innerText = "Rp " + sysCash.toLocaleString();
-                document.getElementById("sys_qris").innerText = "Rp " + sysQris.toLocaleString();
-                hitungSisaLaci();
+            // Update Angka
+            document.getElementById("sys_cash_apk").innerText = "Rp " + state.sysCash.toLocaleString();
+            document.getElementById("sys_qris_kotor").innerText = "Rp " + state.sysQris.toLocaleString();
+            document.getElementById("sys_qris_bersih").innerText = "Rp " + (state.sysQris * 0.993).toLocaleString();
+            document.getElementById("total_keluar").innerText = "Rp " + state.totalKeluar.toLocaleString();
+
+            calcOnline();
+            calcNetProfit();
+        }
+
+        // 2. LOGIKA MATEMATIKA AKUNTANSI
+        function calcOnline() {
+            const gf = Number(document.getElementById("in_gf").value) || 0;
+            const gr = Number(document.getElementById("in_gr").value) || 0;
+            const sh = Number(document.getElementById("in_sh").value) || 0;
+            const netOnline = (gf + gr + sh) * 0.75;
+            document.getElementById("label_online_bersih").innerText = "Rp " + netOnline.toLocaleString();
+            return netOnline;
+        }
+
+        function calcNetProfit() {
+            const netOnline = calcOnline();
+            const netQris = state.sysQris * 0.993;
+            const totalOut = state.totalKeluar;
+            
+            // Laba Bersih = (Cash + QRIS Net + Online Net) - Pengeluaran - Diskon
+            const profit = (state.sysCash + netQris + netOnline) - totalOut - state.sysRedeem;
+            document.getElementById("label_net_profit").innerText = "Rp " + profit.toLocaleString();
+            return profit;
+        }
+
+        // 3. ACTIONS
+        async function bukaShift() {
+            const m = document.getElementById("modal_awal").value;
+            if(!m) return alert("Isi modal awal!");
+            await fetch(`${SCRIPT_URL}?token=${TOKEN}&action=processClosing&actionType=OPEN&modal=${m}`);
+            location.reload();
+        }
+
+        async function inputKeluar() {
+            const item = document.getElementById("item_out").value;
+            const price = document.getElementById("price_out").value;
+            if(!item || !price) return;
+            if(!confirm(`Input ${item} senilai Rp ${price}?`)) return;
+
+            // Kirim ke GAS (Buat action khusus input pengeluaran di GAS)
+            await fetch(`${SCRIPT_URL}?token=${TOKEN}&action=addExpense&item=${item}&price=${price}`);
+            document.getElementById("item_out").value = "";
+            document.getElementById("price_out").value = "";
+            sync();
+        }
+
+        function modalLihatKeluar() {
+            const list = document.getElementById("list_keluar");
+            list.innerHTML = state.detailKeluar.map(ex => `<div>• ${ex.item}: Rp ${ex.price.toLocaleString()}</div>`).join("");
+            document.getElementById("modal_keluar").classList.remove("hidden");
+        }
+
+        function tutupShift() {
+            const tunaiLaci = Number(document.getElementById("tunai_laci").value);
+            const selisih = tunaiLaci - (state.modalAwal + state.sysCash - state.totalKeluar);
+            
+            const aiLabel = document.getElementById("ai_audit");
+            if(selisih === 0) {
+                aiLabel.innerText = "Audit Clean: Uang laci dan sistem sinkron sempurna.";
+                aiLabel.className = "text-xs italic text-green-400";
             } else {
-                dot.className = "h-3 w-3 rounded-full bg-red-500 mr-2";
-                statusText.innerText = "Shift Tertutup (Silahkan Buka)";
-                setupSec.classList.remove("hidden");
-                closingPanel.classList.add("hidden");
-                document.getElementById("msg_modal_wajib").innerText = "*Modal wajib sesuai sisa laci sebelumnya: Rp " + modalWajibSistem.toLocaleString();
+                aiLabel.innerText = `Audit Warning: Selisih Rp ${selisih.toLocaleString()}. ${selisih < 0 ? 'Ada uang kurang di laci, cek nota yang lupa diinput.' : 'Ada uang lebih, cek kembalian yang belum diberikan.'}`;
+                aiLabel.className = "text-xs italic text-red-400";
             }
-        }
-
-        // 2. LOGIKA HITUNG SISA LACI
-        function hitungSisaLaci() {
-            const setoran = Number(document.getElementById("input_setoran").value) || 0;
-            const pengeluaran = Number(document.getElementById("input_pengeluaran").value) || 0;
             
-            // Rumus: (Modal Awal + Cash Masuk) - Pengeluaran - Uang Disetor
-            const sisaLaci = (modalAwalAktif + sysCash) - pengeluaran - setoran;
+            document.getElementById("tunai_laci").disabled = true;
+            document.getElementById("btn_tutup").disabled = true;
+        }
+
+        function finalKirim() {
+            // Logika kumpulkan text untuk WA & Fetch ke GAS untuk Email
+            const profit = calcNetProfit();
+            const pesan = `LAPORAN DYG++\nModal: ${state.modalAwal}\nTunai Laci: ${document.getElementById("tunai_laci").value}\nNet Profit: ${profit}\nAudit: ${document.getElementById("ai_audit").innerText}`;
             
-            document.getElementById("label_sisa_laci").innerText = "Rp " + sisaLaci.toLocaleString();
-            return sisaLaci;
-        }
-
-        // 3. PROSES BUKA SHIFT
-        async function handleBukaShift() {
-            const inputModal = Number(document.getElementById("input_modal_awal").value);
+            // Buka WA
+            window.open(`https://api.whatsapp.com/send?phone=628XXXXXXXX&text=${encodeURIComponent(pesan)}`);
             
-            if (inputModal !== modalWajibSistem) {
-                alert("Gagal Buka Shift! Modal harus Rp " + modalWajibSistem.toLocaleString() + " (Sesuai sisa laci sebelumnya).");
-                return;
-            }
-
-            const url = `${SCRIPT_URL}?token=${TOKEN}&action=processClosing&actionType=OPEN&modal=${inputModal}`;
-            const resp = await fetch(url);
-            if (await resp.text() === "SUCCESS_OPEN") {
-                alert("Shift Berhasil Dibuka!");
-                checkStatus();
-            }
+            // Hit GAS processClosing untuk simpan ke sheet & email
+            // ... fetch logic ...
         }
 
-        // 4. PROSES TUTUP SHIFT
-        async function handleTutupShift() {
-            const setoran = document.getElementById("input_setoran").value;
-            const pengeluaran = document.getElementById("input_pengeluaran").value;
-            const sisaLaci = hitungSisaLaci();
-
-            if (!setoran || setoran < 0) { alert("Masukkan jumlah uang yang disetor!"); return; }
-
-            if (!confirm(`Konfirmasi Closing:\n- Setoran: Rp ${Number(setoran).toLocaleString()}\n- Sisa di Laci: Rp ${sisaLaci.toLocaleString()}\n\nLanjutkan?`)) return;
-
-            // Simulasi Pesan Laporan untuk Email
-            const pesanLaporan = `LAPORAN CLOSING\nModal: ${modalAwalAktif}\nCash: ${sysCash}\nOut: ${pengeluaran}\nSetoran: ${setoran}\nSisa Laci: ${sisaLaci}`;
-
-            const url = `${SCRIPT_URL}?token=${TOKEN}&action=processClosing&actionType=SEND` +
-                        `&modal=${modalAwalAktif}&sysCash=${sysCash}&sysQris=${sysQris}` +
-                        `&uangDisetor=${setoran}&totalOut=${pengeluaran}&pesan=${encodeURIComponent(pesanLaporan)}`;
-
-            const resp = await fetch(url);
-            if (await resp.text() === "SUCCESS_SEND") {
-                alert("Shift Berhasil Ditutup & Laporan Terkirim!");
-                location.reload();
-            }
-        }
-
-        // Jalankan cek status saat pertama kali load
-        checkStatus();
+        sync();
     </script>
 </body>
 </html>
