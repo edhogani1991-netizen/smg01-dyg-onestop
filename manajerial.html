@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         input:disabled { background-color: #f3f4f6; cursor: not-allowed; }
-        .card { background: white; border-radius: 1rem; padding: 1.5rem; shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 1rem; }
+        .card { background: white; border-radius: 1rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 1rem; }
         .btn-dyg { background: #1B4332; color: white; font-weight: bold; border-radius: 0.5rem; transition: all 0.2s; }
         .btn-dyg:disabled { background: #9ca3af; }
     </style>
@@ -50,12 +50,12 @@
         <div class="card border-t-4 border-green-500">
             <h3 class="text-xs font-bold text-gray-500 mb-4 uppercase">Online Food (Kotor)</h3>
             <div class="grid grid-cols-3 gap-2">
-                <div><label class="text-[10px]">GOFOOD</label><input type="number" id="in_gf" oninput="calcOnline()" class="w-full border p-2 rounded text-sm"></div>
-                <div><label class="text-[10px]">GRAB</label><input type="number" id="in_gr" oninput="calcOnline()" class="w-full border p-2 rounded text-sm"></div>
-                <div><label class="text-[10px]">SHOPEE</label><input type="number" id="in_sh" oninput="calcOnline()" class="w-full border p-2 rounded text-sm"></div>
+                <div><label class="text-[10px]">GOFOOD</label><input type="number" id="in_gf" oninput="updateUI()" class="w-full border p-2 rounded text-sm"></div>
+                <div><label class="text-[10px]">GRAB</label><input type="number" id="in_gr" oninput="updateUI()" class="w-full border p-2 rounded text-sm"></div>
+                <div><label class="text-[10px]">SHOPEE</label><input type="number" id="in_sh" oninput="updateUI()" class="w-full border p-2 rounded text-sm"></div>
             </div>
             <div class="mt-4 bg-green-50 p-3 rounded-lg flex justify-between items-center">
-                <span class="text-xs font-bold text-green-700">TOTAL ONLINE (NET 25%)</span>
+                <span class="text-xs font-bold text-green-700">TOTAL ONLINE (NET 75%)</span>
                 <span id="label_online_bersih" class="font-bold text-green-700">Rp 0</span>
             </div>
         </div>
@@ -89,11 +89,11 @@
                 <p id="ai_audit" class="text-xs italic text-yellow-300">Menunggu data tutup...</p>
             </div>
 
-            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">Uang Yang Disetor</label>
+            <label class="block text-xs font-bold text-gray-500 mb-1 uppercase text-blue-600">Uang Yang Disetor</label>
             <input type="number" id="tunai_setor" class="w-full border p-3 rounded-lg text-lg font-bold text-blue-600 mb-4" placeholder="Rp 0">
 
             <div class="pt-4 border-t">
-                <p class="text-[10px] text-gray-400 uppercase">Estimasi Pendapatan Bersih (Net)</p>
+                <p class="text-[10px] text-gray-400 uppercase">Estimasi Pendapatan Bersih (Net Profit)</p>
                 <p id="label_net_profit" class="text-2xl font-black text-gray-800">Rp 0</p>
             </div>
         </div>
@@ -104,21 +104,14 @@
 
     <div id="modal_keluar" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-xs p-6">
-            <h2 class="font-bold mb-4 border-b pb-2">Daftar Pengeluaran</h2>
+            <h2 class="font-bold mb-4 border-b pb-2 text-orange-600 uppercase text-xs">Rincian Pengeluaran</h2>
             <div id="list_keluar" class="text-sm space-y-1 mb-4 max-h-40 overflow-y-auto"></div>
             <button onclick="document.getElementById('modal_keluar').classList.add('hidden')" class="w-full py-2 bg-gray-200 rounded-lg font-bold text-gray-700">TUTUP</button>
         </div>
     </div>
 
     <script>
-// Ganti dengan nomor WA kamu (gunakan format 62)
-const NOMOR_WA_ADMIN = "6289601522700"; 
-
-function kirimLaporanKeWA(pesan) {
-    const urlWA = `https://api.whatsapp.com/send?phone=${NOMOR_WA_ADMIN}&text=${encodeURIComponent(pesan)}`;
-    window.open(urlWA, '_blank');
-}
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzedVPYyKDbWAMzKhsr3I_-dgIhqDhYEAyFvnz9GOiaVVEoBqO0nD1JZO1pcq_0RegF2w/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMzKqNonp8AR8msJ23uhoZr41OM8fWOSMhS4vGDr4z2C9TtnO7Oh78irwLb-hEP7X8pw/exec";
         const TOKEN = "dyg-access-v2";
         
         let state = {
@@ -131,33 +124,30 @@ function kirimLaporanKeWA(pesan) {
             detailKeluar: []
         };
 
-        // 1. CEK STATUS & PERSISTENCE
+        // --- 1. CORE SYNC ---
         async function sync() {
-            const resp = await fetch(`${SCRIPT_URL}?token=${TOKEN}&action=getShiftStatusData`);
-            const data = await resp.json();
-            
-            state.status = data.status;
-            state.modalAwal = data.lastModal;
-            state.sysCash = data.sysCash;
-            state.sysQris = data.sysQris;
-            state.sysRedeem = data.sysRedeem;
-            
-            // Tarik data pengeluaran (Pastikan GAS mengirim ini)
-            state.totalKeluar = data.totalKeluar || 0;
-            state.detailKeluar = data.detailKeluar || [];
+            try {
+                const resp = await fetch(`${SCRIPT_URL}?token=${TOKEN}&action=getShiftStatusData`);
+                const data = await resp.json();
+                
+                state.status = data.status;
+                state.modalAwal = data.lastModal;
+                state.sysCash = data.sysCash;
+                state.sysQris = data.sysQris;
+                state.sysRedeem = data.sysRedeem;
+                state.totalKeluar = data.totalKeluar || 0;
+                state.detailKeluar = data.detailKeluar || [];
 
-            updateUI();
+                updateUI();
+            } catch (e) { alert("Koneksi Gagal. Cek Sinyal!"); }
         }
 
         function updateUI() {
             const isBuka = state.status === "OPEN";
-            
-            // Lock Modal Awal
             document.getElementById("modal_awal").value = state.modalAwal;
             document.getElementById("modal_awal").disabled = isBuka;
             document.getElementById("btn_buka").disabled = isBuka;
 
-            // Update Angka
             document.getElementById("sys_cash_apk").innerText = "Rp " + state.sysCash.toLocaleString();
             document.getElementById("sys_qris_kotor").innerText = "Rp " + state.sysQris.toLocaleString();
             document.getElementById("sys_qris_bersih").innerText = "Rp " + (state.sysQris * 0.993).toLocaleString();
@@ -167,7 +157,7 @@ function kirimLaporanKeWA(pesan) {
             calcNetProfit();
         }
 
-        // 2. LOGIKA MATEMATIKA AKUNTANSI
+        // --- 2. CALCULATORS ---
         function calcOnline() {
             const gf = Number(document.getElementById("in_gf").value) || 0;
             const gr = Number(document.getElementById("in_gr").value) || 0;
@@ -180,15 +170,12 @@ function kirimLaporanKeWA(pesan) {
         function calcNetProfit() {
             const netOnline = calcOnline();
             const netQris = state.sysQris * 0.993;
-            const totalOut = state.totalKeluar;
-            
-            // Laba Bersih = (Cash + QRIS Net + Online Net) - Pengeluaran - Diskon
-            const profit = (state.sysCash + netQris + netOnline) - totalOut - state.sysRedeem;
+            const profit = (state.sysCash + netQris + netOnline) - state.totalKeluar - state.sysRedeem;
             document.getElementById("label_net_profit").innerText = "Rp " + profit.toLocaleString();
             return profit;
         }
 
-        // 3. ACTIONS
+        // --- 3. ACTIONS ---
         async function bukaShift() {
             const m = document.getElementById("modal_awal").value;
             if(!m) return alert("Isi modal awal!");
@@ -197,35 +184,17 @@ function kirimLaporanKeWA(pesan) {
         }
 
         async function inputKeluar() {
-    const item = document.getElementById("item_out").value;
-    const price = document.getElementById("price_out").value;
-    
-    if(!item || !price) {
-        alert("Nama barang dan harga harus diisi!");
-        return;
-    }
-    
-    if(!confirm(`Yakin input ${item} seharga Rp ${Number(price).toLocaleString()}?`)) return;
-
-    // Tampilkan loading sederhana
-    document.getElementById("btn_input_keluar").innerText = "MENGIRIM...";
-    
-    try {
-        const url = `${SCRIPT_URL}?token=${TOKEN}&action=addExpense&item=${encodeURIComponent(item)}&price=${price}`;
-        const resp = await fetch(url);
-        if (resp.ok) {
+            const item = document.getElementById("item_out").value;
+            const price = document.getElementById("price_out").value;
+            if(!item || !price) return alert("Isi data!");
+            
+            document.getElementById("btn_input_keluar").innerText = "...";
+            await fetch(`${SCRIPT_URL}?token=${TOKEN}&action=addExpense&item=${encodeURIComponent(item)}&price=${price}`);
             document.getElementById("item_out").value = "";
             document.getElementById("price_out").value = "";
             document.getElementById("btn_input_keluar").innerText = "INPUT";
-            // Panggil sync() agar angka total pengeluaran & rincian langsung update
-            await sync(); 
-            alert("Pengeluaran berhasil dicatat!");
+            await sync();
         }
-    } catch (e) {
-        alert("Gagal koneksi!");
-        document.getElementById("btn_input_keluar").innerText = "INPUT";
-    }
-}
 
         function modalLihatKeluar() {
             const list = document.getElementById("list_keluar");
@@ -235,31 +204,71 @@ function kirimLaporanKeWA(pesan) {
 
         function tutupShift() {
             const tunaiLaci = Number(document.getElementById("tunai_laci").value);
-            const selisih = tunaiLaci - (state.modalAwal + state.sysCash - state.totalKeluar);
+            const uangSeharusnya = (state.modalAwal + state.sysCash - state.totalKeluar);
+            const selisih = tunaiLaci - uangSeharusnya;
             
             const aiLabel = document.getElementById("ai_audit");
-            if(selisih === 0) {
+            if(Math.abs(selisih) < 100) {
                 aiLabel.innerText = "Audit Clean: Uang laci dan sistem sinkron sempurna.";
                 aiLabel.className = "text-xs italic text-green-400";
             } else {
-                aiLabel.innerText = `Audit Warning: Selisih Rp ${selisih.toLocaleString()}. ${selisih < 0 ? 'Ada uang kurang di laci, cek nota yang lupa diinput.' : 'Ada uang lebih, cek kembalian yang belum diberikan.'}`;
+                aiLabel.innerText = `Audit Warning: Selisih Rp ${selisih.toLocaleString()}. ${selisih < 0 ? 'Kurang di laci.' : 'Lebih di laci.'}`;
                 aiLabel.className = "text-xs italic text-red-400";
             }
-            
             document.getElementById("tunai_laci").disabled = true;
             document.getElementById("btn_tutup").disabled = true;
         }
 
-        function finalKirim() {
-            // Logika kumpulkan text untuk WA & Fetch ke GAS untuk Email
-            const profit = calcNetProfit();
-            const pesan = `LAPORAN DYG++\nModal: ${state.modalAwal}\nTunai Laci: ${document.getElementById("tunai_laci").value}\nNet Profit: ${profit}\nAudit: ${document.getElementById("ai_audit").innerText}`;
+        // --- 4. GENERATE & SEND ---
+        function generateLaporanText() {
+            const gf = Number(document.getElementById("in_gf").value) || 0;
+            const gr = Number(document.getElementById("in_gr").value) || 0;
+            const sh = Number(document.getElementById("in_sh").value) || 0;
+            const onlineNet = (gf + gr + sh) * 0.75;
+            const tunaiLaci = document.getElementById("tunai_laci").value || 0;
+            const tunaiSetor = document.getElementById("tunai_setor").value || 0;
+
+            return `*LAPORAN CLOSING dyg++*
+---------------------------
+💰 *MODAL AWAL:* Rp ${state.modalAwal.toLocaleString()}
+🛵 *ONLINE NET (75%):* Rp ${onlineNet.toLocaleString()}
+📱 *QRIS NET (99.3%):* Rp ${(state.sysQris * 0.993).toLocaleString()}
+💸 *KELUAR TOTAL:* Rp ${state.totalKeluar.toLocaleString()}
+---------------------------
+📥 *UANG DI LACI:* Rp ${Number(tunaiLaci).toLocaleString()}
+🏦 *SETORAN:* Rp ${Number(tunaiSetor).toLocaleString()}
+---------------------------
+📊 *PROFIT BERSIH:* Rp ${calcNetProfit().toLocaleString()}
+🤖 *AUDIT AI:* ${document.getElementById("ai_audit").innerText}`;
+        }
+
+        async function finalKirim() {
+            const pesan = generateLaporanText();
+            const tunaiSetor = document.getElementById("tunai_setor").value;
+            if(!tunaiSetor) return alert("Isi uang setor!");
+
+            // 1. WhatsApp
+            const noWA = "6289601522700";
+            window.open(`https://api.whatsapp.com/send?phone=${noWA}&text=${encodeURIComponent(pesan)}`, '_blank');
+
+            // 2. Google Sheets & Email
+            const gf = document.getElementById("in_gf").value || 0;
+            const gr = document.getElementById("in_gr").value || 0;
+            const sh = document.getElementById("in_sh").value || 0;
+
+            const urlGAS = `${SCRIPT_URL}?token=${TOKEN}&action=processClosing&actionType=SEND` +
+                           `&modal=${state.modalAwal}&sysCash=${state.sysCash}&sysQris=${state.sysQris}` +
+                           `&totalRedeem=${state.sysRedeem}&uangDisetor=${tunaiSetor}&totalOut=${state.totalKeluar}` +
+                           `&gf=${gf}&grb=${gr}&shp=${sh}&pesan=${encodeURIComponent(pesan)}`;
+
+            document.getElementById("btn_kirim").innerText = "MENGIRIM...";
+            const resp = await fetch(urlGAS);
+            const hasil = await resp.text();
             
-            // Buka WA
-            window.open(`https://api.whatsapp.com/send?phone=628XXXXXXXX&text=${encodeURIComponent(pesan)}`);
-            
-            // Hit GAS processClosing untuk simpan ke sheet & email
-            // ... fetch logic ...
+            if(hasil === "SUCCESS_SEND") {
+                alert("Berhasil! Sistem akan direset.");
+                location.reload();
+            }
         }
 
         sync();
