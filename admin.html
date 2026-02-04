@@ -244,15 +244,19 @@ function cekMember() {
         .then(r => r.json()).then(d => {
             if (d.exists) { 
                 member = d; 
-                document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin || 0})</span>`;
+                document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin || 0} Poin)</span>`;
                 
-                // LOGIKA AUTO REDEEM 5000
-                if (d.poin >= 5000) {
-                    if (confirm(`Member memiliki ${d.poin} poin. Gunakan 5000 poin untuk diskon?`)) {
-                        redeemQty = 5000;
-                        document.getElementById("voucher").value = 5000;
+                // ATURAN BARU: Min 500 Poin untuk potongan 5000
+                if (d.poin >= 500) {
+                    // Hitung kelipatan 500 poin yang tersedia
+                    let maxTukarPoin = Math.floor(d.poin / 500) * 500;
+                    let nominalPotongan = (maxTukarPoin / 500) * 5000;
+
+                    if (confirm(`Member memiliki ${d.poin} poin.\nTukarkan ${maxTukarPoin} poin untuk diskon Rp${nominalPotongan.toLocaleString()}?`)) {
+                        redeemQty = maxTukarPoin; // Ini yang dikirim ke GAS untuk kurangi poin
+                        document.getElementById("voucher").value = nominalPotongan; // Ini untuk potong tampilan total
                         renderCart();
-                        alert("Poin diterapkan! Total dipotong Rp5.000");
+                        alert(`Berhasil! ${maxTukarPoin} poin ditukar dengan diskon Rp${nominalPotongan.toLocaleString()}`);
                     }
                 }
             }
