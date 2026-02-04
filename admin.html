@@ -58,23 +58,27 @@
         </div>
 
         <div class="p-2 bg-white border-t border-slate-200">
-            <div class="mb-1">
-                <button onclick="toggleVoucher()" class="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                    <span>🏷️</span> KODE VOUCHER <span id="vouchArrow">▼</span>
-                </button>
-                <div id="voucherSection">
-                    <div class="flex justify-between items-center py-1 px-1">
-                        <span class="text-[10px] text-slate-500 italic">Input Kode Unik</span>
-                        <input id="voucher" type="text" placeholder="Ketik Kode..." class="w-32 text-right border-b border-blue-300 bg-transparent outline-none font-bold text-blue-600 text-xs uppercase">
-                    </div>
-                </div>
+    <div class="mb-1">
+        <button onclick="toggleVoucher()" class="flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">
+            <span>🏷️</span> KODE UNIK VOUCHER <span id="vouchArrow">▼</span>
+        </button>
+        <div id="voucherSection">
+            <div class="flex flex-col py-1 px-1">
+                <label class="text-[9px] text-slate-500 font-bold mb-1 uppercase tracking-tighter">Masukkan Kode Unik:</label>
+                <input id="voucher" type="text" placeholder="CONTOH: PROMO10K" class="w-full border-b-2 border-blue-400 bg-blue-50/50 px-2 py-1 outline-none font-bold text-blue-700 text-sm placeholder:text-slate-300 placeholder:font-normal uppercase">
             </div>
+        </div>
+    </div>
 
-            <div id="pointDiscWrapper" class="hidden flex justify-between px-1 text-[10px] font-bold text-red-600 mb-1">
-                <span>POTONGAN POIN</span>
-                <span>- Rp <span id="pointDiscNominal">0</span></span>
-            </div>
+    <div id="pointDiscWrapper" class="hidden flex justify-between px-1 text-[10px] font-bold text-red-600 mb-1 animate-pulse">
+        <span>PROMO POIN MEMBER</span>
+        <span>- Rp <span id="pointDiscNominal">0</span></span>
+    </div>
 
+    <div class="flex justify-between items-center mb-1 px-1 border-t border-slate-100 pt-1">
+        <span class="font-bold text-slate-700 text-[11px]">TOTAL TAGIHAN</span>
+        <span class="text-xl font-black text-blue-700 leading-none">Rp <span id="total">0</span></span>
+    </div>
             <div class="flex justify-between items-center mb-1 px-1">
                 <span class="font-bold text-slate-700 text-[11px]">TOTAL</span>
                 <span class="text-lg font-black text-blue-700 leading-none">Rp <span id="total">0</span></span>
@@ -238,7 +242,7 @@ async function submitOrder() {
     const btn = document.querySelector("button[onclick='submitOrder()']");
     btn.innerText = "PROSES..."; btn.disabled = true;
     
-    const kodeVoucher = document.getElementById("voucher").value;
+    const kodeVoucher = document.getElementById("voucher").value; // Ambil teksnya saja
 
     try {
         const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
