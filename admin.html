@@ -8,28 +8,18 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #f1f5f9; }
-        
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
         .main-container { height: calc(100vh - 56px); display: flex; }
-        .menu-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
-            gap: 6px; 
-            align-content: start;
-        }
-
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; align-content: start; }
         @media (max-width: 640px) {
             .menu-grid { grid-template-columns: repeat(2, 1fr); }
             .main-container { flex-direction: column; overflow-y: auto; height: calc(100vh - 60px); }
             .cart-panel { width: 100% !important; height: auto !important; border-l: none; border-t: 2px solid #e2e8f0; }
         }
-
         .menu-card { transition: transform 0.1s; border: 1px solid #e2e8f0; }
         .menu-card:active { transform: scale(0.96); }
-        
         #voucherSection { transition: all 0.3s ease-in-out; max-height: 0; overflow: hidden; opacity: 0; }
         #voucherSection.open { max-height: 100px; opacity: 1; margin-top: 4px; }
     </style>
@@ -60,16 +50,11 @@
 
     <section class="cart-panel w-[310px] flex flex-col bg-white border-l border-slate-200 shrink-0">
         <div class="p-2 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <h2 class="font-bold text-slate-700 text-[10px] uppercase tracking-widest flex items-center gap-1">
-                <span>🛒</span> KERANJANG
-            </h2>
+            <h2 class="font-bold text-slate-700 text-[10px] uppercase tracking-widest flex items-center gap-1"><span>🛒</span> KERANJANG</h2>
             <button onclick="location.reload()" class="text-[9px] text-red-500 font-bold hover:underline">RESET</button>
         </div>
-
         <div id="cartList" class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1.5">
-            <div class="flex flex-col items-center justify-center h-full text-slate-300">
-                <p class="text-[10px]">Kosong</p>
-            </div>
+            <div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[10px]">Kosong</p></div>
         </div>
 
         <div class="p-2 bg-white border-t border-slate-200">
@@ -84,24 +69,18 @@
                     </div>
                 </div>
             </div>
-            
             <div class="flex justify-between items-center mb-1 px-1">
                 <span class="font-bold text-slate-700 text-[11px]">TOTAL</span>
                 <span class="text-lg font-black text-blue-700 leading-none">Rp <span id="total">0</span></span>
             </div>
-
             <div class="space-y-1.5">
                 <select id="metode" onchange="renderCash()" class="w-full border border-slate-200 rounded-md p-1.5 text-[11px] font-bold bg-white outline-none">
                     <option value="CASH">💵 TUNAI</option>
                     <option value="QRIS">📱 QRIS</option>
                     <option value="CARD">💳 KARTU</option>
                 </select>
-
                 <div id="cashBox" class="empty:hidden"></div>
-
-                <button onclick="submitOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-[12px] shadow-sm transition active:scale-95 uppercase">
-                    Bayar & Cetak
-                </button>
+                <button onclick="submitOrder()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-bold text-[12px] shadow-sm transition active:scale-95 uppercase">Bayar & Cetak</button>
             </div>
         </div>
     </section>
@@ -112,9 +91,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyvU5fQpE_UFq_mnfAMvhCN
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
-let MENU = [];
-let cart = {};
-let member = null;
+let MENU = [], cart = {}, member = null;
 
 function toggleVoucher() {
     const v = document.getElementById('voucherSection');
@@ -157,17 +134,9 @@ function renderMenu() {
             const el = document.createElement("div");
             el.className = "menu-card bg-white p-2 rounded-lg shadow-sm flex flex-col justify-between cursor-pointer relative";
             el.onclick = () => addItem(i);
-            el.innerHTML = `
-                <div>
-                    <div class="text-[7px] font-bold text-blue-500 uppercase">${m.kategori}</div>
-                    <div class="font-bold text-slate-800 text-[10px] leading-tight line-clamp-2">${m.nama}</div>
-                </div>
-                <div class="flex justify-between items-center mt-1.5">
-                    <div class="text-[10px] font-black text-slate-900">Rp${m.harga.toLocaleString()}</div>
-                    <div class="bg-blue-50 text-blue-600 rounded p-0.5"><svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/></svg></div>
-                </div>
-                <span id="badge-${i}" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full font-bold border-white border"></span>
-            `;
+            el.innerHTML = `<div><div class="text-[7px] font-bold text-blue-500 uppercase">${m.kategori}</div><div class="font-bold text-slate-800 text-[10px] leading-tight line-clamp-2">${m.nama}</div></div>
+                <div class="flex justify-between items-center mt-1.5"><div class="text-[10px] font-black text-slate-900">Rp${m.harga.toLocaleString()}</div><div class="bg-blue-50 text-blue-600 rounded p-0.5"><svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/></svg></div></div>
+                <span id="badge-${i}" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full font-bold border-white border"></span>`;
             list.appendChild(el);
         }
     });
@@ -180,11 +149,71 @@ function removeItem(i) { cart[i].qty--; if (cart[i].qty <= 0) delete cart[i]; re
 function updateBadges() {
     MENU.forEach((_, i) => {
         const b = document.getElementById("badge-" + i);
-        if (b) {
-            if (cart[i]) { b.innerText = cart[i].qty; b.classList.remove("hidden"); }
-            else { b.classList.add("hidden"); }
-        }
+        if (b) { if (cart[i]) { b.innerText = cart[i].qty; b.classList.remove("hidden"); } else { b.classList.add("hidden"); } }
     });
+}
+
+function renderCart() {
+    let h = ""; let t = 0;
+    Object.keys(cart).forEach(i => {
+        const item = cart[i]; t += item.qty * item.harga;
+        h += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-md border border-slate-100"><div class="flex-1 min-w-0 pr-1"><div class="font-bold text-slate-800 text-[10px] truncate">${item.nama}</div></div><div class="flex items-center gap-1.5"><button onclick="removeItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">－</button><span class="font-bold text-[10px] w-3 text-center">${item.qty}</span><button onclick="addItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">＋</button></div></div>`;
+    });
+    const v = Number(document.getElementById("voucher").value || 0);
+    const final = Math.max(0, t - v);
+    document.getElementById("cartList").innerHTML = h || `<div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[9px]">Kosong</p></div>`;
+    document.getElementById("total").innerText = final.toLocaleString();
+    updateBadges();
+    if(document.getElementById("metode").value === "CASH") renderCash();
+}
+
+function renderCash() {
+    const m = document.getElementById("metode").value;
+    const b = document.getElementById("cashBox");
+    if (m !== "CASH") { b.innerHTML = ""; return; }
+    const currentTotal = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
+    const denoms = [1000, 2000, 5000, 10000, 20000, 50000, 100000];
+    let btns = `<button onclick="quickCash(${currentTotal})" class="flex-1 bg-blue-600 text-white border py-0.5 rounded text-[8px] font-bold">Uang Pas</button>`;
+    denoms.forEach(v => { if (v > currentTotal) btns += `<button onclick="quickCash(${v})" class="flex-1 bg-white border py-0.5 rounded text-[8px] font-bold hover:bg-blue-600 hover:text-white">${v/1000}K</button>`; });
+    b.innerHTML = `<div class="bg-blue-50 p-1.5 rounded-md border border-blue-100 space-y-1">
+        <div class="flex justify-between items-center px-1"><label class="text-[8px] font-bold text-blue-700">TUNAI</label><input id="bayar" type="number" oninput="hitungKembali()" placeholder="0" class="w-20 bg-transparent border-b border-blue-400 text-right text-[11px] font-black outline-none"></div>
+        <div class="flex flex-wrap gap-1">${btns}</div>
+        <div id="kembaliWrapper" class="flex justify-between items-center text-[9px] font-bold px-1 text-blue-700"><span>KEMBALI</span><span>Rp <span id="kembali">0</span></span></div>
+    </div>`;
+}
+
+function quickCash(v) { 
+    const input = document.getElementById("bayar");
+    if(input) { input.value = v; hitungKembali(); }
+}
+
+function hitungKembali() {
+    const b = Number(document.getElementById("bayar")?.value || 0);
+    const t = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
+    const s = b - t;
+    const d = document.getElementById("kembali");
+    const w = document.getElementById("kembaliWrapper");
+    if (s < 0) { d.innerText = "Kurang " + Math.abs(s).toLocaleString(); w.classList.replace("text-blue-700", "text-red-600"); }
+    else { d.innerText = s.toLocaleString(); w.classList.replace("text-red-600", "text-blue-700"); }
+}
+
+async function submitOrder() {
+    const total = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
+    if (total <= 0 && Object.keys(cart).length === 0) return alert("Kosong");
+    const btn = document.querySelector("button[onclick='submitOrder()']");
+    btn.innerText = "PROSES..."; btn.disabled = true;
+    try {
+        const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=processPayment&total=${total}&noWA=${document.getElementById("nohp").value}&redeemQty=0&voucher=${document.getElementById("voucher").value || 0}&method=${document.getElementById("metode").value}&pesanan=${encodeURIComponent(pesanan)}`);
+        if (await res.text() === "SUCCESS") {
+            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
+            esc += "Tgl: " + new Date().toLocaleString() + "\n--------------------------------\n\x1B\x61\x00";
+            Object.values(cart).forEach(i => { esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`; });
+            esc += "--------------------------------\nTOTAL: Rp " + total.toLocaleString() + "\nMember: " + (document.getElementById("nohp").value || "-") + "\n\nTERIMA KASIH\n\n\n\n";
+            if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
+            alert("Berhasil!"); location.reload();
+        } else { alert("Gagal"); btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
+    } catch (e) { alert("Error"); btn.disabled = false; }
 }
 
 function cekMember() {
@@ -197,137 +226,7 @@ function cekMember() {
         });
 }
 
-function renderCash() {
-    const m = document.getElementById("metode").value;
-    const b = document.getElementById("cashBox");
-    if (m !== "CASH") { b.innerHTML = ""; return; }
-
-    // Ambil total belanja saat ini (angka bersih)
-    const rawTotal = document.getElementById("total").innerText.replace(/[^0-9]/g, '');
-    const currentTotal = Number(rawTotal || 0);
-
-    // List pecahan uang
-    const denominations = [1000, 2000, 5000, 10000, 20000, 50000, 100000];
-    
-    // Filter: hanya tampilkan uang yang >= total belanja, atau tampilkan "Uang Pas"
-    let cashButtons = `<button onclick="quickCash(${currentTotal})" class="flex-1 bg-blue-600 text-white border py-0.5 rounded text-[8px] font-bold">Uang Pas</button>`;
-    
-    denominations.forEach(v => {
-        if (v > currentTotal) {
-            cashButtons += `<button onclick="quickCash(${v})" class="flex-1 bg-white border py-0.5 rounded text-[8px] font-bold hover:bg-blue-600 hover:text-white">${v/1000}K</button>`;
-        }
-    });
-
-    b.innerHTML = `<div class="bg-blue-50 p-1.5 rounded-md border border-blue-100 space-y-1">
-        <div class="flex justify-between items-center px-1">
-            <label class="text-[8px] font-bold text-blue-700">TUNAI</label>
-            <input id="bayar" type="number" placeholder="0" class="w-20 bg-transparent border-b border-blue-400 text-right text-[11px] font-black outline-none">
-        </div>
-        <div class="flex flex-wrap gap-1">
-            ${cashButtons}
-        </div>
-        <div class="flex justify-between items-center text-[9px] font-bold px-1">
-            <span>KEMBALI</span>
-            <span class="text-blue-700">Rp <span id="kembali">0</span></span>
-        </div>
-    </div>`;
-}
-
-function quickCash(v) { 
-    document.getElementById("bayar").value = v; 
-    hitungKembali(); 
-}
-
-function hitungKembali() {
-    // Ambil nilai bayar dari input
-    const b = Number(document.getElementById("bayar")?.value || 0);
-    // Ambil total (hapus semua karakter kecuali angka)
-    const raw = document.getElementById("total").innerText.replace(/[^0-9]/g, '');
-    const t = Number(raw || 0);
-    
-    const selisih = b - t;
-    const displayKembali = document.getElementById("kembali");
-    
-    if (selisih < 0) {
-        displayKembali.innerText = "Kurang " + Math.abs(selisih).toLocaleString();
-        displayKembali.parentElement.classList.add("text-red-600");
-    } else {
-        displayKembali.innerText = selisih.toLocaleString();
-        displayKembali.parentElement.classList.remove("text-red-600");
-        displayKembali.parentElement.classList.add("text-blue-700");
-    }
-}
-
-// Pastikan renderCash dipanggil ulang setiap kali isi keranjang berubah
-// Tambahkan pemanggilan renderCash() di dalam fungsi renderCart()
-function renderCart() {
-    let h = ""; let t = 0;
-    Object.keys(cart).forEach(i => {
-        const item = cart[i]; t += item.qty * item.harga;
-        h += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-md border border-slate-100">
-            <div class="flex-1 min-w-0 pr-1"><div class="font-bold text-slate-800 text-[10px] truncate">${item.nama}</div></div>
-            <div class="flex items-center gap-1.5">
-                <button onclick="removeItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">－</button>
-                <span class="font-bold text-[10px] w-3 text-center">${item.qty}</span>
-                <button onclick="addItem(${i})" class="w-5 h-5 rounded bg-white border flex items-center justify-center text-[10px]">＋</button>
-            </div>
-        </div>`;
-    });
-    const v = Number(document.getElementById("voucher").value || 0);
-    document.getElementById("cartList").innerHTML = h || `<div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[9px]">Kosong</p></div>`;
-    document.getElementById("total").innerText = (t - v).toLocaleString();
-    updateBadges();
-    
-    // PERBAIKAN: Update panel cash jika sedang terbuka agar tombol uang cepat sinkron dengan total baru
-    if(document.getElementById("metode").value === "CASH") renderCash();
-}
-
-/* ================= LOGIC SUBMIT (DILENGKAPI) ================= */
-async function submitOrder() {
-    const rawTotal = document.getElementById("total").innerText.replace(/,/g, '');
-    const total = Number(rawTotal || 0);
-    if (total <= 0 && Object.keys(cart).length === 0) { alert("Keranjang kosong"); return; }
-
-    const voucher = Number(document.getElementById("voucher").value || 0);
-    const finalTotal = Math.max(0, total);
-    const metode = document.getElementById("metode").value;
-    const noWA = document.getElementById("nohp").value || "";
-    const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
-
-    const btn = document.querySelector("button[onclick='submitOrder()']");
-    btn.innerText = "PROSES..."; btn.disabled = true;
-
-    try {
-        const url = `${API_URL}?token=${TOKEN}&action=processPayment&total=${finalTotal}&noWA=${noWA}&redeemQty=0&voucher=${voucher}&method=${metode}&pesanan=${encodeURIComponent(pesanan)}`;
-        const res = await fetch(url);
-        const txt = await res.text();
-
-        if (txt === "SUCCESS") {
-            // PERINTAH CETAK ESC/POS
-            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
-            esc += "Tgl: " + new Date().toLocaleString() + "\n--------------------------------\n\x1B\x61\x00";
-            Object.values(cart).forEach(i => {
-                esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`;
-            });
-            esc += "--------------------------------\nTOTAL: Rp " + finalTotal.toLocaleString() + "\n";
-            if (noWA) esc += "Member: " + noWA + "\n";
-            esc += "\nTERIMA KASIH\n\n\n\n";
-
-            if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-            alert("Transaksi Berhasil!");
-            location.reload();
-        } else {
-            alert("Gagal menyimpan");
-            btn.innerText = "BAYAR & CETAK"; btn.disabled = false;
-        }
-    } catch (e) {
-        alert("Koneksi gagal");
-        btn.innerText = "BAYAR & CETAK"; btn.disabled = false;
-    }
-}
-
 loadMenu();
-renderCash();
 </script>
 </body>
 </html>
