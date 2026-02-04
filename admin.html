@@ -187,6 +187,79 @@ function updateBadges() {
     });
 }
 
+function cekMember() {
+    const no = document.getElementById("nohp").value.trim(); if (!no) return;
+    document.getElementById("memberInfo").innerText = "Mengecek...";
+    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`)
+        .then(r => r.json()).then(d => {
+            if (d.exists) { member = d; document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin || 0})</span>`; }
+            else { member = null; document.getElementById("memberInfo").innerHTML = `<span class="text-red-500 font-bold">❌ Bukan Member</span>`; }
+        });
+}
+
+function renderCash() {
+    const m = document.getElementById("metode").value;
+    const b = document.getElementById("cashBox");
+    if (m !== "CASH") { b.innerHTML = ""; return; }
+
+    // Ambil total belanja saat ini (angka bersih)
+    const rawTotal = document.getElementById("total").innerText.replace(/[^0-9]/g, '');
+    const currentTotal = Number(rawTotal || 0);
+
+    // List pecahan uang
+    const denominations = [1000, 2000, 5000, 10000, 20000, 50000, 100000];
+    
+    // Filter: hanya tampilkan uang yang >= total belanja, atau tampilkan "Uang Pas"
+    let cashButtons = `<button onclick="quickCash(${currentTotal})" class="flex-1 bg-blue-600 text-white border py-0.5 rounded text-[8px] font-bold">Uang Pas</button>`;
+    
+    denominations.forEach(v => {
+        if (v > currentTotal) {
+            cashButtons += `<button onclick="quickCash(${v})" class="flex-1 bg-white border py-0.5 rounded text-[8px] font-bold hover:bg-blue-600 hover:text-white">${v/1000}K</button>`;
+        }
+    });
+
+    b.innerHTML = `<div class="bg-blue-50 p-1.5 rounded-md border border-blue-100 space-y-1">
+        <div class="flex justify-between items-center px-1">
+            <label class="text-[8px] font-bold text-blue-700">TUNAI</label>
+            <input id="bayar" type="number" placeholder="0" class="w-20 bg-transparent border-b border-blue-400 text-right text-[11px] font-black outline-none">
+        </div>
+        <div class="flex flex-wrap gap-1">
+            ${cashButtons}
+        </div>
+        <div class="flex justify-between items-center text-[9px] font-bold px-1">
+            <span>KEMBALI</span>
+            <span class="text-blue-700">Rp <span id="kembali">0</span></span>
+        </div>
+    </div>`;
+}
+
+function quickCash(v) { 
+    document.getElementById("bayar").value = v; 
+    hitungKembali(); 
+}
+
+function hitungKembali() {
+    // Ambil nilai bayar dari input
+    const b = Number(document.getElementById("bayar")?.value || 0);
+    // Ambil total (hapus semua karakter kecuali angka)
+    const raw = document.getElementById("total").innerText.replace(/[^0-9]/g, '');
+    const t = Number(raw || 0);
+    
+    const selisih = b - t;
+    const displayKembali = document.getElementById("kembali");
+    
+    if (selisih < 0) {
+        displayKembali.innerText = "Kurang " + Math.abs(selisih).toLocaleString();
+        displayKembali.parentElement.classList.add("text-red-600");
+    } else {
+        displayKembali.innerText = selisih.toLocaleString();
+        displayKembali.parentElement.classList.remove("text-red-600");
+        displayKembali.parentElement.classList.add("text-blue-700");
+    }
+}
+
+// Pastikan renderCash dipanggil ulang setiap kali isi keranjang berubah
+// Tambahkan pemanggilan renderCash() di dalam fungsi renderCart()
 function renderCart() {
     let h = ""; let t = 0;
     Object.keys(cart).forEach(i => {
@@ -204,38 +277,9 @@ function renderCart() {
     document.getElementById("cartList").innerHTML = h || `<div class="flex flex-col items-center justify-center h-full text-slate-300"><p class="text-[9px]">Kosong</p></div>`;
     document.getElementById("total").innerText = (t - v).toLocaleString();
     updateBadges();
-}
-
-function cekMember() {
-    const no = document.getElementById("nohp").value.trim(); if (!no) return;
-    document.getElementById("memberInfo").innerText = "Mengecek...";
-    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`)
-        .then(r => r.json()).then(d => {
-            if (d.exists) { member = d; document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin || 0})</span>`; }
-            else { member = null; document.getElementById("memberInfo").innerHTML = `<span class="text-red-500 font-bold">❌ Bukan Member</span>`; }
-        });
-}
-
-function renderCash() {
-    const m = document.getElementById("metode").value;
-    const b = document.getElementById("cashBox");
-    if (m !== "CASH") { b.innerHTML = ""; return; }
-    b.innerHTML = `<div class="bg-blue-50 p-1.5 rounded-md border border-blue-100 space-y-1">
-        <div class="flex justify-between items-center px-1"><label class="text-[8px] font-bold text-blue-700">TUNAI</label><input id="bayar" type="number" placeholder="0" class="w-20 bg-transparent border-b border-blue-400 text-right text-[11px] font-black outline-none"></div>
-        <div class="flex gap-1">
-            ${[20000, 50000, 100000].map(v => `<button onclick="quickCash(${v})" class="flex-1 bg-white border py-0.5 rounded text-[8px] font-bold hover:bg-blue-600 hover:text-white">${v/1000}K</button>`).join("")}
-        </div>
-        <div class="flex justify-between items-center text-[9px] font-bold px-1"><span>KEMBALI</span><span>Rp <span id="kembali">0</span></span></div>
-    </div>`;
-}
-
-function quickCash(v) { document.getElementById("bayar").value = v; hitungKembali(); }
-document.addEventListener("input", e => { if (e.target.id === "bayar") hitungKembali(); });
-function hitungKembali() {
-    const b = Number(document.getElementById("bayar")?.value || 0);
-    const raw = document.getElementById("total").innerText.replace(/,/g, '');
-    const t = Number(raw || 0);
-    document.getElementById("kembali").innerText = (b - t).toLocaleString();
+    
+    // PERBAIKAN: Update panel cash jika sedang terbuka agar tombol uang cepat sinkron dengan total baru
+    if(document.getElementById("metode").value === "CASH") renderCash();
 }
 
 /* ================= LOGIC SUBMIT (DILENGKAPI) ================= */
