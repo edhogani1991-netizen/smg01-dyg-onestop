@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Admin Shift</title>
+<style>
+body{font-family:sans-serif}
+input{width:100%;padding:6px}
+.warn{color:red;font-weight:bold}
+</style>
+</head>
+<body>
+
+<h2>SHIFT CONTROL</h2>
+
+<label>Modal Awal</label>
+<input id="modal">
+
+<button onclick="openShift()">BUKA SHIFT</button>
+
+<hr>
+
+<h3>PENGELUARAN</h3>
+<input id="expItem" placeholder="Item">
+<input id="expHarga" placeholder="Harga">
+<button onclick="addExpense()">INPUT</button>
+<button onclick="lihat()">LIHAT</button>
+<div id="detail"></div>
+
+<hr>
+
+<h3>CLOSING</h3>
+<label>Cash di Laci</label>
+<input id="cashInput">
+<div id="ai" class="warn"></div>
+
+<label>GoFood</label><input id="gf">
+<label>GrabFood</label><input id="grb">
+<label>ShopeeFood</label><input id="shp">
+
+<label>Uang Disetor</label><input id="setor">
+
+<button onclick="closeShift()">TUTUP SHIFT</button>
+
+<script>
+const API = "URL_GAS_KAMU";
+
+async function openShift(){
+ await fetch(`${API}?token=dyg-access-v2&action=openShift&modal=${modal.value}`);
+ alert("SHIFT OPEN");
+}
+
+async function load(){
+ const r = await fetch(`${API}?token=dyg-access-v2&action=getShift`);
+ const d = await r.json();
+ if(Math.abs(d.saldoSeharusnya - cashInput.value) > 1000){
+   ai.innerText = "⚠️ SALDO CASH TIDAK SESUAI LOGIC";
+ }
+}
+
+async function addExpense(){
+ await fetch(`${API}?token=dyg-access-v2&action=addExpense&item=${expItem.value}&harga=${expHarga.value}`);
+ expHarga.value = 0;
+ load();
+}
+
+async function lihat(){
+ const r = await fetch(`${API}?token=dyg-access-v2&action=getShift`);
+ const d = await r.json();
+ detail.innerHTML = d.detail.map(x=>`${x.item} - ${x.harga}`).join("<br>");
+}
+
+async function closeShift(){
+ await fetch(`${API}?token=dyg-access-v2&action=closeShift&cash=${cashInput.value}&gf=${gf.value}&grb=${grb.value}&shp=${shp.value}&setor=${setor.value}`);
+ alert("SHIFT CLOSED");
+}
+</script>
+</body>
+</html>
