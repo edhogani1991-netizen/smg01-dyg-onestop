@@ -369,22 +369,29 @@ async function prosesSimpanKeCloud() {
     if (!pendingOrder) return;
     const p = pendingOrder;
     
-    // Beri info ke kasir
     const btn = document.querySelector("button[onclick='submitOrder()']");
     if(btn) btn.innerText = "MENYIMPAN DATA...";
 
     try {
-        const url = `${API_URL}?token=${TOKEN}&action=processPayment&total=${p.total}&noWA=${p.noWA}&method=${p.metode}&pesanan=${encodeURIComponent(p.pesanan)}&trxId=${p.trxId}&voucher=${encodeURIComponent(p.voucher)}&redeemQty=${redeemQty}`;
-        const res = await fetch(url);
+        // Encode URI agar karakter aneh pada pesanan tidak memutus link
+        const url = `${API_URL}?token=${TOKEN}&action=processPayment&total=${p.total}&noWA=${p.noWA}&method=${p.metode}&pesanan=${encodeURIComponent(p.pesanan)}&trxId=${p.trxId}&voucher=${encodeURIComponent(p.kodeVoucher)}&redeemQty=${redeemQty}`;
         
-        if (await res.text() === "SUCCESS") {
-            alert("✅ Struk Dicetak & Data Berhasil Disimpan!");
-            location.reload(); // Refresh untuk transaksi baru
+        const res = await fetch(url);
+        const serverResponse = await res.text();
+        
+        // SINKRONISASI: Kita paksa jadi huruf besar semua agar tidak bentrok (Success vs SUCCESS)
+        if (serverResponse.toUpperCase().includes("SUCCESS")) {
+            alert("✅ Transaksi Berhasil & Data Tersimpan!");
+            location.reload(); 
         } else {
-            alert("❌ Gagal simpan ke cloud, tapi struk sudah keluar.");
+            // Jika server merespon tapi bukan "Success" (misal: "Action Not Found")
+            alert("⚠️ Respon Server: " + serverResponse);
+            if(btn) { btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
         }
     } catch (e) {
-        alert("❌ Masalah Koneksi Internet saat simpan data.");
+        // INI BAGIAN JIKA JARINGAN TIDAK AMAN / MATI
+        alert("❌ KONEKSI INTERNET PUTUS!\nData gagal masuk ke Cloud. Mohon cek sinyal/wifi Anda.");
+        if(btn) { btn.innerText = "COBA SIMPAN LAGI"; btn.disabled = false; }
     }
 }
 // Fungsi untuk mengecek status shift saat aplikasi dibuka
