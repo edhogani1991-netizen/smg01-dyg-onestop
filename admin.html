@@ -97,7 +97,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxT3zSk8o2sYimZP8OpgV0eH77TibgvnW7yIi1h-lwcPfa0Wd85IXusSbbl0mcvU118JA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyLgEjzd1oeJyy6m6vcbHsL4x21TwYeAuvQMBTeOZo1zsj3IxkaCgsmWgCzSreyVmSP/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
@@ -236,31 +236,79 @@ function hitungKembali() {
     }
 }
 
-async function submitOrder() {
-    const total = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
-    if (total <= 0 && Object.keys(cart).length === 0) return alert("Kosong");
-    const btn = document.querySelector("button[onclick='submitOrder()']");
-    btn.innerText = "PROSES..."; btn.disabled = true;
-    
-    const kodeVoucher = document.getElementById("voucher").value; // Ambil teksnya saja
+// Simpan variabel ini di luar fungsi agar bisa diakses oleh prosesSimpanKeCloud
+let pendingOrder = null;
 
-    try {
-        const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
-        const res = await fetch(`${API_URL}?token=${TOKEN}&action=processPayment&total=${total}&noWA=${document.getElementById("nohp").value}&redeemQty=${redeemQty}&voucher=${encodeURIComponent(kodeVoucher)}&method=${document.getElementById("metode").value}&pesanan=${encodeURIComponent(pesanan)}`);
-        
-        if (await res.text() === "SUCCESS") {
-            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ RETAIL\x1B\x21\x00\n";
-            esc += "Tgl: " + new Date().toLocaleString() + "\n--------------------------------\n\x1B\x61\x00";
-            Object.values(cart).forEach(i => { esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty*i.harga).toLocaleString()}\n`; });
-            esc += "--------------------------------\nTOTAL: Rp " + total.toLocaleString() + "\nMember: " + (document.getElementById("nohp").value || "-") + (redeemQty > 0 ? "\nRedeem: " + redeemQty + " Poin" : "") + (kodeVoucher ? "\nVoucher: " + kodeVoucher : "") + "\n\nTERIMA KASIH\n\n\n\n";
-            
-            if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-            
-            alert("Berhasil!"); location.reload();
-        } else { alert("Gagal"); btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
-    } catch (e) { alert("Error"); btn.disabled = false; }
+async function submitOrder() {
+    // 1. Ambil total tagihan
+    const total = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
+    
+    // 2. Validasi keranjang
+    if (total <= 0 && Object.keys(cart).length === 0) {
+        return alert("Keranjang masih kosong!");
+    }
+
+    const btn = document.querySelector("button[onclick='submitOrder()']");
+    btn.innerText = "MENCETAK..."; 
+    btn.disabled = true;
+
+    // 3. Siapkan Data Transaksi (Simpan sementara di variabel pendingOrder)
+    const now = new Date();
+    const trxId = "TRX-" + now.getHours() + now.getMinutes() + now.getSeconds() + "-" + Math.floor(Math.random() * 100);
+    const noWA = document.getElementById("nohp").value || "-";
+    const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
+    const kodeVoucher = document.getElementById("voucher").value;
+    const metode = document.getElementById("metode").value;
+
+    pendingOrder = { 
+        total, 
+        noWA, 
+        pesanan, 
+        kodeVoucher, 
+        metode, 
+        trxId 
+    };
+
+    // 4. Susun Format Struk untuk Printer
+    // Pakai Nama CLOUDkitchendyg++ dan sertakan ID Transaksi
+    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10CLOUDkitchendyg++\x1B\x21\x00\n";
+    esc += "ID: " + trxId + "\n";
+    esc += "Tgl: " + now.toLocaleString('id-ID') + "\n";
+    esc += "--------------------------------\n\x1B\x61\x00";
+    
+    Object.values(cart).forEach(item => { 
+        esc += `${item.nama}\n${item.qty} x ${item.harga.toLocaleString()} = ${(item.qty * item.harga).toLocaleString()}\n`; 
+    });
+    
+    esc += "--------------------------------\n";
+    esc += "TOTAL   : Rp " + total.toLocaleString() + "\n";
+    esc += "METODE  : " + metode + "\n";
+    if (redeemQty > 0) esc += "REDEEM  : " + redeemQty + " Poin\n";
+    if (kodeVoucher)   esc += "VOUCHER : " + kodeVoucher + "\n";
+    esc += "\n\x1B\x61\x01TERIMA KASIH\x1B\x61\x00\n\n\n\n";
+
+    // 5. KIRIM PERINTAH KE APP INVENTOR
+    // Menambahkan prefix "PRINT|" agar dideteksi oleh blok IF di App Inventor
+    if (window.AppInventor) {
+        window.AppInventor.setWebViewString("PRINT|" + esc);
+    } else {
+        // Jika buka di browser biasa (untuk testing)
+        console.log("Simulasi Cetak:\n" + esc);
+        // Di browser kita panggil manual suksesnya karena tidak ada bluetooth
+        setTimeout(() => { onPrintSuccess_Mock(); }, 1000); 
+    }
 }
 
+// Fungsi simulasi jika tidak pakai App Inventor (hanya untuk tes di laptop)
+function onPrintSuccess_Mock() {
+    if(confirm("Simulasi: Apakah cetak berhasil?")) {
+        prosesSimpanKeCloud();
+    } else {
+        const btn = document.querySelector("button[onclick='submitOrder()']");
+        btn.innerText = "Bayar & Cetak";
+        btn.disabled = false;
+    }
+}
 function cekMember() {
     const no = document.getElementById("nohp").value.trim(); if (!no) return;
     document.getElementById("memberInfo").innerText = "Mengecek...";
@@ -287,7 +335,49 @@ function cekMember() {
             }
         });
 }
+// Pantau laporan dari App Inventor setiap 1 detik
+setInterval(function() {
+    if (window.AppInventor) {
+        let laporan = window.AppInventor.getWebViewString();
+        
+        if (laporan === "SUCCESS") {
+            window.AppInventor.setWebViewString(""); // Reset agar tidak kirim data berulang
+            prosesSimpanKeCloud(); // Panggil fungsi kirim data ke Google Sheets
+        } 
+        else if (laporan === "FAILED") {
+            window.AppInventor.setWebViewString(""); // Reset
+            alert("⚠️ GAGAL CETAK: Bluetooth printer tidak terhubung!");
+            
+            // Aktifkan kembali tombol agar kasir bisa coba lagi
+            const btn = document.querySelector("button[onclick='submitOrder()']");
+            if(btn) { btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
+        }
+    }
+}, 1000);
 
+// Fungsi utama untuk kirim data ke Google Sheets
+async function prosesSimpanKeCloud() {
+    if (!pendingOrder) return;
+    const p = pendingOrder;
+    
+    // Beri info ke kasir
+    const btn = document.querySelector("button[onclick='submitOrder()']");
+    if(btn) btn.innerText = "MENYIMPAN DATA...";
+
+    try {
+        const url = `${API_URL}?token=${TOKEN}&action=processPayment&total=${p.total}&noWA=${p.noWA}&method=${p.metode}&pesanan=${encodeURIComponent(p.pesanan)}&trxId=${p.trxId}&voucher=${encodeURIComponent(p.voucher)}&redeemQty=${redeemQty}`;
+        const res = await fetch(url);
+        
+        if (await res.text() === "SUCCESS") {
+            alert("✅ Struk Dicetak & Data Berhasil Disimpan!");
+            location.reload(); // Refresh untuk transaksi baru
+        } else {
+            alert("❌ Gagal simpan ke cloud, tapi struk sudah keluar.");
+        }
+    } catch (e) {
+        alert("❌ Masalah Koneksi Internet saat simpan data.");
+    }
+}
 loadMenu();
 </script>
 </body>
