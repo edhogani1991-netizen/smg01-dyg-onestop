@@ -32,8 +32,11 @@
         <div id="memberInfo" class="hidden md:block text-[10px] text-slate-500 italic truncate max-w-[150px]">Cek member...</div>
     </div>
     
-    <div class="flex items-center gap-2">
-        <div id="shiftArea" class="flex gap-1">
+    <div id="shiftArea" class="flex items-center gap-2">
+    <div id="shiftAlert" class="hidden flex items-center gap-1 bg-amber-100 border border-amber-300 px-2 py-1 rounded-md animate-pulse">
+        <span class="text-amber-600">⚠️</span>
+        <span id="alertText" class="text-[9px] font-bold text-amber-800 uppercase tracking-tighter"></span>
+    </div>
             <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold transition">BUKA SHIFT</button>
             <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold transition hidden">TUTUP SHIFT</button>
         </div>
@@ -109,6 +112,76 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxqeTBO66KcBbjSH6rAL-iQKqnfJO8Q7qYMXddlK_eqprDV5ehZ2aSWdPDX7fVgSpkHOg/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
+
+// Global variabel untuk menyimpan tanggal buka shift
+let shiftOpenedDate = null;
+
+async function checkShiftAlert() {
+    const alertBox = document.getElementById("shiftAlert");
+    const alertText = document.getElementById("alertText");
+    const status = document.getElementById("btnCloseShift").classList.contains("hidden") ? "CLOSED" : "OPEN";
+
+    // Jika shift sedang tutup, sembunyikan alert
+    if (status === "CLOSED") {
+        alertBox.classList.add("hidden");
+        return;
+    }
+
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+
+    // 1. Ambil info kapan shift dibuka (kita asumsikan dari ID shift atau data server)
+    // Untuk akurasi, kita bandingkan tanggal sekarang dengan tanggal buka shift
+    // (Misal: shiftOpenedDate diset saat checkShiftStatus)
+    
+    if (shiftOpenedDate) {
+        const diffTime = Math.abs(now - shiftOpenedDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // LOGIKA 1: Melebihi 2 Hari
+        if (diffDays > 2) {
+            alertBox.classList.remove("hidden");
+            alertText.innerText = "CLOSINGMU SUDAH MELAMPAUI BATAS KESALAHAN";
+            return;
+        }
+    }
+
+    // LOGIKA 2: Jam 03:30 (Pagi)
+    // Sesuai jam operasional Anda yang sampai jam 5 pagi
+    if (currentHour === 3 && currentMinute >= 30 || currentHour > 3 && currentHour < 6) {
+        alertBox.classList.remove("hidden");
+        alertText.innerText = "JANGAN LUPA TUTUP SHIFT, SAAT AKAN CLOSING";
+    } else {
+        alertBox.classList.add("hidden");
+    }
+}
+
+// Update fungsi checkShiftStatus yang sudah ada agar menyimpan tanggal buka
+async function checkShiftStatus() {
+    try {
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftStatus`);
+        const status = await res.text();
+        
+        // Asumsi: Kita butuh tanggal buka shift. 
+        // Anda bisa memodifikasi backend untuk mengirimkan "OPEN|2026-02-06"
+        if (status.includes("OPEN")) {
+            // Kita simpan tanggal hari ini sebagai patokan awal jika server tidak kirim tanggal
+            if(!shiftOpenedDate) shiftOpenedDate = new Date(); 
+            
+            document.getElementById("btnOpenShift").classList.add("hidden");
+            document.getElementById("btnCloseShift").classList.remove("hidden");
+        } else {
+            shiftOpenedDate = null;
+            document.getElementById("btnOpenShift").classList.remove("hidden");
+            document.getElementById("btnCloseShift").classList.add("hidden");
+        }
+        checkShiftAlert(); // Jalankan cek alert
+    } catch (e) { console.error(e); }
+}
+
+// Jalankan pengecekan setiap 1 menit
+setInterval(checkShiftAlert, 60000);
 
 let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0;
 
@@ -279,7 +352,6 @@ async function submitOrder() {
     };
 
     // 4. Susun Format Struk untuk Printer
-    // Pakai Nama CLOUDkitchendyg++ dan sertakan ID Transaksi
     let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10CLOUDkitchendyg++\x1B\x21\x00\n";
     esc += "ID: " + trxId + "\n";
     esc += "Tgl: " + now.toLocaleString('id-ID') + "\n";
@@ -290,11 +362,23 @@ async function submitOrder() {
     });
     
     esc += "--------------------------------\n";
-    esc += "TOTAL   : Rp " + total.toLocaleString() + "\n";
-    esc += "METODE  : " + metode + "\n";
-    if (redeemQty > 0) esc += "REDEEM  : " + redeemQty + " Poin\n";
-    if (kodeVoucher)   esc += "VOUCHER : " + kodeVoucher + "\n";
-    esc += "\n\x1B\x61\x01TERIMA KASIH\x1B\x61\x00\n\n\n\n";
+    esc += "TOTAL    : Rp " + total.toLocaleString() + "\n";
+    esc += "METODE   : " + metode + "\n";
+
+    // LOGIKA MEMBER & POIN TETAP TAMPIL
+    // Jika bukan member, namaMember akan tetap "-" dan poinDapat akan "0"
+    const namaMemberStruk = (member && member.nama) ? member.nama : "-";
+    const poinDidapatStruk = (namaMemberStruk !== "-") ? Math.floor(total / 20000) * 100 : 0;
+
+    esc += "MEMBER   : " + namaMemberStruk + "\n";
+    esc += "DAPAT POIN: " + poinDidapatStruk + "\n";
+
+    if (redeemQty > 0) esc += "REDEEM   : " + redeemQty + " Poin\n";
+    if (kodeVoucher)   esc += "VOUCHER  : " + kodeVoucher + "\n";
+    
+    esc += "--------------------------------\n";
+    esc += "\x1B\x61\x01TERIMA KASIH\x1B\x61\x00\n";
+    esc += "\x1B\x61\x01powered by cloudkitchendyg++\x1B\x61\x00\n\n\n\n\n";
 
     // 5. KIRIM PERINTAH KE APP INVENTOR
     // Menambahkan prefix "PRINT|" agar dideteksi oleh blok IF di App Inventor
