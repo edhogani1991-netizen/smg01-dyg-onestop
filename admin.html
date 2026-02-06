@@ -6,6 +6,46 @@
     <title>dyg++ POS Compact</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+
+/* Efek Berkedip Halus */
+.animate-pulse-fast {
+    animation: pulse-alert 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-alert {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.02); }
+}
+
+/* Styling Box Alert */
+#shiftAlert {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px; /* Lonjong pill */
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+/* Warna Kuning (Peringatan Standar) */
+.alert-warning {
+    background-color: #fef08a;
+    color: #854d0e;
+    border-color: #eab308 !important;
+}
+
+/* Warna Merah (Sudah 2 Hari) */
+.alert-danger {
+    background-color: #ef4444;
+    color: #ffffff;
+    border-color: #b91c1c !important;
+}
+
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #f1f5f9; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
@@ -32,20 +72,22 @@
         <div id="memberInfo" class="hidden md:block text-[10px] text-slate-500 italic truncate max-w-[150px]">Cek member...</div>
     </div>
     
+  <div class="flex items-center gap-3">
     <div id="shiftArea" class="flex items-center gap-2">
-    <div id="shiftAlert" class="hidden flex items-center gap-1 bg-amber-100 border border-amber-300 px-2 py-1 rounded-md animate-pulse">
-        <span class="text-amber-600">⚠️</span>
-        <span id="alertText" class="text-[9px] font-bold text-amber-800 uppercase tracking-tighter"></span>
-    </div>
-            <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold transition">BUKA SHIFT</button>
-            <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold transition hidden">TUTUP SHIFT</button>
+        <div id="shiftAlert" class="hidden flex items-center gap-1 px-2 py-1.5 rounded-lg pulse-fast shadow-sm">
+            <span id="alertIcon">⚠️</span>
+            <span id="alertText" class="text-[9px] font-extrabold uppercase tracking-tighter"></span>
         </div>
-        
-        <div class="flex items-center gap-1">
-            <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 border-none rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none w-24 md:w-36">
-            <button onclick="cekMember()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold transition">Cek</button>
-        </div>
+
+        <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold transition">BUKA SHIFT</button>
+        <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold transition hidden">TUTUP SHIFT</button>
     </div>
+    
+    <div class="flex items-center gap-1 border-l border-slate-200 pl-3">
+        <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 border-none rounded-lg px-3 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none w-24 md:w-36">
+        <button onclick="cekMember()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-[11px] font-bold transition">Cek</button>
+    </div>
+</div>
 </header>
 
 <main class="flex flex-1 overflow-hidden main-container">
@@ -113,6 +155,61 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxqeTBO66KcBbjSH6rAL-iQ
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
+function updateShiftWarning() {
+    const alertBox = document.getElementById("shiftAlert");
+    const alertText = document.getElementById("alertText");
+    const alertIcon = document.getElementById("alertIcon");
+    const btnClose = document.getElementById("btnCloseShift");
+
+    // Jika tombol Tutup Shift tersembunyi, berarti shift CLOSED
+    if (btnClose.classList.contains("hidden")) {
+        alertBox.classList.add("hidden");
+        return;
+    }
+
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMin = now.getMinutes();
+
+    // Logika Deteksi 2 Hari dari Nama Shift (Format: OPEN-6/2/2026)
+    // Kita simpan nama shift di localStorage saat buka shift
+    const savedShift = localStorage.getItem("activeShiftName") || "";
+    let isExpired = false;
+
+    if (savedShift.includes("-")) {
+        try {
+            const dateStr = savedShift.split("-")[1]; // ambil 6/2/2026
+            const p = dateStr.split("/");
+            const shiftDate = new Date(p[2], p[1] - 1, p[0]);
+            const diffDays = (now - shiftDate) / (1000 * 60 * 60 * 24);
+            if (diffDays >= 2) isExpired = true;
+        } catch(e) { isExpired = false; }
+    }
+
+    if (isExpired) {
+        // Mode Bahaya (Merah)
+        alertBox.classList.remove("hidden", "alert-kuning");
+        alertBox.classList.add("alert-merah");
+        alertIcon.innerText = "🚨";
+        alertText.innerText = "CLOSINGMU SUDAH MELAMPAUI BATAS KESALAHAN";
+    } 
+    else if ((currentHour === 3 && currentMin >= 30) || (currentHour >= 4 && currentHour < 6)) {
+        // Mode Pengingat (Kuning)
+        alertBox.classList.remove("hidden", "alert-merah");
+        alertBox.classList.add("alert-kuning");
+        alertIcon.innerText = "⚠️";
+        alertText.innerText = "JANGAN LUPA TUTUP SHIFT, SAAT AKAN CLOSING";
+    } 
+    else {
+        alertBox.classList.add("hidden");
+    }
+}
+
+// Pastikan dipanggil setiap menit
+setInterval(updateShiftWarning, 60000);
+
+// Tambahkan ini di dalam fungsi manageShift('open') saat sukses:
+// localStorage.setItem("activeShiftName", result);
 // Global variabel untuk menyimpan tanggal buka shift
 let shiftOpenedDate = null;
 
@@ -334,7 +431,7 @@ async function submitOrder() {
     btn.innerText = "MENCETAK..."; 
     btn.disabled = true;
 
-    // 3. Siapkan Data Transaksi (Simpan sementara di variabel pendingOrder)
+    // 3. Siapkan Data Transaksi
     const now = new Date();
     const trxId = "TRX-" + now.getHours() + now.getMinutes() + now.getSeconds() + "-" + Math.floor(Math.random() * 100);
     const noWA = document.getElementById("nohp").value || "-";
@@ -351,6 +448,19 @@ async function submitOrder() {
         trxId 
     };
 
+    // --- LOGIKA POIN & MEMBER UNTUK STRUK ---
+    // Mengambil data dari variabel 'member' yang diisi saat fungsi cekMember() dijalankan
+    const namaMemberStruk = (member && member.nama) ? member.nama : "-";
+    
+    // Hitung poin yang BARU didapat dari transaksi ini (Contoh: tiap 20rb dapat 100 poin)
+    const poinBaru = (namaMemberStruk !== "-") ? Math.floor(total / 20000) * 100 : 0;
+    
+    // Ambil saldo poin LAMA dari database member
+    const poinLama = (member && member.poin) ? Number(member.poin) : 0;
+    
+    // Hitung TOTAL poin akhir (Saldo Lama + Baru - Saldo yang ditukar/Redeem)
+    const totalPoinAkhir = (namaMemberStruk !== "-") ? (poinLama + poinBaru - redeemQty) : 0;
+
     // 4. Susun Format Struk untuk Printer
     let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10CLOUDkitchendyg++\x1B\x21\x00\n";
     esc += "ID: " + trxId + "\n";
@@ -362,32 +472,27 @@ async function submitOrder() {
     });
     
     esc += "--------------------------------\n";
-    esc += "TOTAL    : Rp " + total.toLocaleString() + "\n";
-    esc += "METODE   : " + metode + "\n";
+    esc += "TOTAL     : Rp " + total.toLocaleString() + "\n";
+    esc += "METODE    : " + metode + "\n";
+    
+    // Tampilan Poin (Tetap muncul walau bukan member)
+    esc += "MEMBER    : " + namaMemberStruk + "\n";
+    esc += "DAPAT POIN: " + poinBaru + "\n";
+    esc += "TOTAL POIN: " + totalPoinAkhir + "\n";
 
-    // LOGIKA MEMBER & POIN TETAP TAMPIL
-    // Jika bukan member, namaMember akan tetap "-" dan poinDapat akan "0"
-    const namaMemberStruk = (member && member.nama) ? member.nama : "-";
-    const poinDidapatStruk = (namaMemberStruk !== "-") ? Math.floor(total / 20000) * 100 : 0;
-
-    esc += "MEMBER   : " + namaMemberStruk + "\n";
-    esc += "DAPAT POIN: " + poinDidapatStruk + "\n";
-
-    if (redeemQty > 0) esc += "REDEEM   : " + redeemQty + " Poin\n";
-    if (kodeVoucher)   esc += "VOUCHER  : " + kodeVoucher + "\n";
+    if (redeemQty > 0) esc += "REDEEM    : " + redeemQty + " Poin\n";
+    if (kodeVoucher)   esc += "VOUCHER   : " + kodeVoucher + "\n";
     
     esc += "--------------------------------\n";
     esc += "\x1B\x61\x01TERIMA KASIH\x1B\x61\x00\n";
     esc += "\x1B\x61\x01powered by cloudkitchendyg++\x1B\x61\x00\n\n\n\n\n";
 
     // 5. KIRIM PERINTAH KE APP INVENTOR
-    // Menambahkan prefix "PRINT|" agar dideteksi oleh blok IF di App Inventor
     if (window.AppInventor) {
         window.AppInventor.setWebViewString("PRINT|" + esc);
     } else {
         // Jika buka di browser biasa (untuk testing)
         console.log("Simulasi Cetak:\n" + esc);
-        // Di browser kita panggil manual suksesnya karena tidak ada bluetooth
         setTimeout(() => { onPrintSuccess_Mock(); }, 1000); 
     }
 }
