@@ -1238,38 +1238,25 @@ function changeMode(m, el) {
         renderMenu(cat);
     }
 
-// --- FUNGSI UPDATE ANTREAN (HANYA HEADER) ---
     async function syncQueue() {
-        try {
-            // Kita panggil action getAntrean yang baru dibuat di GAS
-            const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=getAntrean`);
-            const data = await resp.json();
-            
-            if (Array.isArray(data)) {
-                antrean = data.length; // Simpan jumlah antrean ke variabel global
-                const el = document.getElementById('noAntrean');
-                if(el) {
-                    el.innerText = "#" + antrean; // Update angka di header saja
-                }
-            }
-        } catch(e) { 
-            console.error("Queue error:", e); 
+    try {
+        const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
+        const num = await resp.text();
+        if (num) {
+            antrean = num; 
+            const el = document.getElementById('noAntrean');
+            if(el) el.innerText = "#" + num;
         }
-        // Gunakan setTimeout agar terus mengecek tiap 20 detik secara rekursif
-        setTimeout(syncQueue, 20000); 
-    }
+    } catch(e) { console.error("Queue error:", e); }
+    setTimeout(syncQueue, 20000); // Cek antrean tiap 20 detik
+}
 
-    // --- FUNGSI MODAL (TIDAK BERUBAH / TETAP AMAN) ---
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
     function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
-
-    // --- JALANKAN SAAT STARTUP ---
-    window.addEventListener('load', () => {
-        syncQueue(); // Mulai memantau antrean
-    });
+</script>
 
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
