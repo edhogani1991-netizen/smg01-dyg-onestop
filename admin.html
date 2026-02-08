@@ -164,7 +164,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbx8hcYCLIKnDRzJviqbfdCBtUIkXv3HxftZQxqQdA8aDQtFUbWvuVQGZAk1CqIX2pX8-g/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwILUxFXWavj8WTWAVGTydHKx84-3H7shE9SuzYDed74BOChXo5sSsbFvptd5V1ZEZ1Nw/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
@@ -240,33 +240,25 @@ setInterval(updateShiftWarning, 60000);
 let shiftOpenedDate = null;
 
 // VERSI BERSIH (Ganti baris 212-230 dengan ini)
-async function checkShiftStatus() {
-    try {
-        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftStatus`);
-        const status = await res.text();
-        
-        const btnOpen = document.getElementById("btnOpenShift");
-        const btnClose = document.getElementById("btnCloseShift");
-        const btnSubmit = document.getElementById("btnSubmitOrder");
+function checkShiftStatus() {
+    const activeShift = localStorage.getItem("activeShiftName");
+    const btn = document.getElementById("btnShift");
+    const alertBox = document.getElementById("shiftAlert");
 
-        if (status === "OPEN") {
-            btnOpen.classList.add("hidden");
-            btnClose.classList.remove("hidden");
-            btnSubmit.disabled = false;
-            btnSubmit.innerText = "Bayar & Cetak";
-            btnSubmit.classList.remove("opacity-50", "grayscale");
-        } else {
-            btnOpen.classList.remove("hidden");
-            btnClose.classList.add("hidden");
-            btnSubmit.disabled = true;
-            btnSubmit.innerText = "BUKA SHIFT DULU";
-            btnSubmit.classList.add("opacity-50", "grayscale");
-        }
-        
-        // Panggil fungsi alert yang baru kita buat
-        updateShiftWarning(); 
-    } catch (e) { console.error("Gagal cek shift", e); }
+    // Matikan segitiga kuning selamanya
+    if (alertBox) alertBox.style.display = "none";
+
+    if (activeShift) {
+        btn.innerText = "TUTUP SHIFT";
+        btn.className = "w-full py-3 bg-red-600 text-white rounded-xl font-bold transition-all active:scale-95";
+        btn.onclick = () => manageShift('close');
+    } else {
+        btn.innerText = "BUKA SHIFT";
+        btn.className = "w-full py-3 bg-emerald-600 text-white rounded-xl font-bold transition-all active:scale-95";
+        btn.onclick = () => manageShift('open');
+    }
 }
+
 let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0;
 
 function toggleVoucher() {
@@ -631,25 +623,21 @@ async function manageShift(type) {
                 alert("Shift Dimulai!"); 
                 location.reload(); 
             }
-        } catch (e) { alert("Gagal buka shift. Cek koneksi!"); }
+        } catch (e) { alert("Gagal koneksi server!"); }
     } else {
         if (!confirm("Tutup shift dan CETAK LAPORAN?")) return;
 
         try {
-            // 1. Ambil data laporan
             const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
             const r = await res.json();
 
-            // Jika server bilang tidak ada shift, kita bersihkan lokal saja
             if (r === "NO_ACTIVE_SHIFT") {
-                alert("Sistem mencatat tidak ada shift aktif. Membersihkan data lokal...");
                 localStorage.removeItem("activeShiftName");
-                localStorage.removeItem("pemicuClosing");
                 location.reload();
                 return;
             }
 
-            // 2. Susun teks printer (Tetap jalan walaupun beda hari)
+            // Susun Teks Printer
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
             esc += (r.shiftName || "Shift") + "\n";
             esc += "--------------------------------\n\x1B\x61\x00";
@@ -657,40 +645,40 @@ async function manageShift(type) {
             esc += "Total Pemasukan : Rp " + (r.totalPemasukan || 0).toLocaleString() + "\n";
             esc += "  - CASH        : Rp " + (r.cash || 0).toLocaleString() + "\n";
             esc += "  - QRIS        : Rp " + (r.qris || 0).toLocaleString() + "\n";
-            esc += "  - CARD        : Rp " + (r.card || 0).toLocaleString() + "\n";
             esc += "--------------------------------\n";
-            
-            // ... (Bagian daftar member tetap sama) ...
+            esc += "INFO MEMBER & POIN:\n";
+            const memberList = Object.keys(r.members || {});
+            esc += "Total Member    : " + memberList.length + " Orang\n";
+            esc += "Poin Didapat    : " + (r.totalPoinDapat || 0) + "\n";
+            esc += "Poin Ditukar    : " + (r.totalPoinRedeem || 0) + "\n";
+            esc += "--------------------------------\n";
 
-            // 3. Eksekusi Tutup ke Server & Printer
+            if (memberList.length > 0) {
+                esc += "RINCIAN POIN MEMBER:\n";
+                memberList.forEach(m => {
+                    esc += "- " + m + ": +" + r.members[m] + "\n";
+                });
+                esc += "--------------------------------\n";
+            }
+            esc += "\n\n\n\n\n";
+
             if (window.AppInventor) {
                 window.AppInventor.setWebViewString("PRINT|" + esc);
-                
-                // Beri jeda agar printer sempat memproses
                 setTimeout(async () => {
                     await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`);
                     localStorage.removeItem("activeShiftName");
-                    localStorage.removeItem("pemicuClosing");
-                    alert("Laporan Dicetak & Shift Ditutup!");
+                    alert("Shift Ditutup!");
                     location.reload();
                 }, 2000);
             } else {
-                // Testing di Browser
-                console.log("Mock Report:\n" + esc);
                 await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`);
                 localStorage.removeItem("activeShiftName");
-                localStorage.removeItem("pemicuClosing");
                 location.reload();
             }
         } catch (e) {
-            console.error(e);
-            alert("Terjadi kesalahan teknis. Pastikan internet aktif!");
-            // Opsi: Jika darurat, paksa hapus localStorage agar bisa buka shift baru
-            if(confirm("Paksa tutup shift secara lokal? (Laporan mungkin tidak tercetak)")) {
-                 localStorage.removeItem("activeShiftName");
-                 localStorage.removeItem("pemicuClosing");
-                 location.reload();
-            }
+            alert("Gagal koneksi! Klik Oke untuk paksa reset lokal.");
+            localStorage.removeItem("activeShiftName");
+            location.reload();
         }
     }
 }
