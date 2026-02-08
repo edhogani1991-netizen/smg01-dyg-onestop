@@ -708,7 +708,7 @@ async function apiCekMember() {
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwFW4hCROJxihl5LvtiZO8KNFc3sl222fJLNIN9y9xm0OPa-6I1-0ZO-C8v6quFeldFXA/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbyL0eZfyuzPxwQ_S2EKxFqi2B_BlIktb03CPqm9rK8WMwEA9zvSW6ccVXhuc_I2BZPjqQ/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1238,57 +1238,38 @@ function changeMode(m, el) {
         renderMenu(cat);
     }
 
+// --- FUNGSI UPDATE ANTREAN (HANYA HEADER) ---
     async function syncQueue() {
-    try {
-        const resp = await fetch(CONFIG.WEB_APP_URL + `?waitQueue=true&token=${CONFIG.TOKEN}`);
-        const num = await resp.text();
-        if (num) {
-            antrean = num; 
-            const el = document.getElementById('noAntrean');
-            if(el) el.innerText = "#" + num;
+        try {
+            // Kita panggil action getAntrean yang baru dibuat di GAS
+            const resp = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=getAntrean`);
+            const data = await resp.json();
+            
+            if (Array.isArray(data)) {
+                antrean = data.length; // Simpan jumlah antrean ke variabel global
+                const el = document.getElementById('noAntrean');
+                if(el) {
+                    el.innerText = "#" + antrean; // Update angka di header saja
+                }
+            }
+        } catch(e) { 
+            console.error("Queue error:", e); 
         }
-    } catch(e) { console.error("Queue error:", e); }
-    setTimeout(syncQueue, 20000); // Cek antrean tiap 20 detik
-}
+        // Gunakan setTimeout agar terus mengecek tiap 20 detik secara rekursif
+        setTimeout(syncQueue, 20000); 
+    }
 
+    // --- FUNGSI MODAL (TIDAK BERUBAH / TETAP AMAN) ---
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
     function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
-async function fetchAntrean() {
-    const container = document.getElementById("antrean-list"); // Pastikan ID ini ada di HTML Anda
-    if (!container) return;
 
-    try {
-        const response = await fetch(`${API_URL}?token=${TOKEN}&action=getAntrean`);
-        const data = await response.json();
-
-        if (Array.isArray(data) && data.length > 0) {
-            container.innerHTML = data.map(item => `
-                <div style="background: white; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-size: 10px; font-weight: bold; color: var(--muted);">${item.trxId}</div>
-                        <div style="font-size: 13px; font-weight: 900; color: var(--primary);">${item.nama}</div>
-                    </div>
-                    <div style="background: #e6f4ea; color: #1e7e34; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 900;">
-                        ${item.status}
-                    </div>
-                </div>
-            `).join('');
-        } else {
-            container.innerHTML = "<p style='text-align:center; font-size:12px; color:#999;'>Belum ada antrean hari ini.</p>";
-        }
-    } catch (error) {
-        console.error("Gagal ambil antrean:", error);
-        container.innerHTML = "<p style='text-align:center; font-size:12px; color:red;'>Gagal memuat data.</p>";
-    }
-}
-
-// Panggil fungsi ini agar jalan otomatis saat halaman dibuka
-setInterval(fetchAntrean, 30000); // Update tiap 30 detik
-window.addEventListener('load', fetchAntrean);
-</script>
+    // --- JALANKAN SAAT STARTUP ---
+    window.addEventListener('load', () => {
+        syncQueue(); // Mulai memantau antrean
+    });
 
 <div id="modalComingSoon" class="modal-overlay">
     <div class="modal-card">
