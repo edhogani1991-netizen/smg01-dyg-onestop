@@ -86,10 +86,7 @@
     
   <div class="flex items-center gap-3">
     <div id="shiftArea" class="flex items-center gap-2">
-        <div id="shiftAlert" class="hidden flex items-center gap-1 px-2 py-1.5 rounded-lg pulse-fast shadow-sm">
-            <span id="alertIcon">⚠️</span>
-            <span id="alertText" class="text-[9px] font-extrabold uppercase tracking-tighter"></span>
-        </div>
+        <div id="shiftAlert" class="hidden"></div>
 
         <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold transition">BUKA SHIFT</button>
         <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 hover:bg-rose-700 text-white px-2 py-1.5 rounded-lg text-[10px] font-bold transition hidden">TUTUP SHIFT</button>
@@ -168,94 +165,25 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwILUxFXWavj8WTWAVGTydH
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
-function updateShiftWarning() {
-    const alertBox = document.getElementById("shiftAlert");
-    const alertText = document.getElementById("alertText");
-    const alertIcon = document.getElementById("alertIcon");
-    const btnClose = document.getElementById("btnCloseShift");
-
-    // 1. Jika tombol Tutup Shift tersembunyi (Shift CLOSED), sembunyikan total
-    if (btnClose.classList.contains("hidden")) {
-        alertBox.classList.add("hidden");
-        // Reset status pemicu agar besok sore saat buka shift tidak langsung muncul
-        localStorage.removeItem("pemicuClosing");
-        return;
-    }
-
-    const now = new Date();
-    const jam = now.getHours();
-
-    // 2. CEK LOGIKA 2 HARI (Peringatan Merah - Prioritas Utama)
-    const savedShift = localStorage.getItem("activeShiftName") || "";
-    let isExpired = false;
-    
-    if (savedShift.includes("-")) {
-        try {
-            const dateStr = savedShift.split("-")[1]; // Mengambil bagian tanggal saja
-            const p = dateStr.split("/");
-            // Format Date(tahun, bulan-1, tanggal)
-            const shiftDate = new Date(p[2], p[1] - 1, p[0]);
-            const diffInMs = now - shiftDate;
-            const diffDays = diffInMs / (1000 * 60 * 60 * 24);
-            
-            if (diffDays >= 2) isExpired = true;
-        } catch(e) { 
-            console.error("Error parsing date:", e);
-            isExpired = false; 
-        }
-    }
-
-    // TAMPILAN JIKA EXPIRED (MERAH)
-    if (isExpired) {
-        alertBox.classList.remove("hidden", "alert-kuning");
-        alertBox.classList.add("alert-merah", "pulse-fast");
-        alertIcon.innerText = "🚨";
-        alertText.innerText = "CLOSINGMU SUDAH MELAMPAUI BATAS KESALAHAN";
-        return; // Berhenti di sini jika sudah expired
-    }
-
-    // 3. LOGIKA JAM 3 PAGI (Peringatan Kuning)
-    // Syarat: Jam antara 03:00 - 09:00 (Pemicu awal)
-    // ATAU sudah pernah terpicu hari ini (Terkunci di memori)
-    const pemicuAktif = (jam >= 3 && jam <= 9); 
-    const sudahPernahTerpicu = localStorage.getItem("pemicuClosing") === "true";
-
-    if (pemicuAktif || sudahPernahTerpicu) {
-        // Simpan ke memori agar kalau jam sudah lewat jam 9 pagi, alert TIDAK hilang
-        localStorage.setItem("pemicuClosing", "true");
-
-        alertBox.classList.remove("hidden", "alert-merah");
-        alertBox.classList.add("alert-kuning", "pulse-fast");
-        alertIcon.innerText = "⚠️";
-        alertText.innerText = "JANGAN LUPA TUTUP SHIFT, SAAT AKAN CLOSING";
-    } else {
-        // Jika masih sore/malam (sebelum jam 3 pagi) dan belum pernah terpicu
-        alertBox.classList.add("hidden");
-    }
-}
-
-// Jalankan setiap 1 menit
-setInterval(updateShiftWarning, 60000);
 // Global variabel untuk menyimpan tanggal buka shift
 let shiftOpenedDate = null;
 
 // VERSI BERSIH (Ganti baris 212-230 dengan ini)
 function checkShiftStatus() {
     const activeShift = localStorage.getItem("activeShiftName");
-    const btn = document.getElementById("btnShift");
+    const btnOpen = document.getElementById("btnOpenShift");
+    const btnClose = document.getElementById("btnCloseShift");
     const alertBox = document.getElementById("shiftAlert");
 
-    // Matikan segitiga kuning selamanya
+    // Sembunyikan peringatan selamanya
     if (alertBox) alertBox.style.display = "none";
 
     if (activeShift) {
-        btn.innerText = "TUTUP SHIFT";
-        btn.className = "w-full py-3 bg-red-600 text-white rounded-xl font-bold transition-all active:scale-95";
-        btn.onclick = () => manageShift('close');
+        btnOpen.classList.add("hidden");
+        btnClose.classList.remove("hidden");
     } else {
-        btn.innerText = "BUKA SHIFT";
-        btn.className = "w-full py-3 bg-emerald-600 text-white rounded-xl font-bold transition-all active:scale-95";
-        btn.onclick = () => manageShift('open');
+        btnOpen.classList.remove("hidden");
+        btnClose.classList.add("hidden");
     }
 }
 
@@ -585,33 +513,6 @@ async function prosesSimpanKeCloud() {
         if(btn) { btn.innerText = "COBA SIMPAN LAGI"; btn.disabled = false; }
     }
 }
-// Fungsi untuk mengecek status shift saat aplikasi dibuka
-async function checkShiftStatus() {
-    try {
-        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftStatus`);
-        const status = await res.text();
-        
-        const btnOpen = document.getElementById("btnOpenShift");
-        const btnClose = document.getElementById("btnCloseShift");
-        const btnSubmit = document.getElementById("btnSubmitOrder");
-
-        if (status === "OPEN") {
-            btnOpen.classList.add("hidden");
-            btnClose.classList.remove("hidden");
-            btnSubmit.disabled = false;
-            btnSubmit.innerText = "Bayar & Cetak";
-            btnSubmit.classList.remove("opacity-50", "grayscale");
-        } else {
-            btnOpen.classList.remove("hidden");
-            btnClose.classList.add("hidden");
-            // Kunci tombol transaksi jika belum buka shift
-            btnSubmit.disabled = true;
-            btnSubmit.innerText = "BUKA SHIFT DULU";
-            btnSubmit.classList.add("opacity-50", "grayscale");
-        }
-    } catch (e) { console.error("Gagal cek shift", e); }
-}
-
 async function manageShift(type) {
     if (type === 'open') {
         if (!confirm("Buka shift sekarang?")) return;
