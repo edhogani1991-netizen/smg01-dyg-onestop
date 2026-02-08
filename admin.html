@@ -169,21 +169,43 @@ const TOKEN = "dyg-access-v2";
 let shiftOpenedDate = null;
 
 // VERSI BERSIH (Ganti baris 212-230 dengan ini)
-function checkShiftStatus() {
-    const activeShift = localStorage.getItem("activeShiftName");
-    const btnOpen = document.getElementById("btnOpenShift");
-    const btnClose = document.getElementById("btnCloseShift");
-    const alertBox = document.getElementById("shiftAlert");
+async function checkShiftStatus() {
+    try {
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftStatus`);
+        const status = await res.text();
+        
+        const btnOpen = document.getElementById("btnOpenShift");
+        const btnClose = document.getElementById("btnCloseShift");
+        const btnSubmit = document.getElementById("btnSubmitOrder");
+        const alertBox = document.getElementById("shiftAlert");
 
-    // Sembunyikan peringatan selamanya
-    if (alertBox) alertBox.style.display = "none";
+        // Sembunyikan segitiga kuning selamanya sesuai permintaan Anda
+        if (alertBox) alertBox.style.display = "none";
 
-    if (activeShift) {
-        btnOpen.classList.add("hidden");
-        btnClose.classList.remove("hidden");
-    } else {
-        btnOpen.classList.remove("hidden");
-        btnClose.classList.add("hidden");
+        if (status === "OPEN") {
+            // Jika Shift Terbuka
+            btnOpen.classList.add("hidden");
+            btnClose.classList.remove("hidden");
+            
+            // Aktifkan tombol bayar
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "Bayar & Cetak";
+            btnSubmit.classList.remove("opacity-50", "grayscale", "cursor-not-allowed");
+        } else {
+            // Jika Shift Tertutup
+            btnOpen.classList.remove("hidden");
+            btnClose.classList.add("hidden");
+            
+            // Kunci tombol bayar secara total
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "BUKA SHIFT DULU";
+            btnSubmit.classList.add("opacity-50", "grayscale", "cursor-not-allowed");
+            
+            // Bersihkan data lokal jika server bilang sudah tutup
+            localStorage.removeItem("activeShiftName");
+        }
+    } catch (e) { 
+        console.error("Gagal cek shift", e); 
     }
 }
 
@@ -349,6 +371,13 @@ function hitungKembali() {
 let pendingOrder = null;
 
 async function submitOrder() {
+    // PROTEKSI TAMBAHAN
+    const activeShift = localStorage.getItem("activeShiftName");
+    if (!activeShift) {
+        alert("Peringatan: Anda belum membuka shift! Transaksi ditolak.");
+        return;
+    }
+    
     // 1. Ambil total tagihan
     const total = Number(document.getElementById("total").innerText.replace(/[^0-9]/g, '') || 0);
     
