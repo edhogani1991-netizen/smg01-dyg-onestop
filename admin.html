@@ -161,7 +161,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxiaPYYqwQy971Eo7RZi7zm4b8M_iLBLJSu0GanwrolSvuor9D6B_j8ArOzsCV9YI3DKQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyZnJUk9hqSjFQL3og92bIFuj70PMob9mt9sHP7XsOUgvqkLVu7H3tS6hzctGxq7iRXng/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
@@ -515,34 +515,40 @@ setInterval(function() {
 // Fungsi utama untuk kirim data ke Google Sheets
 async function prosesSimpanKeCloud() {
     if (!pendingOrder) return;
-    const p = pendingOrder;
-    
+
     const btn = document.querySelector("button[onclick='submitOrder()']");
-    if(btn) btn.innerText = "MENYIMPAN DATA...";
+    const rQty = (typeof redeemQty !== 'undefined') ? Number(redeemQty) : 0;
+
+    const params = new URLSearchParams({
+        token: CONFIG.TOKEN,
+        action: "processPayment",
+        total: pendingOrder.total,     // Masuk ke Jumlah Bayar
+        pesanan: pendingOrder.pesanan, // Masuk ke Pesanan
+        method: pendingOrder.metode,   // Masuk ke Mode Pembayaran
+        trxId: pendingOrder.trxId,     // Masuk ke ID Transaksi
+        noWA: pendingOrder.noWA,       // Masuk ke HP
+        redeemQty: rQty                // Masuk ke Potongan
+    });
 
     try {
-        // Encode URI agar karakter aneh pada pesanan tidak memutus link
-        const url = `${API_URL}?token=${TOKEN}&action=processPayment&total=${p.total}&noWA=${p.noWA}&method=${p.metode}&pesanan=${encodeURIComponent(p.pesanan)}&trxId=${p.trxId}&voucher=${encodeURIComponent(p.kodeVoucher)}&redeemQty=${redeemQty}`;
-        
-        const res = await fetch(url);
-        const serverResponse = await res.text();
-        
-        // SINKRONISASI: Kita paksa jadi huruf besar semua agar tidak bentrok (Success vs SUCCESS)
-        if (serverResponse.toUpperCase().includes("SUCCESS")) {
-            alert("✅ Transaksi Berhasil & Data Tersimpan!");
+        const response = await fetch(`${CONFIG.API_URL}?${params.toString()}`);
+        const result = await response.text();
+
+        if (result.includes("Success")) {
+            alert("Transaksi Berhasil Dicatat!");
+            cart = {};
             location.reload(); 
         } else {
-            // Jika server merespon tapi bukan "Success" (misal: "Action Not Found")
-            alert("⚠️ Respon Server: " + serverResponse);
-            if(btn) { btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
+            alert("Gagal Simpan: " + result);
+            btn.innerText = "Bayar & Cetak";
+            btn.disabled = false;
         }
-    } catch (e) {
-        // INI BAGIAN JIKA JARINGAN TIDAK AMAN / MATI
-        alert("❌ KONEKSI INTERNET PUTUS!\nData gagal masuk ke Cloud. Mohon cek sinyal/wifi Anda.");
-        if(btn) { btn.innerText = "COBA SIMPAN LAGI"; btn.disabled = false; }
+    } catch (err) {
+        alert("Koneksi Putus!");
+        btn.innerText = "Bayar & Cetak";
+        btn.disabled = false;
     }
-}
-async function manageShift(type) {
+}async function manageShift(type) {
     if (type === 'open') {
         if (!confirm("Buka shift sekarang?")) return;
         try {
