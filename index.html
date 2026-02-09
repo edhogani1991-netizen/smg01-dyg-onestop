@@ -1005,7 +1005,11 @@ async function submitOrder() {
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
-    const noAntrean = document.getElementById('noAntrean').innerText; // Ini ID antrean untuk tampilan & DB
+    
+    // --- AMBIL NOMOR ANTREAN DARI HEADER ---
+    const noAntreanFull = document.getElementById('noAntrean').innerText; 
+    const noAntrean = noAntreanFull.replace('#', ''); // Pastikan hanya angka yang dikirim ke DB
+    
     const tglK = document.getElementById('tglKatering')?.value || '';
 
     // Validasi input (Nama, Meja, Alamat)
@@ -1058,11 +1062,10 @@ async function submitOrder() {
     }
 
     // --- 4. KIRIM KE GOOGLE SHEETS (MONITOR DAPUR) ---
-    // Kami menggunakan metode GET agar paling kompatibel dengan fungsi doGet di Apps Script Anda
     const params = new URLSearchParams({
         token: CONFIG.TOKEN,
         action: "simpanPesanan",
-        antrean: noAntrean,
+        antrean: noAntrean, // Mengirim angka murni (misal: 4)
         nama: nI.value,
         mode: currentMode,
         pesanan: Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join('\n'),
@@ -1071,7 +1074,7 @@ async function submitOrder() {
     });
 
     try {
-        // Fetch background tanpa menunggu respon (no-cors) agar cepat
+        // Fetch background
         await fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
         console.log("Data pesanan berhasil dikirim ke database.");
     } catch (e) {
@@ -1082,7 +1085,7 @@ async function submitOrder() {
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
-    msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
+    msg += `🔢 *ANTREAN: #${noAntrean}*\n`; // Menampilkan tanda # hanya di teks WA agar keren
     msg += `━━━━━━━━━━━━━━\n`;
 
     if (currentMode === 'DINE IN') {
@@ -1107,12 +1110,15 @@ async function submitOrder() {
     const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
     window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
 
-    // --- 7. RESET TAMPILAN WEB (Setelah jeda sedikit) ---
+    // --- 7. RESET TAMPILAN WEB & REFRESH ANTREAN ---
     setTimeout(() => {
         cart = [];
         if (typeof refreshUI === 'function') refreshUI();
         closeModal();
         
+        // AMBIL NOMOR ANTREAN BARU DARI SERVER UNTUK PESANAN BERIKUTNYA
+        if (typeof fetchCurrentQueue === 'function') fetchCurrentQueue();
+
         const welcome = document.getElementById('welcome-overlay'); 
         if (welcome) {
             welcome.style.display = 'flex';
@@ -1137,6 +1143,7 @@ async function submitOrder() {
         document.getElementById('orderNote').value = '';
     }, 1500);
 }
+
     function toggleSummary(open) {
         if (cart.length === 0 && open) return;
         document.getElementById('orderSummaryPanel').classList.toggle('active', open);
@@ -1327,5 +1334,28 @@ function changeMode(m, el) {
 </div>
     </div>
 </div>
+// Fungsi untuk mengambil angka antrean terbaru dari server
+async function fetchCurrentQueue() {
+    const el = document.getElementById('noAntrean');
+    if (!el) return;
+
+    try {
+        const response = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=getNextAntrean`);
+        const queueNumber = await response.text();
+        
+        // Jika response bukan angka (karena error), set default ke #1
+        if (isNaN(queueNumber)) {
+            el.innerText = "#1";
+        } else {
+            el.innerText = "#" + queueNumber;
+        }
+    } catch (err) {
+        console.error("Queue Error:", err);
+        el.innerText = "#1"; // Fallback jika koneksi gagal
+    }
+}
+
+// Jalankan fungsi saat halaman dibuka
+window.addEventListener('DOMContentLoaded', fetchCurrentQueue);
 </body>
 </html>
