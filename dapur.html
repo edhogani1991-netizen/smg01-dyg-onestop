@@ -33,15 +33,15 @@
 <script>
 /* ================= CONFIG ================= */
 const CONFIG = {
-    // PASTIKAN URL INI ADALAH URL "NEW DEPLOYMENT" TERBARU
+    // URL Deployment GAS Anda
     API_URL: "https://script.google.com/macros/s/AKfycbxsXUiyX-JBk4agHl0du-mS2Ew_lEAQR4JsdFuCSkYE-HA7Odwoazcnl55uabyygSogIw/exec",
     TOKEN: "dyg-access-v2",
-    REFRESH: 8000
+    REFRESH: 8000 // Sinkronisasi setiap 8 detik
 };
 
 /* ================= STATE ================= */
 let lastCount = 0;
-let removedRows = [];
+let removedRows = []; // Menyimpan ID baris yang sudah diselesaikan agar tidak muncul lagi saat refresh
 let currentOrders = [];
 
 /* ================= VOICE NOTIF ================= */
@@ -65,13 +65,17 @@ function loadOrders() {
             document.getElementById("status").innerText = "TERHUBUNG";
             document.getElementById("status").style.color = "green";
             
-            // Cek jika ada pesanan benar-benar baru untuk suara
-            if (data.length > lastCount && lastCount !== 0) {
+            // Filter data yang masuk: hanya ambil yang belum ada di removedRows
+            const filteredData = data.filter(o => !removedRows.includes(String(o.row)));
+
+            // Notifikasi suara jika ada pesanan benar-benar baru
+            if (filteredData.length > lastCount && lastCount !== 0) {
                 playVoiceNotif();
             }
-            lastCount = data.length;
+            
+            lastCount = filteredData.length;
             currentOrders = data; 
-            render(data);
+            render(filteredData);
         })
         .catch(e => {
             document.getElementById("status").innerText = "OFFLINE / ERROR";
@@ -81,10 +85,8 @@ function loadOrders() {
 }
 
 /* ================= RENDER CARD ================= */
-function render(data){
+function render(active){
     const box = document.getElementById("list");
-    // Filter out rows that are temporarily hidden
-    const active = data.filter(o => !removedRows.includes(String(o.row)));
 
     if(active.length === 0){
         box.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#999;padding:50px">Tidak ada pesanan baru</div>`;
@@ -94,11 +96,13 @@ function render(data){
     box.innerHTML = active.map(o => {
         let daftarMenu = "";
         try {
+            // Cek apakah data berupa JSON string atau teks biasa
             if (o.Pesanan && o.Pesanan.trim().startsWith('{')) {
                 const jsonPesanan = JSON.parse(o.Pesanan);
                 daftarMenu = Object.keys(jsonPesanan).map(menu => `• ${jsonPesanan[menu].qty}x ${menu}`).join("<br>");
             } else {
-                daftarMenu = o.Pesanan.split(',').map(i => `• ${i.trim()}`).join("<br>");
+                // Mendukung pemisah koma atau baris baru
+                daftarMenu = o.Pesanan.split(/,|\n/).map(i => `• ${i.trim()}`).filter(i => i !== "•").join("<br>");
             }
         } catch (e) {
             daftarMenu = `• ${o.Pesanan}`;
@@ -115,12 +119,12 @@ function render(data){
         `;
     }).join("");
 
-    // Re-attach Swipe
+    // Aktifkan kembali Hammer JS untuk Swipe
     document.querySelectorAll(".card").forEach(card => {
         const mc = new Hammer(card);
         mc.on("swipeleft", () => {
             const rowId = card.getAttribute("data-row");
-            if (confirm("Selesaikan pesanan ini?")) finish(rowId);
+            finish(rowId);
         });
     });
 }
@@ -129,24 +133,38 @@ function render(data){
 function finish(row) {
     const orderData = currentOrders.find(o => o.row == row);
     
-    // 1. Animasi & Sembunyikan Instan
+    // 1. Animasi & Sembunyikan Instan secara Visual
     const card = document.getElementById("c-" + row);
     if (card) card.classList.add("slide-out-left");
     
-    removedRows.push(String(row));
+    // Tambahkan ke daftar "sudah dihapus" agar tidak muncul saat auto-refresh
+    if (!removedRows.includes(String(row))) {
+        removedRows.push(String(row));
+    }
 
-    // 2. Cetak
+    // 2. Eksekusi Cetak (Mempertahankan fungsi RawBT Anda)
     if (orderData) printOrder(orderData);
 
-    // 3. Update ke Sheet (Gunakan action updateStatus)
+    // 3. Update Status ke Google Sheets (Background Sync)
     const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`;
-    fetch(url).then(() => console.log("Sync Sheet Success"));
+    fetch(url)
+        .then(r => r.text())
+        .then(res => console.log("Sync Sheet Success:", res))
+        .catch(e => console.error("Sync Failed:", e));
 
-    // 4. Hapus elemen setelah animasi
-    setTimeout(() => { if (card) card.remove(); }, 500);
+    // 4. Hapus elemen dari DOM setelah animasi selesai
+    setTimeout(() => { 
+        if (card) card.remove();
+        // Jika setelah dihapus layar kosong, jalankan render ulang untuk memicu empty state
+        if (document.querySelectorAll('.card').length === 0) {
+            render([]);
+        }
+    }, 500);
 }
 
+/* ================= PRINT FUNCTION (RAWBT BASE64) ================= */
 function printOrder(order) {
+    // Format teks untuk printer thermal
     let txt = `      dyg++ KITCHEN\n`;
     txt += `================================\n`;
     txt += `Antrean : #${order.Antrean}\n`;
@@ -158,12 +176,14 @@ function printOrder(order) {
     txt += `PESANAN:\n${order.Pesanan}\n`;
     txt += `--------------------------------\n\n\n\n`; 
 
+    // Encode ke Base64 untuk dikirim ke aplikasi RawBT
     const base64Data = btoa(unescape(encodeURIComponent(txt)));
     window.location.href = "rawbt:base64," + base64Data;
 }
 
 /* ================= START ================= */
 loadOrders();
+// Interval sinkronisasi otomatis
 setInterval(loadOrders, CONFIG.REFRESH);
 </script>
 </body>
