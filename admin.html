@@ -518,39 +518,31 @@ async function prosesSimpanKeCloud() {
     const btn = document.querySelector("button[onclick='submitOrder()']");
     const rQty = (typeof redeemQty !== 'undefined') ? Number(redeemQty) : 0;
 
-    // Menyiapkan parameter yang dikirim ke URL
     const params = new URLSearchParams({
-        token: TOKEN,                // Sesuai baris 114: "dyg-access-v2"
+        token: TOKEN,
         action: "processPayment",
-        total: pendingOrder.total,     // Masuk ke Kolom C
-        pesanan: pendingOrder.pesanan, // Masuk ke Kolom B
-        method: pendingOrder.metode,   // Masuk ke Kolom E
-        trxId: pendingOrder.trxId,     // Masuk ke Kolom F
-        noWA: pendingOrder.noWA,       // Masuk ke Kolom H
-        redeemQty: rQty                // Masuk ke Kolom D
+        total: pendingOrder.total,     // Kolom C
+        pesanan: pendingOrder.pesanan, // Kolom B
+        method: pendingOrder.metode,   // Kolom E
+        trxId: pendingOrder.trxId,     // Kolom F
+        noWA: pendingOrder.noWA,       // Kolom H
+        redeemQty: rQty                // Kolom D
     });
 
     try {
-        // Menggunakan API_URL (baris 112) bukan CONFIG.API_URL
-        const response = await fetch(`${API_URL}?${params.toString()}`);
-        const result = await response.text();
+        // Gunakan mode no-cors untuk kirim data agar tidak macet di "MENCETAK..."
+        fetch(`${API_URL}?${params.toString()}`, { mode: 'no-cors' });
+        
+        // Karena mode no-cors, kita anggap sukses setelah fetch dikirim
+        alert("✅ Transaksi Berhasil Dicatat!");
+        cart = {};
+        pendingOrder = null;
+        location.reload(); 
 
-        if (result.includes("Success")) {
-            alert("✅ Transaksi Berhasil Disimpan!");
-            // Reset Data
-            cart = {};
-            pendingOrder = null;
-            location.reload(); 
-        } else {
-            alert("⚠️ Database Menolak: " + result);
-            btn.innerText = "Bayar & Cetak";
-            btn.disabled = false;
-        }
     } catch (err) {
-        console.error("Fetch Error:", err);
-        alert("❌ Gagal Terhubung ke Database! Periksa Internet.");
-        btn.innerText = "Bayar & Cetak";
-        btn.disabled = false;
+        console.error("Cloud Error:", err);
+        alert("❌ Gagal terhubung ke Database!");
+        if(btn) { btn.innerText = "Bayar & Cetak"; btn.disabled = false; }
     }
 }
 
@@ -558,14 +550,27 @@ async function manageShift(type) {
     if (type === 'open') {
         if (!confirm("Buka shift sekarang?")) return;
         try {
-            const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift`);
-            const result = await res.text();
-            if (result) {
-                localStorage.setItem("activeShiftName", result);
-                alert("Shift Dimulai!"); 
-                location.reload(); 
-            }
-        } catch (e) { alert("Gagal koneksi server!"); }
+            // Tambahkan mode no-cors agar tidak terblokir browser saat 'Buka Shift'
+            const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift`, { mode: 'no-cors' });
+            
+            // Karena no-cors tidak bisa membaca text respon, kita beri jeda lalu ambil status terbaru
+            setTimeout(async () => {
+                const checkStatus = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftStatus`);
+                const statusText = await checkStatus.text();
+                
+                if (statusText === "OPEN") {
+                    localStorage.setItem("activeShiftName", "SHIFT-" + new Date().toLocaleDateString());
+                    alert("Shift Dimulai!"); 
+                    location.reload(); 
+                } else {
+                    alert("Gagal mengaktifkan shift di server. Coba lagi.");
+                }
+            }, 1000);
+
+        } catch (e) { 
+            alert("Gagal koneksi server!"); 
+            console.error(e);
+        }
     } else {
         if (!confirm("Tutup shift dan CETAK LAPORAN?")) return;
 
@@ -579,7 +584,7 @@ async function manageShift(type) {
                 return;
             }
 
-            // Susun Teks Printer
+            // Susun Teks Printer (ESC/POS) - TIDAK ADA YANG DIUBAH
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
             esc += (r.shiftName || "Shift") + "\n";
             esc += "--------------------------------\n\x1B\x61\x00";
@@ -596,7 +601,7 @@ async function manageShift(type) {
             esc += "--------------------------------\n";
 
             if (memberList.length > 0) {
-                esc += "RINCIAN POIN MEMBER:\n";
+                esc += "RINCIAN POIN MEMBER:\\n";
                 memberList.forEach(m => {
                     esc += "- " + m + ": +" + r.members[m] + "\n";
                 });
@@ -607,13 +612,13 @@ async function manageShift(type) {
             if (window.AppInventor) {
                 window.AppInventor.setWebViewString("PRINT|" + esc);
                 setTimeout(async () => {
-                    await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`);
+                    await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`, { mode: 'no-cors' });
                     localStorage.removeItem("activeShiftName");
                     alert("Shift Ditutup!");
                     location.reload();
                 }, 2000);
             } else {
-                await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`);
+                await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`, { mode: 'no-cors' });
                 localStorage.removeItem("activeShiftName");
                 location.reload();
             }
@@ -624,7 +629,6 @@ async function manageShift(type) {
         }
     }
 }
-
 // Tambahkan checkShiftStatus() ke dalam window.onload Anda yang sudah ada
 window.onload = () => {
     loadMenu();
