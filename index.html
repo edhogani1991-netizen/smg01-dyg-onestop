@@ -708,7 +708,7 @@ async function apiCekMember() {
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxxaqHaHaJMH3DNTNs9nklz5mlsxKfJPrDt_pnfJqwwn0xypjVNfJSxtlkbecM_BRW5cg/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwfnr3syLjgo0jINxnpBByzuYktmBcvUXdhpa-P4rb6I9kbZE-2lVfIgeVdjtki7hPY7w/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1008,7 +1008,7 @@ async function submitOrder() {
     const noAntrean = document.getElementById('noAntrean').innerText;
     const tglK = document.getElementById('tglKatering')?.value || '';
 
-    // Validasi input (Nama, Meja, Alamat) - Tetap Utuh
+    // Validasi input (Tetap Utuh)
     const cards = [nI.closest('.input-card'), tI?.closest('.input-card'), aI?.closest('.input-card')];
     cards.forEach(card => card?.classList.remove('error-field', 'shake-ani'));
 
@@ -1032,24 +1032,24 @@ async function submitOrder() {
     cart.forEach(c => {
         let label = c.nama;
         let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-        if(tags) label += ` [${tags}]`;
+        if (tags) label += ` [${tags}]`;
         const itemKey = label;
         const itemPrice = c.harga + (c.ex || 0);
         if (!summary[itemKey]) summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
         summary[itemKey].qty++;
     });
 
-    const pRowsWA = Object.entries(summary).map(([name, data]) => 
+    const pRowsWA = Object.entries(summary).map(([name, data]) =>
         `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
     );
 
-    // --- 3. Hitung Data & Lokasi ---
-    const distKM = (userDist/1000).toFixed(1);
+    // --- 3. Hitung Data ---
+    const distKM = (userDist / 1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
     const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
-    // --- 4. Susun Pesan WA (Tetap Utuh) ---
+    // --- 4. Pesan WA (Tetap Utuh) ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
@@ -1071,7 +1071,7 @@ async function submitOrder() {
     msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
     msg += `Terimakasih!`;
 
-    // --- 5. Animasi & Eksekusi (DIUBAH BAGIAN FETCH NYA SAJA) ---
+    // --- 5. FETCH KE BACKEND (INI YANG DIPERBAIKI) ---
     const btnKirim = document.querySelector('#modalConfirm button:last-child');
     if (btnKirim) {
         btnKirim.innerHTML = "⌛ Menghubungkan...";
@@ -1079,51 +1079,54 @@ async function submitOrder() {
         btnKirim.style.pointerEvents = "none";
     }
 
-    const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, ''); 
-    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
+    const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, '');
+    const pesananJSON = JSON.stringify(summary); // ✅ FORMAT AMAN UNTUK DAPUR
 
-    // --- PERBAIKAN PENTING DI SINI ---
-    // Menggunakan action=submitOrder sesuai Backend agar masuk ke logantrean
-    const dbUrl = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=submitOrder` +
-              `&nama=${encodeURIComponent(nI.value)}` +
-              `&pesanan=${encodeURIComponent(pesananTeks)}` +
-              `&mode=${encodeURIComponent(currentMode)}` +
-              `&meja=${encodeURIComponent(tI ? tI.value : '-')}`;
+    const dbUrl =
+        `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=simpanPesanan` +
+        `&antrean=${encodeURIComponent(noAntrean)}` +
+        `&nama=${encodeURIComponent(nI.value)}` +
+        `&mode=${encodeURIComponent(currentMode)}` +
+        `&pesanan=${encodeURIComponent(pesananJSON)}` +
+        `&total=${finalTotal}` +
+        `&meja=${encodeURIComponent(tI?.value || '')}`;
 
-    // Jalankan Fetch ke Database (Background)
-    fetch(dbUrl).then(r => console.log("Data dikirim ke logantrean"));
+    fetch(dbUrl).then(() => console.log("✔ Masuk logantrean"));
 
-    // Eksekusi Pindah ke WA
-    const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
+    // --- WA TETAP ---
+    const wa = currentMode === 'DELIVERY'
+        ? CONFIG.WA_NUMBERS.DELIVERY
+        : CONFIG.WA_NUMBERS.DINE_IN;
+
     window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
 
-    // 3. RESET TAMPILAN WEB (Tetap Utuh)
+    // --- 6. RESET (Tetap Utuh) ---
     setTimeout(() => {
-       cart = [];
-       refreshUI();
-       closeModal();
-        
-       const welcome = document.getElementById('welcome-overlay'); 
-       if (welcome) {
-           welcome.style.display = 'flex';
-           const startBtn = welcome.querySelector('button');
-           if (startBtn) {
-               startBtn.innerHTML = "MULAI SEKARANG";
-               startBtn.style.opacity = "1";
-               startBtn.style.pointerEvents = "auto";
-           }
-       }
+        cart = [];
+        refreshUI();
+        closeModal();
 
-       if (btnKirim) {
-         btnKirim.innerHTML = "Kirim WA";
-         btnKirim.style.opacity = "1";
-         btnKirim.style.pointerEvents = "auto";
-       }
-       
-       nI.value = '';
-       if(tI) tI.value = '';
-       if(aI) aI.value = '';
-       document.getElementById('orderNote').value = '';
+        const welcome = document.getElementById('welcome-overlay');
+        if (welcome) {
+            welcome.style.display = 'flex';
+            const startBtn = welcome.querySelector('button');
+            if (startBtn) {
+                startBtn.innerHTML = "MULAI SEKARANG";
+                startBtn.style.opacity = "1";
+                startBtn.style.pointerEvents = "auto";
+            }
+        }
+
+        if (btnKirim) {
+            btnKirim.innerHTML = "Kirim WA";
+            btnKirim.style.opacity = "1";
+            btnKirim.style.pointerEvents = "auto";
+        }
+
+        nI.value = '';
+        if (tI) tI.value = '';
+        if (aI) aI.value = '';
+        document.getElementById('orderNote').value = '';
     }, 1000);
 }
 
