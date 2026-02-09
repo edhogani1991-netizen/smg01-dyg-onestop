@@ -1246,26 +1246,42 @@ function changeMode(m, el) {
         renderMenu(cat);
     }
 
-    async function syncQueue() {
+// 1. Fungsi Utama untuk mengambil antrean dari Server
+async function fetchCurrentQueue() {
+    const el = document.getElementById('noAntrean');
+    if (!el) return;
+
     try {
-        // GANTI waitQueue=true MENJADI action=getNextAntrean
-        const resp = await fetch(CONFIG.WEB_APP_URL + `?action=getNextAntrean&token=${CONFIG.TOKEN}`);
-        const num = await resp.text();
+        // Memanggil GAS dengan parameter action yang benar
+        const response = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=getNextAntrean`);
+        const queueNumber = await response.text();
         
-        // Pastikan responnya angka, bukan pesan error "Action Not Found" atau "Unauthorized"
-        if (num && !isNaN(num)) {
-            const el = document.getElementById('noAntrean');
-            if(el) el.innerText = "#" + num;
+        // Validasi: Jika server mengirim "Action Not Found" atau bukan angka, jangan tampilkan
+        if (!isNaN(queueNumber) && queueNumber.trim() !== "") {
+            el.innerText = "#" + queueNumber;
+            console.log("Antrean Terupdate: " + queueNumber);
         } else {
-            console.error("Respon Server Bukan Angka:", num);
+            console.error("Server Response Error: ", queueNumber);
+            // Jika error, kita biarkan atau set ke #1 sebagai default
+            if(el.innerText === "#0") el.innerText = "#1";
         }
-    } catch(e) { 
-        console.error("Queue error:", e); 
+    } catch (err) {
+        console.error("Koneksi Gagal:", err);
     }
-    // Cek setiap 20 detik
-    setTimeout(syncQueue, 20000); 
 }
 
+// 2. Fungsi sinkronisasi otomatis (looping)
+async function syncQueue() {
+    await fetchCurrentQueue();
+    // Ulangi setiap 30 detik agar tidak membebani server tapi tetap up-to-date
+    setTimeout(syncQueue, 30000); 
+}
+
+// 3. Jalankan saat halaman pertama kali dibuka
+window.addEventListener('DOMContentLoaded', () => {
+    syncQueue(); 
+});
+    
     function openModal() { document.getElementById('modalConfirm').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
     function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
@@ -1342,27 +1358,6 @@ function changeMode(m, el) {
     </div>
 </div>
 // Fungsi untuk mengambil angka antrean terbaru dari server
-async function fetchCurrentQueue() {
-    const el = document.getElementById('noAntrean');
-    if (!el) return;
 
-    try {
-        const response = await fetch(`${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=getNextAntrean`);
-        const queueNumber = await response.text();
-        
-        // Jika response bukan angka (karena error), set default ke #1
-        if (isNaN(queueNumber)) {
-            el.innerText = "#1";
-        } else {
-            el.innerText = "#" + queueNumber;
-        }
-    } catch (err) {
-        console.error("Queue Error:", err);
-        el.innerText = "#1"; // Fallback jika koneksi gagal
-    }
-}
-
-// Jalankan fungsi saat halaman dibuka
-window.addEventListener('DOMContentLoaded', fetchCurrentQueue);
 </body>
 </html>
