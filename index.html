@@ -1005,7 +1005,7 @@ async function submitOrder() {
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
-    const noAntrean = document.getElementById('noAntrean').innerText;
+    const noAntrean = document.getElementById('noAntrean').innerText; // Ini ID antrean untuk tampilan & DB
     const tglK = document.getElementById('tglKatering')?.value || '';
 
     // Validasi input (Nama, Meja, Alamat)
@@ -1018,7 +1018,6 @@ async function submitOrder() {
     else if (currentMode === 'DELIVERY' && !aI.value.trim()) targetEl = aI;
     else if (currentMode === 'KATERING' && !document.getElementById('tglKatering').value) targetEl = document.getElementById('tglKatering');
 
-    // JIKA ADA FIELD KOSONG
     if (targetEl) {
         const targetCard = targetEl.closest('.input-card');
         closeModal();
@@ -1028,7 +1027,7 @@ async function submitOrder() {
         return; 
     }
 
-    // --- 2. Rangkai Rincian Pesanan ---
+    // --- 2. Rangkai Rincian Pesanan & Hitung Total ---
     const summary = {};
     cart.forEach(c => {
         let label = c.nama;
@@ -1044,14 +1043,42 @@ async function submitOrder() {
         `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
     );
 
-    // --- 3. Hitung Data & Lokasi ---
     const distKM = (userDist/1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
-    const finalPrice = document.getElementById('miniPrice').innerText;
-    // FIX BUG: Link Google Maps diperbaiki agar valid
+    const finalPriceText = document.getElementById('miniPrice').innerText;
+    const finalPriceNumeric = finalPriceText.replace(/[^0-9]/g, ''); // Angka murni untuk DB
     const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
 
-    // --- 4. Susun Pesan WA ---
+    // --- 3. Animasi Tombol Loading ---
+    const btnKirim = document.querySelector('#modalConfirm button:last-child');
+    if (btnKirim) {
+        btnKirim.innerHTML = "⌛ Mengirim ke Dapur...";
+        btnKirim.style.opacity = "0.7";
+        btnKirim.style.pointerEvents = "none";
+    }
+
+    // --- 4. KIRIM KE GOOGLE SHEETS (MONITOR DAPUR) ---
+    // Kami menggunakan metode GET agar paling kompatibel dengan fungsi doGet di Apps Script Anda
+    const params = new URLSearchParams({
+        token: CONFIG.TOKEN,
+        action: "simpanPesanan",
+        antrean: noAntrean,
+        nama: nI.value,
+        mode: currentMode,
+        pesanan: Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join('\n'),
+        total: finalPriceNumeric,
+        meja: (currentMode === 'DINE IN' ? tI.value : (currentMode === 'DELIVERY' ? "DELIVERY" : "TAKEAWAY"))
+    });
+
+    try {
+        // Fetch background tanpa menunggu respon (no-cors) agar cepat
+        await fetch(`${CONFIG.WEB_APP_URL}?${params.toString()}`, { mode: 'no-cors' });
+        console.log("Data pesanan berhasil dikirim ke database.");
+    } catch (e) {
+        console.error("Gagal mengirim ke database dapur:", e);
+    }
+
+    // --- 5. SUSUN PESAN WHATSAPP ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
@@ -1070,49 +1097,25 @@ async function submitOrder() {
     msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
     const catatan = document.getElementById('orderNote').value || '-';
     msg += `\n*CATATAN:* ${catatan}\n`;
-    msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
+    msg += `*TOTAL BAYAR: Rp ${finalPriceText}*\n\n`;
     msg += `⏳ *PROSES PESANAN:*\nMohon tunggu, tim kami sedang mengecek pesanan Anda.\n\n`;
     msg += `💳 *INFO:* Dine In (Kasir), Delivery (TF/QRIS)\n\n`;
     msg += `⭐️ *REVIEW:* https://search.google.com/local/writereview?placeid=ChIJj4s4oMWLcC4REIr_BWkoLiI\n\n`;
     msg += `Terimakasih!`;
 
-    // --- 5. Animasi & Eksekusi ---
-    const btnKirim = document.querySelector('#modalConfirm button:last-child');
-    if (btnKirim) {
-        btnKirim.innerHTML = "⌛ Menghubungkan...";
-        btnKirim.style.opacity = "0.7";
-        btnKirim.style.pointerEvents = "none";
-    }
-
-    const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, ''); 
-    const pesananTeks = Object.entries(summary).map(([n, d]) => `${d.qty}x ${n}`).join(', ');
-
-    // 1. Jalankan Fetch ke Database (Background)
-    // FIX BUG: Menambahkan parameter &meja agar terkirim ke monitor dapur
-    const dbUrl = `${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=processOrder` +
-                  `&nama=${encodeURIComponent(nI.value)}` +
-                  `&pesanan=${encodeURIComponent(pesananTeks)}` +
-                  `&mode=${encodeURIComponent(currentMode)}` +
-                  `&meja=${encodeURIComponent(tI ? tI.value : '')}` +
-                  `&total=${finalTotal}`;
-
-    fetch(dbUrl).then(r => console.log("Data Sent to Database"));
-
-    // 2. Eksekusi Pindah ke WA
+    // --- 6. EKSEKUSI PINDAH KE WHATSAPP ---
     const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
     window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
 
-    // 3. RESET TAMPILAN WEB
+    // --- 7. RESET TAMPILAN WEB (Setelah jeda sedikit) ---
     setTimeout(() => {
-        // Kosongkan Keranjang
-       cart = [];
-        refreshUI();
+        cart = [];
+        if (typeof refreshUI === 'function') refreshUI();
         closeModal();
         
-const welcome = document.getElementById('welcome-overlay'); 
+        const welcome = document.getElementById('welcome-overlay'); 
         if (welcome) {
             welcome.style.display = 'flex';
-            // Kembalikan tombol mulai ke teks awal
             const startBtn = welcome.querySelector('button');
             if (startBtn) {
                 startBtn.innerHTML = "MULAI SEKARANG";
@@ -1121,20 +1124,18 @@ const welcome = document.getElementById('welcome-overlay');
             }
         }
 
-        // Kembalikan tombol konfirmasi ke status normal
         if (btnKirim) {
-          btnKirim.innerHTML = "Kirim WA";
-          btnKirim.style.opacity = "1";
-          btnKirim.style.pointerEvents = "auto";
+            btnKirim.innerHTML = "Kirim WA";
+            btnKirim.style.opacity = "1";
+            btnKirim.style.pointerEvents = "auto";
         }
         
-        // Reset form input
+        // Reset form
         nI.value = '';
         if(tI) tI.value = '';
         if(aI) aI.value = '';
         document.getElementById('orderNote').value = '';
-        
-    }, 1000); // Beri jeda 1 detik agar proses window.location.href selesai
+    }, 1500);
 }
     function toggleSummary(open) {
         if (cart.length === 0 && open) return;
