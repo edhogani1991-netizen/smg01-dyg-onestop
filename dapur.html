@@ -1,302 +1,170 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DAPUR | dyg++</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
-
-<style>
-:root{
-  --main:#1B4332;
-  --danger:#c0392b;
-  --bg:#f2f4f7;
-}
-
-body{
-  margin:0;
-  background:var(--bg);
-  font-family:Segoe UI,Arial,sans-serif;
-}
-.header{
-  margin:15px;
-  padding:15px 20px;
-  background:white;
-  border-radius:14px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  box-shadow:0 4px 10px rgba(0,0,0,.05);
-}
-#status{
-  font-weight:900;
-  color:orange;
-}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
-  gap:15px;
-  padding:15px;
-}
-.card{
-  background:white;
-  border-radius:16px;
-  padding:18px;
-  border-top:8px solid var(--main);
-  position:relative;
-  animation:pop .3s ease;
-}
-@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
-.no{
-  font-size:38px;
-  font-weight:900;
-  color:var(--main);
-}
-.name{
-  font-size:20px;
-  font-weight:900;
-}
-.mode{
-  display:inline-block;
-  margin-top:4px;
-  padding:4px 10px;
-  border-radius:12px;
-  font-size:11px;
-  font-weight:900;
-  background:#eee;
-}
-.items{
-  margin:14px 0;
-  font-family:Courier New,monospace;
-  font-weight:900;
-}
-.btn{
-  width:100%;
-  padding:16px;
-  border:none;
-  border-radius:12px;
-  background:var(--main);
-  color:white;
-  font-weight:900;
-  cursor:pointer;
-}
-.overlay{
-  position:absolute;
-  inset:0;
-  background:rgba(192,57,43,.96);
-  display:none;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  border-radius:16px;
-  color:white;
-}
-.overlay.active{display:flex}
-.overlay button{
-  margin:6px;
-  padding:12px 26px;
-  border-radius:10px;
-  border:none;
-  font-weight:900;
-  cursor:pointer;
-}
-.yes{background:white;color:var(--danger)}
-.nope{background:transparent;color:white;border:2px solid white}
-/* Animasi kartu tergeser ke kiri */
-.slide-out-left {
-  transform: translateX(-150%) rotate(-10deg);
-  opacity: 0;
-  transition: all 0.5s ease;
-  pointer-events: none;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAPUR | dyg++</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    <style>
+        :root{ --main:#1B4332; --danger:#c0392b; --bg:#f2f4f7; }
+        body{ margin:0; background:var(--bg); font-family:Segoe UI,Arial,sans-serif; }
+        .header{ margin:15px; padding:15px 20px; background:white; border-radius:14px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,.05); }
+        #status{ font-weight:900; color:orange; }
+        .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:15px; padding:15px; }
+        .card{ background:white; border-radius:16px; padding:18px; border-top:8px solid var(--main); position:relative; animation:pop .3s ease; transition: all 0.5s ease; }
+        @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+        .no{ font-size:38px; font-weight:900; color:var(--main); }
+        .name{ font-size:20px; font-weight:900; }
+        .mode{ display:inline-block; margin-top:4px; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:900; background:#eee; }
+        .items{ margin:14px 0; font-family:Courier New,monospace; font-weight:900; line-height:1.4; }
+        .btn{ width:100%; padding:16px; border:none; border-radius:12px; background:var(--main); color:white; font-weight:900; cursor:pointer; }
+        .slide-out-left { transform: translateX(-150%) rotate(-10deg); opacity: 0; pointer-events: none; }
+    </style>
 </head>
-
 <body>
 
 <div class="header">
-  <h2>👨‍🍳 MONITOR DAPUR</h2>
-  <div id="status">● Menghubungkan...</div>
+    <h2>👨‍🍳 MONITOR DAPUR</h2>
+    <div id="status">● Menghubungkan...</div>
 </div>
 
 <div class="grid" id="list"></div>
 
-
 <script>
-/* ================= FUNGSI SUARA ROBOT ================= */
-function playVoiceNotif() {
-  if ('speechSynthesis' in window) {
-    // Kita hentikan suara sebelumnya jika ada (biar tidak tumpang tindih)
-    window.speechSynthesis.cancel();
-
-    const pesan = new SpeechSynthesisUtterance("Orderan baru diterima... Orderan baru diterima... Orderan baru diterima");
-    
-    pesan.lang = 'id-ID'; // Menggunakan suara Bahasa Indonesia
-    pesan.rate = 0.9;     // Kecepatan sedikit kalem agar jelas
-    pesan.pitch = 1;      // Nada standar
-
-    window.speechSynthesis.speak(pesan);
-  } else {
-    console.log("Browser ini tidak mendukung fitur suara.");
-  }
-}
-/* ================= CONFIG FINAL ================= */
+/* ================= CONFIG ================= */
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbyJn64ddreso4CysCZUbK85WI3PfwX3eKJv4cd4P9EM_pa7CKvBzmSFzmRRa-IQ5tDYrg/exec",
-  TOKEN: "dyg-access-v2",
-  REFRESH: 8000
+    // PASTIKAN URL INI ADALAH URL "NEW DEPLOYMENT" TERBARU
+    API_URL: "https://script.google.com/macros/s/AKfycbxxaqHaHaJMH3DNTNs9nklz5mlsxKfJPrDt_pnfJqwwn0xypjVNfJSxtlkbecM_BRW5cg/exec",
+    TOKEN: "dyg-access-v2",
+    REFRESH: 8000
 };
 
 /* ================= STATE ================= */
 let lastCount = 0;
 let removedRows = [];
-let currentOrders = []; // <-- TAMBAHKAN INI untuk menyimpan data secara global
+let currentOrders = [];
 
-/* ================= LOAD ================= */
-function loadOrders() {
-  const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`;
-
-  fetch(url)
-    .then(r => r.json())
-    .then(data => {
-      document.getElementById("status").innerText = "TERHUBUNG";
-      document.getElementById("status").style.color = "green";
-      
-      // LOGIKA NOTIFIKASI SUARA: Jika jumlah data baru lebih banyak dari sebelumnya
-      if (data.length > lastCount) {
-        playVoiceNotif();
-      }
-      lastCount = data.length;
-
-      currentOrders = data; 
-      render(data);
-    })
-    .catch(e => {
-      document.getElementById("status").innerText = "OFFLINE / ERROR";
-      document.getElementById("status").style.color = "red";
-    });
+/* ================= VOICE NOTIF ================= */
+function playVoiceNotif() {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const pesan = new SpeechSynthesisUtterance("Orderan baru diterima");
+        pesan.lang = 'id-ID';
+        pesan.rate = 0.9;
+        window.speechSynthesis.speak(pesan);
+    }
 }
 
+/* ================= LOAD DATA ================= */
+function loadOrders() {
+    const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`;
+
+    fetch(url, { cache: 'no-store' })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("status").innerText = "TERHUBUNG";
+            document.getElementById("status").style.color = "green";
+            
+            // Cek jika ada pesanan benar-benar baru untuk suara
+            if (data.length > lastCount && lastCount !== 0) {
+                playVoiceNotif();
+            }
+            lastCount = data.length;
+            currentOrders = data; 
+            render(data);
+        })
+        .catch(e => {
+            document.getElementById("status").innerText = "OFFLINE / ERROR";
+            document.getElementById("status").style.color = "red";
+            console.error("Fetch Error:", e);
+        });
+}
+
+/* ================= RENDER CARD ================= */
 function render(data){
-  const box = document.getElementById("list");
-  const active = data.filter(o => !removedRows.includes(String(o.row)));
+    const box = document.getElementById("list");
+    // Filter out rows that are temporarily hidden
+    const active = data.filter(o => !removedRows.includes(String(o.row)));
 
-  if(active.length === 0){
-    box.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#999;padding:50px">Tidak ada pesanan baru</div>`;
-    return;
-  }
-
-  box.innerHTML = active.map(o => {
-    // --- LOGIKA BARU UNTUK HANDLE JSON PESANAN ---
-    let daftarMenu = "";
-    try {
-      if (o.Pesanan.trim().startsWith('{')) {
-        const jsonPesanan = JSON.parse(o.Pesanan);
-        // Mengambil nama menu dari key JSON
-        daftarMenu = Object.keys(jsonPesanan).map(namaMenu => {
-          const detail = jsonPesanan[namaMenu];
-          return `• ${detail.qty}x ${namaMenu}`;
-        }).join("<br>");
-      } else {
-        // Fallback jika formatnya masih teks biasa (split koma)
-        daftarMenu = o.Pesanan.split(',').map(i => `• ${i.trim()}`).join("<br>");
-      }
-    } catch (e) {
-      daftarMenu = `• ${o.Pesanan}`; // Jika error, tampilkan apa adanya
+    if(active.length === 0){
+        box.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#999;padding:50px">Tidak ada pesanan baru</div>`;
+        return;
     }
 
-    return `
-      <div class="card" id="c-${o.row}" data-row="${o.row}">
-        <div class="no">#${o.Antrean}</div>
-        <div class="name">${o.Nama || 'Tanpa Nama'}</div>
-        <div class="mode">
-          ${o.Mode} 
-          ${o.Meja ? `<span style="color:var(--danger)">[ MEJA ${o.Meja} ]</span>` : ''}
-        </div>
-        <div class="items">
-          ${daftarMenu}
-        </div>
-        <button class="btn" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
-      </div>
-    `;
-  }).join("");
-
- // Inisialisasi Hammer setelah render agar swipe berfungsi
-  document.querySelectorAll(".card").forEach(card => {
-    const mc = new Hammer(card);
-    mc.on("swipeleft", () => {
-        const rowId = card.getAttribute("data-row");
-        const orderNo = card.querySelector(".no").innerText;
-        
-        if (confirm("Selesaikan pesanan " + orderNo + "?")) {
-            // Tambahkan class animasi
-            card.classList.add("slide-out-left");
-            
-            // Tunggu animasi selesai (500ms) baru panggil fungsi finish
-            setTimeout(() => {
-                finish(rowId);
-            }, 500);
+    box.innerHTML = active.map(o => {
+        let daftarMenu = "";
+        try {
+            if (o.Pesanan && o.Pesanan.trim().startsWith('{')) {
+                const jsonPesanan = JSON.parse(o.Pesanan);
+                daftarMenu = Object.keys(jsonPesanan).map(menu => `• ${jsonPesanan[menu].qty}x ${menu}`).join("<br>");
+            } else {
+                daftarMenu = o.Pesanan.split(',').map(i => `• ${i.trim()}`).join("<br>");
+            }
+        } catch (e) {
+            daftarMenu = `• ${o.Pesanan}`;
         }
-    });
-  });
-} // Tetap gunakan kurung tutup ini untuk menutup function render
 
-/* ================= ACTION ================= */
-function cancel(row){
-  document.getElementById("ov-"+row).classList.remove("active");
+        return `
+            <div class="card" id="c-${o.row}" data-row="${o.row}">
+                <div class="no">#${o.Antrean}</div>
+                <div class="name">${o.Nama || 'Tanpa Nama'}</div>
+                <div class="mode">${o.Mode} ${o.Meja ? `<span style="color:var(--danger)">[ MEJA ${o.Meja} ]</span>` : ''}</div>
+                <div class="items">${daftarMenu}</div>
+                <button class="btn" onclick="finish(${o.row})">✔ SELESAI & CETAK</button>
+            </div>
+        `;
+    }).join("");
+
+    // Re-attach Swipe
+    document.querySelectorAll(".card").forEach(card => {
+        const mc = new Hammer(card);
+        mc.on("swipeleft", () => {
+            const rowId = card.getAttribute("data-row");
+            if (confirm("Selesaikan pesanan ini?")) finish(rowId);
+        });
+    });
 }
 
+/* ================= ACTION ================= */
 function finish(row) {
-  // 1. Cari data di variabel currentOrders
-  const orderData = currentOrders.find(o => o.row == row);
-  
-  if (orderData) {
-    // 2. CETAK DULU (Base64 ke RawBT) - Super Cepat
-    printOrder(orderData);
+    const orderData = currentOrders.find(o => o.row == row);
     
-    // 3. Masukkan ke daftar 'dibuang' agar tidak muncul lagi saat refresh otomatis
+    // 1. Animasi & Sembunyikan Instan
+    const card = document.getElementById("c-" + row);
+    if (card) card.classList.add("slide-out-left");
+    
     removedRows.push(String(row));
-  }
 
-  // 4. Update Tampilan (Hapus instan dari layar)
-  const card = document.getElementById("c-" + row);
-  if (card) card.remove();
+    // 2. Cetak
+    if (orderData) printOrder(orderData);
 
-  // 5. Update Database di Background (User/Koki tidak perlu menunggu ini)
-  const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&updateStatus=true&row=${row}`;
-  
-  fetch(url)
-    .then(r => console.log("Database Sync Success"))
-    .catch(e => console.error("Database Sync Failed, but print is OK"));
+    // 3. Update ke Sheet (Gunakan action updateStatus)
+    const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=updateStatus&row=${row}`;
+    fetch(url).then(() => console.log("Sync Sheet Success"));
+
+    // 4. Hapus elemen setelah animasi
+    setTimeout(() => { if (card) card.remove(); }, 500);
 }
 
 function printOrder(order) {
-  let txt = `      dyg++ KITCHEN\n`;
-  txt += `================================\n`;
-  txt += `Antrean : #${order.Antrean}\n`;
-  txt += `Nama    : ${order.Nama}\n`;
-  txt += `Layanan : ${order.Mode}\n`;
-  
-  // Hanya cetak baris Meja jika datanya ada
-  if (order.Meja) {
-    txt += `Meja    : ${order.Meja}\n`;
-  }
+    let txt = `      dyg++ KITCHEN\n`;
+    txt += `================================\n`;
+    txt += `Antrean : #${order.Antrean}\n`;
+    txt += `Nama    : ${order.Nama}\n`;
+    txt += `Layanan : ${order.Mode}\n`;
+    if (order.Meja) txt += `Meja    : ${order.Meja}\n`;
+    txt += `Waktu   : ${new Date().toLocaleTimeString()}\n`;
+    txt += `--------------------------------\n`;
+    txt += `PESANAN:\n${order.Pesanan}\n`;
+    txt += `--------------------------------\n\n\n\n`; 
 
-  txt += `Waktu   : ${new Date().toLocaleTimeString()}\n`;
-  txt += `--------------------------------\n`;
-  txt += `PESANAN:\n`;
-  txt += `${order.Pesanan.split(',').map(i => "- " + i.trim()).join('\n')}\n`;
-  txt += `--------------------------------\n`;
-  txt += `\n\n\n\n`; 
-
-  const base64Data = btoa(unescape(encodeURIComponent(txt)));
-  window.location.href = "rawbt:base64," + base64Data;
+    const base64Data = btoa(unescape(encodeURIComponent(txt)));
+    window.location.href = "rawbt:base64," + base64Data;
 }
 
-/* ================= LOOP ================= */
+/* ================= START ================= */
 loadOrders();
-setInterval(loadOrders, CONFIG.REFRESH);</script>
-
+setInterval(loadOrders, CONFIG.REFRESH);
+</script>
 </body>
 </html>
