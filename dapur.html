@@ -143,7 +143,7 @@ function playVoiceNotif() {
 }
 /* ================= CONFIG FINAL ================= */
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbxBW8ZmUdKTINADUSleiFzq-3UAWSq4DwfOgYqLgK2JJTn2gk23SY3PohpvTFBs-gXh/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbyJn64ddreso4CysCZUbK85WI3PfwX3eKJv4cd4P9EM_pa7CKvBzmSFzmRRa-IQ5tDYrg/exec",
   TOKEN: "dyg-access-v2",
   REFRESH: 8000
 };
@@ -155,23 +155,26 @@ let currentOrders = []; // <-- TAMBAHKAN INI untuk menyimpan data secara global
 
 /* ================= LOAD ================= */
 function loadOrders() {
-  // Meminta data antrean
   const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`;
 
   fetch(url)
     .then(r => r.json())
     .then(data => {
-      // Jika sampai sini, status pasti Hijau dan data muncul
       document.getElementById("status").innerText = "TERHUBUNG";
       document.getElementById("status").style.color = "green";
       
+      // LOGIKA NOTIFIKASI SUARA: Jika jumlah data baru lebih banyak dari sebelumnya
+      if (data.length > lastCount) {
+        playVoiceNotif();
+      }
+      lastCount = data.length;
+
       currentOrders = data; 
-      render(data); // Memanggil fungsi gambar kartu pesanan
+      render(data);
     })
     .catch(e => {
-      document.getElementById("status").innerText = "ACTION NOT FOUND / ERROR";
+      document.getElementById("status").innerText = "OFFLINE / ERROR";
       document.getElementById("status").style.color = "red";
-      console.error("Dapur error:", e);
     });
 }
 
