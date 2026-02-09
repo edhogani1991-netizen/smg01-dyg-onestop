@@ -143,7 +143,7 @@ function playVoiceNotif() {
 }
 /* ================= CONFIG FINAL ================= */
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbxHVlzgkMN77h39K5zM5JuPQhGF-TjzpEQ-Wpo9wU-bs7bIhixljxVciY8aeZQY9z5BeQ/exec",
+  API_URL: "https://script.google.com/macros/s/AKfycbwgd_75RhQanyZwgU8_Ot2iboVYcAJCXzqq9E1IQeXKVRlszcnouSWEN91whzDkLrohHQ/exec",
   TOKEN: "dyg-access-v2",
   REFRESH: 8000
 };
@@ -155,26 +155,23 @@ let currentOrders = []; // <-- TAMBAHKAN INI untuk menyimpan data secara global
 
 /* ================= LOAD ================= */
 function loadOrders() {
-  // Pastikan action adalah getAntrean
+  // Meminta data antrean
   const url = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=getAntrean`;
 
   fetch(url)
-    .then(r => {
-        if (!r.ok) throw new Error('Network response was not ok');
-        return r.json();
-    })
+    .then(r => r.json())
     .then(data => {
-      // Jika sampai sini, berarti "Action Found" dan berhasil
+      // Jika sampai sini, status pasti Hijau dan data muncul
       document.getElementById("status").innerText = "TERHUBUNG";
       document.getElementById("status").style.color = "green";
       
       currentOrders = data; 
-      render(data);
+      render(data); // Memanggil fungsi gambar kartu pesanan
     })
     .catch(e => {
-      document.getElementById("status").innerText = "TERPUTUS / NOT FOUND";
+      document.getElementById("status").innerText = "ACTION NOT FOUND / ERROR";
       document.getElementById("status").style.color = "red";
-      console.error("Dapur Error:", e);
+      console.error("Dapur error:", e);
     });
 }
 

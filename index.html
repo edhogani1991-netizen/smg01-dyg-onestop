@@ -708,7 +708,7 @@ async function apiCekMember() {
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxHVlzgkMN77h39K5zM5JuPQhGF-TjzpEQ-Wpo9wU-bs7bIhixljxVciY8aeZQY9z5BeQ/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwgd_75RhQanyZwgU8_Ot2iboVYcAJCXzqq9E1IQeXKVRlszcnouSWEN91whzDkLrohHQ/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1085,14 +1085,13 @@ async function submitOrder() {
     // --- PERBAIKAN PENTING DI SINI ---
     // Menggunakan action=submitOrder sesuai Backend agar masuk ke logantrean
     const dbUrl = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=submitOrder` +
-                  `&nama=${encodeURIComponent(nI.value)}` +
-                  `&pesanan=${encodeURIComponent(pesananTeks)}` +
-                  `&mode=${encodeURIComponent(currentMode)}` +
-                  `&meja=${encodeURIComponent(tI ? tI.value : '-')}` +
-                  `&total=${finalTotal}`;
+              `&nama=${encodeURIComponent(nI.value)}` +
+              `&pesanan=${encodeURIComponent(pesananTeks)}` +
+              `&mode=${encodeURIComponent(currentMode)}` +
+              `&meja=${encodeURIComponent(tI ? tI.value : '-')}`;
 
     // Jalankan Fetch ke Database (Background)
-    fetch(dbUrl).then(r => console.log("Data Berhasil Masuk Dapur"));
+    fetch(dbUrl).then(r => console.log("Data dikirim ke logantrean"));
 
     // Eksekusi Pindah ke WA
     const wa = currentMode === 'DELIVERY' ? CONFIG.WA_NUMBERS.DELIVERY : CONFIG.WA_NUMBERS.DINE_IN;
