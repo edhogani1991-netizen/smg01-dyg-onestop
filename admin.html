@@ -519,35 +519,40 @@ async function prosesSimpanKeCloud() {
     const btn = document.querySelector("button[onclick='submitOrder()']");
     const rQty = (typeof redeemQty !== 'undefined') ? Number(redeemQty) : 0;
 
+    // Menyiapkan parameter agar sinkron dengan urutan Kolom A-J di Google Sheets
     const params = new URLSearchParams({
-        token: CONFIG.TOKEN,
+        token: TOKEN,                // Menggunakan variabel TOKEN yang sudah ada
         action: "processPayment",
-        total: pendingOrder.total,     // Masuk ke Jumlah Bayar
-        pesanan: pendingOrder.pesanan, // Masuk ke Pesanan
-        method: pendingOrder.metode,   // Masuk ke Mode Pembayaran
-        trxId: pendingOrder.trxId,     // Masuk ke ID Transaksi
-        noWA: pendingOrder.noWA,       // Masuk ke HP
-        redeemQty: rQty                // Masuk ke Potongan
+        total: pendingOrder.total,     // Masuk ke Kolom C: Jumlah Bayar
+        pesanan: pendingOrder.pesanan, // Masuk ke Kolom B: Pesanan
+        method: pendingOrder.metode,   // Masuk ke Kolom E: Mode Pembayaran
+        trxId: pendingOrder.trxId,     // Masuk ke Kolom F: ID Transaksi
+        noWA: pendingOrder.noWA,       // Masuk ke Kolom H: HP
+        redeemQty: rQty                // Masuk ke Kolom D: Potongan
     });
 
     try {
-        const response = await fetch(`${CONFIG.API_URL}?${params.toString()}`);
+        // PERBAIKAN: Menggunakan API_URL (bukan CONFIG.API_URL yang tidak terdefinisi)
+        const response = await fetch(`${API_URL}?${params.toString()}`);
         const result = await response.text();
 
         if (result.includes("Success")) {
-            alert("Transaksi Berhasil Dicatat!");
+            alert("✅ Transaksi Berhasil Dicatat ke Cloud!");
             cart = {};
-            location.reload(); 
+            location.reload(); // Refresh halaman agar state kembali bersih
         } else {
-            alert("Gagal Simpan: " + result);
+            alert("⚠️ Printer Berhasil, tapi Database Gagal: " + result);
             btn.innerText = "Bayar & Cetak";
             btn.disabled = false;
         }
     } catch (err) {
-        alert("Koneksi Putus!");
+        console.error("Fetch Error:", err);
+        alert("❌ Koneksi Terputus atau Script Error!");
         btn.innerText = "Bayar & Cetak";
         btn.disabled = false;
     }
+}
+
 }async function manageShift(type) {
     if (type === 'open') {
         if (!confirm("Buka shift sekarang?")) return;
