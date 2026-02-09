@@ -1005,7 +1005,8 @@ async function submitOrder() {
     const nI = document.getElementById('custName');
     const tI = document.getElementById('tableNo');
     const aI = document.getElementById('addressDetail');
-    const noAntrean = document.getElementById('noAntrean').innerText;
+    const noAntreanFull = document.getElementById('noAntrean').innerText; // Contoh: "#5"
+    const noAntreanMurni = noAntreanFull.replace('#', ''); // Jadi: "5"
     const tglK = document.getElementById('tglKatering')?.value || '';
 
     // Validasi input (Tetap Utuh)
@@ -1047,13 +1048,13 @@ async function submitOrder() {
     const distKM = (userDist / 1000).toFixed(1);
     const ongkirVal = currentMode === 'DELIVERY' ? calculateOngkir(userDist) : 0;
     const finalPrice = document.getElementById('miniPrice').innerText;
-    const userLocationUrl = `https://www.google.com/maps?q=${window.userLat},${window.userLng}`;
+    const userLocationUrl = `http://googleusercontent.com/maps.google.com/maps?q=${window.userLat},${window.userLng}`;
 
-    // --- 4. Pesan WA (Tetap Utuh) ---
+    // --- 4. Rangkai Pesan WhatsApp ---
     let msg = `Halo cloudkitchen.dyg++!\n\n`;
     msg += `🛵 *${currentMode}*\n`;
     msg += `👤 *Nama:* ${nI.value}\n`;
-    msg += `🔢 *ANTREAN: ${noAntrean}*\n`;
+    msg += `🔢 *ANTREAN: ${noAntreanFull}*\n`;
     msg += `━━━━━━━━━━━━━━\n`;
 
     if (currentMode === 'DINE IN') {
@@ -1062,7 +1063,7 @@ async function submitOrder() {
         msg += `🏠 *Alamat:* ${aI.value}\n`;
         if (currentMode === 'KATERING') msg += `📅 *Tanggal Kirim:* ${tglK}\n`;
         msg += `🌐 *Lokasi:* ${userLocationUrl}\n`;
-        msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
+        if (currentMode === 'DELIVERY') msg += `🛵 *Ongkir (${distKM} km):* Rp ${ongkirVal.toLocaleString('id-ID')}\n`;
     }
 
     msg += `\n*PESANAN:*\n${pRowsWA.join('\n')}\n`;
@@ -1071,41 +1072,42 @@ async function submitOrder() {
     msg += `*TOTAL BAYAR: Rp ${finalPrice}*\n\n`;
     msg += `Terimakasih!`;
 
-   // --- 5. FETCH KE BACKEND (ANTI-BATAL) ---
-const btnKirim = document.querySelector('#modalConfirm button:last-child');
-if (btnKirim) {
-    btnKirim.innerHTML = "⌛ Menyimpan & Mengalihkan...";
-    btnKirim.style.opacity = "0.7";
-    btnKirim.style.pointerEvents = "none";
-}
+    // --- 5. FETCH KE BACKEND (ANTI-BATAL) ---
+    const btnKirim = document.querySelector('#modalConfirm button:last-child');
+    if (btnKirim) {
+        btnKirim.innerHTML = "⌛ Menyimpan & Mengalihkan...";
+        btnKirim.style.opacity = "0.7";
+        btnKirim.style.pointerEvents = "none";
+    }
 
-const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, '');
-const pesananJSON = JSON.stringify(summary); 
+    const finalTotal = finalPrice.replace(/\./g, '').replace(/[^0-9]/g, '');
+    const pesananTeksDB = Object.entries(summary).map(([name, data]) => `${data.qty}x ${name}`).join(', ');
 
-const dbUrl = `${CONFIG.API_URL}?token=${CONFIG.TOKEN}&action=simpanPesanan` +
-    `&antrean=${encodeURIComponent(noAntrean)}` +
-    `&nama=${encodeURIComponent(nI.value)}` +
-    `&mode=${encodeURIComponent(currentMode)}` +
-    `&pesanan=${encodeURIComponent(pesananJSON)}` +
-    `&total=${finalTotal}` +
-    `&meja=${encodeURIComponent(tI?.value || '')}`;
+    // Pastikan menggunakan CONFIG.WEB_APP_URL sesuai file index.html Anda
+    const dbUrl = `${CONFIG.WEB_APP_URL}?token=${CONFIG.TOKEN}&action=simpanPesanan` +
+        `&antrean=${encodeURIComponent(noAntreanMurni)}` +
+        `&nama=${encodeURIComponent(nI.value)}` +
+        `&mode=${encodeURIComponent(currentMode)}` +
+        `&pesanan=${encodeURIComponent(pesananTeksDB)}` +
+        `&total=${finalTotal}` +
+        `&meja=${encodeURIComponent(tI?.value || '-')}`;
 
-try {
-    // WAJIB PAKAI AWAIT: Tunggu sampai Google Apps Script menjawab "Success/OK"
-    // mode: 'no-cors' digunakan untuk menghindari blokir kebijakan browser
-    await fetch(dbUrl, { method: "GET", mode: "no-cors", cache: "no-store" });
-    console.log("✔ Data berhasil diamankan di logantrean");
-} catch (e) {
-    console.error("❌ Gagal simpan ke dapur, tapi tetap lanjut ke WA", e);
-}
+    try {
+        // MENUNGGU PROSES SIMPAN SELESAI
+        await fetch(dbUrl, { method: "GET", mode: "no-cors", cache: "no-store" });
+        console.log("✔ Data berhasil masuk logantrean");
+    } catch (e) {
+        console.error("❌ Gagal simpan ke database, mencoba lanjut ke WA", e);
+    }
 
-// --- 6. REDIRECT KE WA (Hanya jalan SETELAH fetch selesai) ---
-const wa = currentMode === 'DELIVERY'
-    ? CONFIG.WA_NUMBERS.DELIVERY
-    : CONFIG.WA_NUMBERS.DINE_IN;
+    // --- 6. REDIRECT KE WA ---
+    const wa = (currentMode === 'DELIVERY' || currentMode === 'KATERING')
+        ? CONFIG.WA_NUMBERS.DELIVERY 
+        : CONFIG.WA_NUMBERS.DINE_IN;
 
-window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
-    // --- 6. RESET (Tetap Utuh) ---
+    window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
+
+    // --- 7. RESET UI (Jalan di Background) ---
     setTimeout(() => {
         cart = [];
         refreshUI();
@@ -1132,7 +1134,7 @@ window.location.href = `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
         if (tI) tI.value = '';
         if (aI) aI.value = '';
         document.getElementById('orderNote').value = '';
-    }, 1000);
+    }, 1500);
 }
 
     function toggleSummary(open) {
