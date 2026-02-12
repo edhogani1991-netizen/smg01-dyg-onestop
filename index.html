@@ -856,15 +856,19 @@ function renderMenu(filterKat = 'ALL') {
         document.getElementById('menu-container').innerHTML = items.map(m => {
             const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
             
-            // Logika Varian Nasi
-            const isNasi = kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"));
-            
-            // Logika Varian Mie (Dikecualikan untuk kategori 'mie lik')
-            const isMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik");
-            const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik");
-            
-            // Logika Varian Suhu (Hanya Paket Hemat & Drink, kecuali daftar spesifik)
-            const isSuhu = (kl.includes("paket hemat") || kl.includes("drink")) && !noSuhuList.includes(m.nama);
+            // 1. Logika Varian Nasi
+// Tambahkan pengecualian agar menu "Mie Lik" tidak dianggap varian nasi meskipun ada kata "nasi" di kategori
+const isNasi = (kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"))) && !nl.includes("mie lik");
+
+// 2. Logika Varian Mie
+// Tambahkan pengecualian spesifik agar "mie lik" tidak memicu varian mie goreng/rebus
+const isMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik") && !nl.includes("mie lik");
+const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
+
+// 3. Logika Varian Suhu
+// Karena menu ini mengandung kata "[PH]" (Paket Hemat), maka kl.includes("paket hemat") akan bernilai true.
+// Jadi menu ini otomatis akan mendapatkan varian suhu tanpa perlu diubah logikanya.
+const isSuhu = (kl.includes("paket hemat") || kl.includes("drink")) && !noSuhuList.includes(m.nama);
 
             return `
             <div class="menu-item">
