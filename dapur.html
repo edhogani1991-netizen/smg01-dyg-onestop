@@ -34,7 +34,7 @@
 /* ================= CONFIG ================= */
 const CONFIG = {
     // URL Deployment GAS Anda
-    API_URL: "https://script.google.com/macros/s/AKfycbyx2M_GF_uz-ScFcefbbYyqHka8jG_52nMyIuRcEbY02iOjprO85Wm0qPmr2QY2pWZsYg/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbxylKm9h-1m5FXfmXDQZza2yg9kbeuQsJWofpKify8nDMuuLdL12V5VPCWw-TBmrPgC/exec",
     TOKEN: "dyg-access-v2",
     REFRESH: 8000 // Sinkronisasi setiap 8 detik
 };
@@ -65,10 +65,12 @@ function loadOrders() {
             document.getElementById("status").innerText = "TERHUBUNG";
             document.getElementById("status").style.color = "green";
             
-            // Filter data yang masuk: hanya ambil yang belum ada di removedRows
+            /* FILTER: Kita hanya menampilkan data yang ID barisnya 
+               TIDAK ada di dalam daftar 'removedRows' (pesanan yang baru saja Anda klik selesai)
+            */
             const filteredData = data.filter(o => !removedRows.includes(String(o.row)));
 
-            // Notifikasi suara jika ada pesanan benar-benar baru
+            // Notifikasi suara jika ada pesanan yang benar-benar baru masuk ke server
             if (filteredData.length > lastCount && lastCount !== 0) {
                 playVoiceNotif();
             }
@@ -83,7 +85,6 @@ function loadOrders() {
             console.error("Fetch Error:", e);
         });
 }
-
 /* ================= RENDER CARD ================= */
 function render(active){
     const box = document.getElementById("list");
