@@ -554,32 +554,40 @@ mark {
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
-    <div class="modal-card" style="text-align:left; max-width: 340px;">
-        
-        <h3 style="font-weight: 900; margin-bottom: 6px; font-size: 16px; color: var(--primary); line-height: 1.3;">
-            Data akan dikirim ke WhatsApp resmi cloudkitchen.dyg++
-        </h3>
-        <p style="font-size: 11px; color: var(--danger); margin-bottom: 12px; font-weight: bold; line-height: 1.4;">
-            mohon cek kembali menu, varian, nomor meja, jumlah pesanan yaaa..
-        </p>
+  <div class="modal-card" style="text-align:left;">
 
-        <div id="modalOrderList" style="max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 10px 0; margin-bottom: 10px;">
-            </div>
+    <h3 style="font-weight:900; font-size:16px; margin-bottom:4px; color:var(--primary); line-height:1.3;">
+      Data akan dikirim ke WhatsApp resmi cloudkitchen.dyg++
+    </h3>
+    <p style="font-size:11px; color:var(--danger); margin-bottom:12px; font-weight:bold; line-height:1.4;">
+      mohon cek kembali menu, varian, nomor meja, jumlah pesanan yaaa..
+    </p>
 
-        <div id="modalNote" style="font-size: 11px; color: #666; font-style: italic; margin-bottom: 10px;"></div>
+    <div id="modalOrderList" 
+         style="max-height:260px; overflow-y:auto; border-top:1px solid #eee; border-bottom:1px solid #eee; margin-bottom:10px;">
+         </div>
 
-        <div id="modalOngkir" style="display: none; font-size: 12px; font-weight: bold; color: var(--success); margin-bottom: 10px;"></div>
+    <div id="modalNote" style="font-size:11px; color:#555; margin:10px 0;"></div>
 
-        <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 16px; margin-bottom: 20px;">
-            <span>TOTAL</span>
-            <span style="color: var(--primary);">Rp <span id="modalTotal">0</span></span>
-        </div>
+    <div id="modalOngkir" style="display:none; font-size:12px; font-weight:700; margin-bottom:6px;"></div>
 
-        <div style="display: flex; gap: 8px;">
-            <button onclick="closeModal()" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: #F5F5F5; color: #666; font-weight: 700; font-size: 13px;">Batal</button>
-            <button onclick="submitOrder()" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: 700; font-size: 13px;">Kirim WA</button>
-        </div>
+    <div style="display:flex; justify-content:space-between; font-weight:900; font-size:15px; margin-bottom:16px;">
+      <span>TOTAL</span>
+      <span>Rp <span id="modalTotal">0</span></span>
     </div>
+
+    <div style="display:flex; gap:8px;">
+      <button onclick="closeModal()" 
+              style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700; font-size:13px; cursor:pointer;">
+        Batal
+      </button>
+      <button onclick="submitOrder()" 
+              style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700; font-size:13px; cursor:pointer;">
+        Kirim WA
+      </button>
+    </div>
+
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
