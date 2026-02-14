@@ -554,18 +554,81 @@ mark {
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
-    <div class="modal-card">
-        <h3 style="font-weight: 900; margin-bottom: 8px; font-size: 18px;">Kirim Pesanan?</h3>
-        <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">Data akan dikirim ke WhatsApp resmi cloudkitchen.dyg++</p>
-        <div style="display: flex; gap: 8px;">
-            <button onclick="closeModal()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700; font-size:13px;">Batal</button>
-            <button onclick="submitOrder()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700; font-size:13px;">Kirim WA</button>
-        </div>
+  <div class="modal-card" style="text-align:left;">
+    
+    <h3 style="font-weight:900; font-size:18px; margin-bottom:6px;">
+      Konfirmasi Pesanan
+    </h3>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">
+      Periksa pesanan sebelum dikirim ke WhatsApp
+    </p>
+
+    <!-- RINCIAN PESANAN -->
+    <div id="modalOrderList" style="max-height:260px; overflow:auto; margin-bottom:12px;"></div>
+
+    <!-- TOTAL -->
+    <div style="display:flex; justify-content:space-between; font-weight:900; font-size:14px; margin-bottom:18px;">
+      <span>Total</span>
+      <span>Rp <span id="modalTotal">0</span></span>
     </div>
+
+    <!-- BUTTON -->
+    <div style="display:flex; gap:8px;">
+      <button onclick="closeModal()"
+        style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700;">
+        Batal
+      </button>
+      <button onclick="submitOrder()"
+        style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700;">
+        Kirim WA
+      </button>
+    </div>
+
+  </div>
 </div>
+
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+function openModal() {
+  if (!cart.length) return;
+
+  renderModalOrder();
+  document.getElementById("modalConfirm").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("modalConfirm").style.display = "none";
+}
+
+function renderModalOrder() {
+  const list = document.getElementById("modalOrderList");
+  const totalEl = document.getElementById("modalTotal");
+
+  let html = "";
+  let total = 0;
+
+  cart.forEach((c, i) => {
+    const harga = c.harga + (c.ex || 0);
+    total += harga;
+
+    html += `
+      <div style="border-bottom:1px solid #eee; padding:8px 0;">
+        <div style="font-weight:800; font-size:13px;">${i + 1}. ${c.nama}</div>
+        <div style="font-size:11px; color:#666; margin-top:2px;">
+          ${[c.vN, c.vM, c.vR, c.vS].filter(Boolean).join(" • ")}
+        </div>
+        <div style="font-size:12px; font-weight:700; margin-top:2px;">
+          Rp ${harga.toLocaleString()}
+        </div>
+      </div>
+    `;
+  });
+
+  list.innerHTML = html;
+  totalEl.innerText = total.toLocaleString();
+}
+
 let generatedOTP = null;
 
 async function requestOTP() {
