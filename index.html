@@ -554,36 +554,14 @@ mark {
 </div>
 
 <div id="modalConfirm" class="modal-overlay">
-    <div class="modal-card" style="text-align:left;">
-        <h3 style="font-weight: 900; margin-bottom: 6px; font-size: 16px; color: var(--primary); line-height: 1.2;">
-            Data akan dikirim ke WhatsApp resmi cloudkitchen.dyg++
-        </h3>
-        <p style="font-size: 11px; color: var(--danger); margin-bottom: 12px; font-weight: bold; line-height: 1.4;">
-            mohon cek kembali menu, varian, nomor meja, jumlah pesanan yaaa..
-        </p>
-
-        <div id="modalOrderList" 
-             style="max-height:240px; overflow-y:auto; border-top:1.5px solid #F5F5F5; border-bottom:1.5px solid #F5F5F5; margin-bottom:10px; padding: 5px 0;">
-             </div>
-
-        <div id="modalNote" style="font-size:11px; color:#555; margin:8px 0;"></div>
-
-        <div id="modalOngkir" style="display:none; font-size:12px; font-weight:700; margin-bottom:6px; color: var(--success);"></div>
-
-        <div style="display:flex; justify-content:space-between; font-weight:900; font-size:15px; margin-bottom:16px; padding-top: 5px;">
-            <span>TOTAL</span>
-            <span style="color: var(--primary);">Rp <span id="modalTotal">0</span></span>
-        </div>
-
+    <div class="modal-card">
+        <h3 style="font-weight: 900; margin-bottom: 8px; font-size: 18px;">Kirim Pesanan?</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">-CEK KEMBALI PESANANMU-
+-PASTIKAN VARIAN ES/PANAS PADA MINUMAN SUDAH SESUAI, VARIAN NASI, QTY MENU, DAN NO MEJA JUGA SUDAH SESUAI-
+//Jika sudah sesuai akan silahkan klik kirim ke WhatsApp resmi cloudkitchen.dyg++//</p>
         <div style="display: flex; gap: 8px;">
-            <button onclick="closeModal()" 
-                style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; color: var(--muted); font-weight:700; font-size:13px; cursor:pointer;">
-                Batal
-            </button>
-            <button onclick="submitOrder()" 
-                style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700; font-size:13px; cursor:pointer;">
-                Kirim WA
-            </button>
+            <button onclick="closeModal()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700; font-size:13px;">Batal</button>
+            <button onclick="submitOrder()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700; font-size:13px;">Kirim Pesan</button>
         </div>
     </div>
 </div>
