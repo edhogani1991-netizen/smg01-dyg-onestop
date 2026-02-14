@@ -577,35 +577,38 @@ mark {
         </div>
     </div>
 </div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 
-// --- FUNGSI VALIDASI & TAMPILAN MODAL ---
 function openConfirmModal() {
+    // 1. CEK VALIDASI DATA PEMESAN
     const name = document.getElementById("custName");
     const table = document.getElementById("tableNo");
     const service = document.getElementById("serviceMode").value;
     const address = document.getElementById("addressDetail");
 
-    // A. Validasi (Jika kosong, getar merah & stop)
-    if (!name.value.trim()) { 
-        name.classList.add("shake"); 
-        setTimeout(() => name.classList.remove("shake"), 500); 
-        name.focus(); return; 
-    }
-    if (service === "Dine In" && !table.value.trim()) { 
-        table.classList.add("shake"); 
-        setTimeout(() => table.classList.remove("shake"), 500); 
-        table.focus(); return; 
-    }
-    if (service === "Delivery" && !address.value.trim()) { 
-        address.classList.add("shake"); 
-        setTimeout(() => address.classList.remove("shake"), 500); 
-        address.focus(); return; 
+    if (!name.value.trim()) {
+        name.classList.add("shake");
+        setTimeout(() => name.classList.remove("shake"), 500);
+        name.focus();
+        return; 
     }
 
-    // B. Baca Menu dari Layar (Scraping UI)
+    if (service === "Dine In" && !table.value.trim()) {
+        table.classList.add("shake");
+        setTimeout(() => table.classList.remove("shake"), 500);
+        table.focus();
+        return;
+    }
+
+    if (service === "Delivery" && !address.value.trim()) {
+        address.classList.add("shake");
+        setTimeout(() => address.classList.remove("shake"), 500);
+        address.focus();
+        return;
+    }
+
+    // 2. BACA DATA MENU DARI LAYAR
     const listEl = document.getElementById("modalOrderList");
     const totalEl = document.getElementById("modalTotal");
     listEl.innerHTML = "";
@@ -618,33 +621,42 @@ function openConfirmModal() {
             hasItem = true;
             const nama = card.querySelector(".menu-name")?.innerText || "";
             const harga = parseInt(card.dataset.harga || 0);
-            const note = card.querySelector(".item-note")?.value || "";
-            const variants = [...card.querySelectorAll("select")].map(s => s.value).filter(v => v && v !== "-");
+            const note = card.querySelector(".item-note")?.value || ""; // Mengambil catatan
+            
+            const variants = [...card.querySelectorAll("select")]
+                .map(s => s.value)
+                .filter(v => v && v !== "-");
+
             const subtotal = qty * harga;
             total += subtotal;
 
             listEl.innerHTML += `
-                <div style="padding:8px 0; border-bottom:1px dashed #eee;">
+                <div style="padding:10px 0; border-bottom:1px dashed #eee;">
                     <div style="display:flex; justify-content:space-between; font-weight:800; font-size:13px;">
                         <span>${qty}x ${nama}</span>
                         <span>Rp ${subtotal.toLocaleString("id-ID")}</span>
                     </div>
-                    <div style="font-size:11px; color:#666;">
-                        ${variants.join(" • ") || "Original"} ${note ? `<br><b style="color:orange;">Note: ${note}</b>` : ""}
+                    <div style="font-size:11px; color:#666; margin-top:2px;">
+                        ${variants.join(" • ") || "Original"}
+                        ${note ? `<br><b style="color:var(--accent);">Note: ${note}</b>` : ""}
                     </div>
                 </div>`;
         }
     });
 
+    // 3. TAMPILKAN MODAL JIKA ADA PESANAN
     if (hasItem) {
         totalEl.innerText = total.toLocaleString("id-ID");
         document.getElementById("modalConfirm").style.display = "flex";
     } else {
-        alert("Pilih menu terlebih dahulu!");
+        alert("Pilih menu terlebih dahulu ya!");
     }
 }
 
-function closeModal() { document.getElementById('modalConfirm').style.display = 'none'; }
+function closeModal() {
+    document.getElementById("modalConfirm").style.display = "none";
+}
+
 
 let generatedOTP = null;
 
