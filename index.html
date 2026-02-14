@@ -555,31 +555,42 @@ mark {
 
 <div id="modalConfirm" class="modal-overlay">
   <div class="modal-card" style="text-align:left;">
-    
-    <h3 style="font-weight:900; font-size:18px; margin-bottom:6px;">
+
+    <h3 style="font-weight:900;font-size:18px;margin-bottom:4px;">
       Konfirmasi Pesanan
     </h3>
-    <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">
-      Periksa pesanan sebelum dikirim ke WhatsApp
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+      Mohon periksa rincian sebelum kirim ke WhatsApp
     </p>
 
     <!-- RINCIAN PESANAN -->
-    <div id="modalOrderList" style="max-height:260px; overflow:auto; margin-bottom:12px;"></div>
+    <div id="modalOrderList"
+         style="max-height:260px;overflow:auto;border-top:1px solid #eee;border-bottom:1px solid #eee;margin-bottom:10px;">
+    </div>
+
+    <!-- CATATAN -->
+    <div id="modalNote"
+         style="font-size:11px;color:#555;margin:10px 0;"></div>
+
+    <!-- ONGKIR -->
+    <div id="modalOngkir"
+         style="display:none;font-size:12px;font-weight:700;margin-bottom:6px;">
+    </div>
 
     <!-- TOTAL -->
-    <div style="display:flex; justify-content:space-between; font-weight:900; font-size:14px; margin-bottom:18px;">
-      <span>Total</span>
+    <div style="display:flex;justify-content:space-between;
+                font-weight:900;font-size:15px;margin-bottom:16px;">
+      <span>TOTAL</span>
       <span>Rp <span id="modalTotal">0</span></span>
     </div>
 
-    <!-- BUTTON -->
-    <div style="display:flex; gap:8px;">
+    <div style="display:flex;gap:8px;">
       <button onclick="closeModal()"
-        style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700;">
+        style="flex:1;padding:12px;border-radius:12px;border:none;background:#F5F5F5;font-weight:700;">
         Batal
       </button>
       <button onclick="submitOrder()"
-        style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700;">
+        style="flex:1;padding:12px;border-radius:12px;border:none;background:var(--primary);color:white;font-weight:700;">
         Kirim WA
       </button>
     </div>
@@ -592,7 +603,6 @@ mark {
 <script>
 function openModal() {
   if (!cart.length) return;
-
   renderModalOrder();
   document.getElementById("modalConfirm").style.display = "flex";
 }
@@ -604,29 +614,64 @@ function closeModal() {
 function renderModalOrder() {
   const list = document.getElementById("modalOrderList");
   const totalEl = document.getElementById("modalTotal");
+  const noteEl = document.getElementById("modalNote");
+  const ongkirEl = document.getElementById("modalOngkir");
 
-  let html = "";
-  let total = 0;
+  list.innerHTML = "";
+  let subtotal = 0;
 
-  cart.forEach((c, i) => {
-    const harga = c.harga + (c.ex || 0);
-    total += harga;
+  // === GROUPING ITEM + VARIAN ===
+  const grouped = {};
+  cart.forEach(c => {
+    const key = `${c.nama}|${c.vN}|${c.vM}|${c.vR}|${c.vS}`;
+    if (!grouped[key]) {
+      grouped[key] = {
+        nama: c.nama,
+        varian: [c.vN, c.vM, c.vR, c.vS].filter(Boolean),
+        harga: c.harga + (c.ex || 0),
+        qty: 0
+      };
+    }
+    grouped[key].qty++;
+  });
 
-    html += `
-      <div style="border-bottom:1px solid #eee; padding:8px 0;">
-        <div style="font-weight:800; font-size:13px;">${i + 1}. ${c.nama}</div>
-        <div style="font-size:11px; color:#666; margin-top:2px;">
-          ${[c.vN, c.vM, c.vR, c.vS].filter(Boolean).join(" • ")}
+  Object.values(grouped).forEach(item => {
+    const itemTotal = item.qty * item.harga;
+    subtotal += itemTotal;
+
+    list.innerHTML += `
+      <div style="padding:8px 0;border-bottom:1px dashed #eee;">
+        <div style="font-weight:800;font-size:13px;">
+          ${item.qty}x ${item.nama}
         </div>
-        <div style="font-size:12px; font-weight:700; margin-top:2px;">
-          Rp ${harga.toLocaleString()}
+        <div style="font-size:11px;color:#666;margin:2px 0;">
+          ${item.varian.length ? item.varian.join(', ') : 'Original'}
+        </div>
+        <div style="font-size:12px;font-weight:700;">
+          Rp ${itemTotal.toLocaleString('id-ID')}
         </div>
       </div>
     `;
   });
 
-  list.innerHTML = html;
-  totalEl.innerText = total.toLocaleString();
+  // === ONGKIR ===
+  let ongkir = 0;
+  if (currentMode === "DELIVERY") {
+    ongkir = calculateOngkir(userDist);
+    ongkirEl.style.display = "block";
+    ongkirEl.innerHTML = `🛵 Ongkir: Rp ${ongkir.toLocaleString('id-ID')}`;
+  } else {
+    ongkirEl.style.display = "none";
+  }
+
+  // === CATATAN ===
+  const noteVal = document.getElementById("orderNote")?.value || "";
+  noteEl.innerHTML = noteVal
+    ? `📝 <b>Catatan:</b> ${noteVal}`
+    : "";
+
+  // === TOTAL FINAL ===
+  totalEl.innerText = (subtotal + ongkir).toLocaleString("id-ID");
 }
 
 let generatedOTP = null;
