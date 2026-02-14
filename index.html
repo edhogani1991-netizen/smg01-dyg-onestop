@@ -550,148 +550,87 @@ mark {
         <div id="ongkir-label" class="ongkir-tag"></div>
         <div class="price-total">Rp <span id="miniPrice">0</span></div>
     </div>
-    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openConfirmModal()" disabled>
-        PILIH MENU
-    </button>
+    <button id="btnOrder" class="order-btn" onclick="event.stopPropagation(); openModal()" disabled>PILIH MENU</button>
 </div>
 
-<div id="modalConfirm" class="modal-overlay" style="display:none;">
-    <div class="modal-card" style="text-align:left; width: 90%; max-width: 340px;">
-        <h3 style="font-weight: 900; margin-bottom: 6px; font-size: 16px; color: var(--primary); line-height: 1.3;">
-            Data akan dikirim ke WhatsApp resmi cloudkitchen.dyg++
-        </h3>
-        <p style="font-size: 11px; color: var(--danger); margin-bottom: 12px; font-weight: bold; line-height: 1.4;">
-            mohon cek kembali menu, varian, nomor meja, jumlah pesanan yaaa..
-        </p>
+<div id="modalConfirm" class="modal-overlay">
+  <div class="modal-card" style="text-align:left;">
 
-        <div id="modalOrderList" style="max-height: 250px; overflow-y: auto; border-top: 1px solid #eee; border-bottom: 1px solid #eee;"></div>
+    <h3 style="font-weight:900; font-size:16px; margin-bottom:4px; color:var(--primary); line-height:1.3;">
+      Data akan dikirim ke WhatsApp resmi cloudkitchen.dyg++
+    </h3>
+    <p style="font-size:11px; color:var(--danger); margin-bottom:12px; font-weight:bold; line-height:1.4;">
+      mohon cek kembali menu, varian, nomor meja, jumlah pesanan yaaa..
+    </p>
 
-        <div style="display: flex; justify-content: space-between; font-weight: 900; font-size: 15px; margin: 15px 0;">
-            <span>TOTAL</span>
-            <span style="color: var(--primary);">Rp <span id="modalTotal">0</span></span>
-        </div>
+    <div id="modalOrderList" 
+         style="max-height:260px; overflow-y:auto; border-top:1px solid #eee; border-bottom:1px solid #eee; margin-bottom:10px;">
+         </div>
 
-        <div style="display: flex; gap: 8px;">
-            <button onclick="closeModal()" style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700; font-size:13px;">Batal</button>
-            <button onclick="submitOrder()" style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700; font-size:13px;">Kirim WA</button>
-        </div>
+    <div id="modalNote" style="font-size:11px; color:#555; margin:10px 0;"></div>
+
+    <div id="modalOngkir" style="display:none; font-size:12px; font-weight:700; margin-bottom:6px;"></div>
+
+    <div style="display:flex; justify-content:space-between; font-weight:900; font-size:15px; margin-bottom:16px;">
+      <span>TOTAL</span>
+      <span>Rp <span id="modalTotal">0</span></span>
     </div>
+
+    <div style="display:flex; gap:8px;">
+      <button onclick="closeModal()" 
+              style="flex:1; padding:12px; border-radius:12px; border:none; background:#F5F5F5; font-weight:700; font-size:13px; cursor:pointer;">
+        Batal
+      </button>
+      <button onclick="submitOrder()" 
+              style="flex:1; padding:12px; border-radius:12px; border:none; background:var(--primary); color:white; font-weight:700; font-size:13px; cursor:pointer;">
+        Kirim WA
+      </button>
+    </div>
+
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 
 function openConfirmModal() {
-    // 1. CEK VALIDASI DATA PEMESAN (Membaca input yang ada di UI)
+    // 1. Ambil input yang wajib diisi
     const name = document.getElementById("custName");
     const table = document.getElementById("tableNo");
     const service = document.getElementById("serviceMode").value;
     const address = document.getElementById("addressDetail");
 
-    // Validasi Nama
+    // 2. LOGIKA VALIDASI (Sama seperti submitOrder Anda)
     if (!name.value.trim()) {
         name.classList.add("shake");
         setTimeout(() => name.classList.remove("shake"), 500);
         name.focus();
-        return; // Berhenti di sini, modal rincian tidak muncul
+        // Anda bisa tambahkan alert manual jika ingin pop-up pesan
+        alert("Mohon isi Nama Anda terlebih dahulu");
+        return;
     }
 
-    // Validasi Meja (Jika Dine In)
     if (service === "Dine In" && !table.value.trim()) {
         table.classList.add("shake");
         setTimeout(() => table.classList.remove("shake"), 500);
         table.focus();
+        alert("Mohon isi Nomor Meja");
         return;
     }
 
-    // Validasi Alamat (Jika Delivery)
     if (service === "Delivery" && !address.value.trim()) {
         address.classList.add("shake");
         setTimeout(() => address.classList.remove("shake"), 500);
         address.focus();
+        alert("Mohon isi Alamat Lengkap");
         return;
     }
 
-    // 2. JIKA VALIDASI LOLOS, BACA ULANG MENU (PREVIEW)
-    const listEl = document.getElementById("modalOrderList");
-    const totalEl = document.getElementById("modalTotal");
-    listEl.innerHTML = "";
-    let total = 0;
-
-    document.querySelectorAll(".menu-card").forEach(card => {
-        const qty = parseInt(card.querySelector(".qty")?.innerText || 0);
-        if (qty > 0) {
-            const nama = card.querySelector(".menu-name")?.innerText || "";
-            const harga = parseInt(card.dataset.harga || 0);
-            const variants = [...card.querySelectorAll("select")]
-                .map(s => s.value)
-                .filter(v => v && v !== "-");
-
-            const subtotal = qty * harga;
-            total += subtotal;
-
-            listEl.innerHTML += `
-                <div style="padding:10px 0; border-bottom:1px dashed #eee;">
-                    <div style="display:flex; justify-content:space-between; font-weight:800; font-size:13px;">
-                        <span>${qty}x ${nama}</span>
-                        <span>Rp ${subtotal.toLocaleString("id-ID")}</span>
-                    </div>
-                    <div style="font-size:11px; color:#666; margin-top:2px;">
-                        ${variants.join(" • ") || "Original"}
-                    </div>
-                </div>`;
-        }
-    });
-
-    // 3. TAMPILKAN MODAL
-    totalEl.innerText = total.toLocaleString("id-ID");
-    document.getElementById("modalConfirm").style.display = "flex";
-}
-
-function closeModal() {
-    document.getElementById("modalConfirm").style.display = "none";
-}
-
-function previewOrderFromUI() {
-    const listEl = document.getElementById("modalOrderList");
-    const totalEl = document.getElementById("modalTotal");
-    listEl.innerHTML = "";
-    let total = 0;
-    let hasItem = false;
-
-    document.querySelectorAll(".menu-card").forEach(card => {
-        const qty = parseInt(card.querySelector(".qty")?.innerText || 0);
-        if (qty > 0) {
-            hasItem = true;
-            const nama = card.querySelector(".menu-name")?.innerText || "";
-            const harga = parseInt(card.dataset.harga || 0);
-            const variants = [...card.querySelectorAll("select")]
-                .map(s => s.value)
-                .filter(v => v && v !== "-");
-
-            const subtotal = qty * harga;
-            total += subtotal;
-
-            listEl.innerHTML += `
-                <div style="padding:10px 0; border-bottom:1px dashed #eee;">
-                    <div style="display:flex; justify-content:space-between; font-weight:800; font-size:13px;">
-                        <span>${qty}x ${nama}</span>
-                        <span>Rp ${subtotal.toLocaleString("id-ID")}</span>
-                    </div>
-                    <div style="font-size:11px; color:#666; margin-top:2px;">
-                        ${variants.join(" • ") || "Original"}
-                    </div>
-                </div>`;
-        }
-    });
-
-    if (!hasItem) {
-        alert("Anda belum memilih menu!");
-        return false;
+    // 3. JIKA SUDAH LENGKAP, BARU BACA UI & TAMPILKAN MODAL KONFIRMASI
+    const ready = previewOrderFromUI(); // Fungsi yang kita buat sebelumnya
+    if (ready) {
+        document.getElementById("modalConfirm").style.display = "flex";
     }
-
-    totalEl.innerText = total.toLocaleString("id-ID");
-    return true;
 }
 
 let generatedOTP = null;
