@@ -155,8 +155,21 @@ mark {
         .menu-item { background: white; border-radius: 16px; padding: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between; }
         .menu-info h4 { margin: 0 0 4px; font-size: 12px; font-weight: 800; min-height: 32px; line-height: 1.3; }
         .menu-info .price { font-size: 13px; font-weight: 900; color: var(--primary); margin-bottom: 8px; }
-        .variant-select { width: 100%; padding: 5px; border-radius: 7px; border: 1px solid #F0F0F0; font-size: 10px; background: #FAFAFA; margin-bottom: 5px; font-weight: 600; }
-        
+.variant-select {
+    width: 100%;
+    border: 2px solid var(--primary); /* Warna hijau gelap agar menonjol */
+    border-radius: 8px;
+    padding: 6px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+/* Beri warna merah pada border jika pelanggan mencoba klik tambah tapi belum pilih */
+.variant-select:invalid {
+    border-color: var(--danger);
+}        
         .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: 8px; }
         .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
@@ -523,10 +536,10 @@ mark {
               oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
 </div>
 
-    <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Pilih Menu</div>
+    <div style="font-weight: 800; font-size: 14px; margin-top: 20px;">🍴 Geser Kekanan lihat kategori </div>
     
     <div class="search-wrapper">
-        <input type="text" id="searchMenu" placeholder="Cari menu favorit Anda..." oninput="filterMenu()">
+        <input type="text" id="searchMenu" placeholder="ketik menu kesukaanmu..." oninput="filterMenu()">
     </div>
 
     <div class="category-tabs" id="cat-tabs"></div>
@@ -852,7 +865,7 @@ function renderMenu(filterKat = 'ALL') {
             "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", 
             "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", 
             "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", 
-            "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api"
+            "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api", "Kopi ABC Susu", "Nutrisari Jeruk", "Extra Joss", "Kukubima"
         ];
 
         document.getElementById('menu-container').innerHTML = items.map(m => {
@@ -870,7 +883,7 @@ const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah
 // 3. Logika Varian Suhu
 // Karena menu ini mengandung kata "[PH]" (Paket Hemat), maka kl.includes("paket hemat") akan bernilai true.
 // Jadi menu ini otomatis akan mendapatkan varian suhu tanpa perlu diubah logikanya.
-const isSuhu = (kl.includes("paket hemat") || kl.includes("drink")) && !noSuhuList.includes(m.nama);
+const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(m.nama);
 
             return `
             <div class="menu-item">
@@ -893,31 +906,72 @@ const isSuhu = (kl.includes("paket hemat") || kl.includes("drink")) && !noSuhuLi
         }).join('');
     }
 
-    function updateCart(id, change, forceVariant = null) {
-        const item = menuData.find(m => m.id === id);
-        if (!item) return;
+    function updateCart(id, change) {
+    const item = menuData.find(m => m.id === id);
+    if (!item) return;
 
-        if (change > 0) {
-            let vData = forceVariant ? {...forceVariant} : {
-                vN: document.getElementById(`n-${id}`)?.value || null,
-                vM: document.getElementById(`m-${id}`)?.value || null,
-                vR: document.getElementById(`r-${id}`)?.value || null,
-                vS: document.getElementById(`s-${id}`)?.value || null,
-                ex: (VARIAN_NASI.find(x => x.n === document.getElementById(`n-${id}`)?.value)?.e || 0)
-            };
-            cart.push({ ...item, ...vData });
-        } else {
-            let idx = cart.findLastIndex(c => 
-                c.id === id && 
-                c.vN === (forceVariant?.vN || document.getElementById(`n-${id}`)?.value || null) &&
-                c.vM === (forceVariant?.vM || document.getElementById(`m-${id}`)?.value || null) &&
-                c.vR === (forceVariant?.vR || document.getElementById(`r-${id}`)?.value || null) &&
-                c.vS === (forceVariant?.vS || document.getElementById(`s-${id}`)?.value || null)
-            );
-            if (idx !== -1) cart.splice(idx, 1);
+    if (change > 0) {
+        // Ambil elemen select varian (jika ada)
+        const selNasi = document.getElementById(`n-${id}`);
+        const selMieG = document.getElementById(`m-${id}`);
+        const selMieR = document.getElementById(`r-${id}`);
+        const selSuhu = document.getElementById(`s-${id}`);
+
+        // VALIDASI: Cek apakah pelanggan sudah memilih varian
+        // Jika ada dropdown tapi nilainya masih kosong (""), maka tampilkan peringatan
+        if (selNasi && selNasi.value === "") { 
+            alert("Silakan pilih jenis NASI terlebih dahulu!"); 
+            selNasi.focus(); 
+            return; 
         }
-        refreshUI();
+        if (selMieG && selMieG.value === "") { 
+            alert("Silakan pilih varian MIE GORENG!"); 
+            selMieG.focus(); 
+            return; 
+        }
+        if (selMieR && selMieR.value === "") { 
+            alert("Silakan pilih varian MIE KUAH!"); 
+            selMieR.focus(); 
+            return; 
+        }
+        if (selSuhu && selSuhu.value === "") { 
+            alert("Pilih ES atau PANAS terlebih dahulu!"); 
+            selSuhu.focus(); 
+            return; 
+        }
+
+        // Jika lolos validasi, baru masukkan ke keranjang
+        let vData = {
+            vN: selNasi?.value || null,
+            vM: selMieG?.value || null,
+            vR: selMieR?.value || null,
+            vS: selSuhu?.value || null,
+            ex: (VARIAN_NASI.find(x => x.n === selNasi?.value)?.e || 0)
+        };
+        
+        cart.push({ ...item, ...vData });
+
+    } else {
+        // Logika hapus (mencari item terakhir yang sama persis variannya)
+        const sN = document.getElementById(`n-${id}`)?.value || null;
+        const sM = document.getElementById(`m-${id}`)?.value || null;
+        const sR = document.getElementById(`r-${id}`)?.value || null;
+        const sS = document.getElementById(`s-${id}`)?.value || null;
+
+        let idx = cart.findLastIndex(c => 
+            c.id === id && c.vN === sN && c.vM === sM && c.vR === sR && c.vS === sS
+        );
+        
+        if (idx !== -1) {
+            cart.splice(idx, 1);
+        } else {
+            // Jika tidak ketemu yang spesifik, hapus yang mana saja dari ID tersebut
+            let idxAny = cart.findLastIndex(c => c.id === id);
+            if (idxAny !== -1) cart.splice(idxAny, 1);
+        }
     }
+    refreshUI();
+}
 
     function refreshUI() {
         let subtotal = 0; 
