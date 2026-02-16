@@ -155,21 +155,67 @@ mark {
         .menu-item { background: white; border-radius: 16px; padding: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between; }
         .menu-info h4 { margin: 0 0 4px; font-size: 12px; font-weight: 800; min-height: 32px; line-height: 1.3; }
         .menu-info .price { font-size: 13px; font-weight: 900; color: var(--primary); margin-bottom: 8px; }
-.variant-select {
-    width: 100%;
-    border: 2px solid var(--primary); /* Warna hijau gelap agar menonjol */
-    border-radius: 8px;
-    padding: 6px;
-    margin-bottom: 8px;
-    font-size: 12px;
-    background-color: #fff;
-    cursor: pointer;
+/* Container utama area varian */
+.variant-grid {
+    background: #fdfdfd;
+    padding: 12px;
+    border: 1px dashed var(--primary); /* Garis putus-putus hijau agar terlihat spesial */
+    border-radius: 12px;
+    margin-top: 10px;
+    animation: fadeIn 0.3s ease; /* Efek muncul halus */
 }
 
-/* Beri warna merah pada border jika pelanggan mencoba klik tambah tapi belum pilih */
-.variant-select:invalid {
-    border-color: var(--danger);
-}        
+.variant-group { 
+    margin-bottom: 10px; 
+}
+
+.variant-group span { 
+    font-size: 11px; 
+    font-weight: 800; 
+    color: var(--primary); 
+    display: block; 
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+/* Container tombol-tombolnya */
+.chips-area { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 8px; 
+}
+
+/* Gaya tombol (Chip) */
+.chip {
+    background: white;
+    border: 1.5px solid #ddd;
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+/* Warna saat tombol ditekan/aktif */
+.chip.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 8px rgba(27, 67, 50, 0.2);
+}
+
+/* Efek saat ditekan sebentar */
+.chip:active {
+    transform: scale(0.95);
+}
+
+/* Animasi muncul */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
         .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: 8px; }
         .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
         .qty-btn:disabled { background: #EEE; color: #CCC; }
@@ -859,24 +905,13 @@ function renderMenu(filterKat = 'ALL') {
     const counts = {}; 
     cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
-    // Daftar menu sesuai instruksi terakhir Anda (Tanpa pilihan Suhu)
-    const noSuhuList = [
-        "Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", 
-        "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", 
-        "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", 
-        "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", 
-        "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api", "Kopi ABC Susu", 
-        "Nutrisari Jeruk", "Extra Joss", "Kukubima"
-    ];
+    const noSuhuList = ["Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api", "Kopi ABC Susu", "Nutrisari Jeruk", "Extra Joss", "Kukubima"];
 
     document.getElementById('menu-container').innerHTML = items.map(m => {
         const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
-        
         const isNasi = (kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"))) && !nl.includes("mie lik");
         const isMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik") && !nl.includes("mie lik");
         const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
-        
-        // Logika Suhu: Muncul jika kategori drink/sachetan/paket hemat, KECUALI ada di noSuhuList
         const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(m.nama);
 
         return `
@@ -884,30 +919,16 @@ function renderMenu(filterKat = 'ALL') {
             <div class="menu-info">
                 <h4 data-name="${m.nama}">${m.nama}</h4>
                 <div class="price">Rp ${m.harga.toLocaleString()}</div>
-                <div class="variant-area">
-                    ${isNasi ? `<select id="n-${m.id}" class="variant-select">
-                        <option value="">-- Pilih Nasi --</option>
-                        ${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}
-                    </select>` : ''}
-                    
-                    ${isMieG ? `<select id="m-${m.id}" class="variant-select">
-                        <option value="">-- Pilih Rasa --</option>
-                        ${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}
-                    </select>` : ''}
-                    
-                    ${isMieR ? `<select id="r-${m.id}" class="variant-select">
-                        <option value="">-- Pilih Rasa --</option>
-                        ${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}
-                    </select>` : ''}
-                    
-                    ${isSuhu ? `<select id="s-${m.id}" class="variant-select">
-                        <option value="">-- Es / Panas? --</option>
-                        ${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}
-                    </select>` : ''}
+                
+                <div id="variant-display-${m.id}" class="variant-grid" style="display:none; margin-top:10px;">
+                    ${isNasi ? `<div class="variant-group"><span>Pilih Nasi:</span><div class="chips-area">${VARIAN_NASI.map(v => `<button class="chip" onclick="setVariant('${m.id}', 'n', '${v.n}', ${v.e})">${v.n}</button>`).join('')}</div></div>` : ''}
+                    ${isMieG ? `<div class="variant-group"><span>Pilih Rasa:</span><div class="chips-area">${VARIAN_MIE_GORENG.map(v => `<button class="chip" onclick="setVariant('${m.id}', 'm', '${v.n}', 0)">${v.n}</button>`).join('')}</div></div>` : ''}
+                    ${isMieR ? `<div class="variant-group"><span>Pilih Rasa:</span><div class="chips-area">${VARIAN_MIE_REBUS.map(v => `<button class="chip" onclick="setVariant('${m.id}', 'r', '${v.n}', 0)">${v.n}</button>`).join('')}</div></div>` : ''}
+                    ${isSuhu ? `<div class="variant-group"><span>Suhu:</span><div class="chips-area">${VARIAN_SUHU.map(v => `<button class="chip" onclick="setVariant('${m.id}', 's', '${v.n}', 0)">${v.n}</button>`).join('')}</div></div>` : ''}
                 </div>
             </div>
             <div class="qty-box">
-                <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
+                <button class="qty-btn" onclick="updateCart('${m.id}', -1)">−</button>
                 <span id="qty-${m.id}">${counts[m.id] || 0}</span>
                 <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
             </div>
@@ -920,32 +941,49 @@ function updateCart(id, change) {
     if (!item) return;
 
     if (change > 0) {
-        // 1. TAMBAH MENU DULU KE KERANJANG (Sesuai keinginan Anda)
-        // Kita masukkan ke keranjang, tapi datanya masih kosong/default
+        // 1. Tambah ke keranjang
         cart.push({ ...item, vN: null, vM: null, vR: null, vS: null, ex: 0 });
-
-        // 2. MUNCULKAN ALERT UNTUK MEMILIH VARIAN
-        // Kita beri tahu pelanggan bahwa menu sudah bertambah, sekarang pilih variannya
-        const selNasi = document.getElementById(`n-${id}`);
-        const selMieG = document.getElementById(`m-${id}`);
-        const selMieR = document.getElementById(`r-${id}`);
-        const selSuhu = document.getElementById(`s-${id}`);
-
-        if (selNasi || selMieG || selMieR || selSuhu) {
-            // Reset dropdown ke posisi kosong agar pelanggan memilih ulang untuk item baru
-            if(selNasi) selNasi.value = "";
-            if(selMieG) selMieG.value = "";
-            if(selMieR) selMieR.value = "";
-            if(selSuhu) selSuhu.value = "";
+        
+        // 2. Tampilkan pilihan varian (langsung muncul di bawah menu)
+        const vDisplay = document.getElementById(`variant-display-${id}`);
+        if (vDisplay) {
+            vDisplay.style.display = 'block'; // Langsung muncul tanpa klik lagi
             
-            alert("Menu ditambahkan! Sekarang pilih variannya di bawah nama menu.");
+            // Beri highlight tipis agar user fokus ke pilihan
+            vDisplay.style.background = "#fff9e6";
+            setTimeout(() => vDisplay.style.background = "transparent", 1000);
+            
+            // Opsional: Gunakan alert jika ingin lebih tegas
+            // alert("Pilih varian untuk porsi yang baru ditambah!");
         }
     } else {
-        // Logika hapus
         let idx = cart.findLastIndex(c => c.id === id);
         if (idx !== -1) cart.splice(idx, 1);
+        
+        // Sembunyikan varian jika qty jadi 0
+        const currentQty = cart.filter(c => c.id === id).length;
+        if (currentQty === 0) {
+            const vDisplay = document.getElementById(`variant-display-${id}`);
+            if (vDisplay) vDisplay.style.display = 'none';
+        }
     }
     refreshUI();
+}
+
+// Fungsi baru untuk menangani klik pada tombol varian (Chip)
+function setVariant(id, type, val, extra = 0) {
+    let lastIdx = cart.findLastIndex(c => c.id === id);
+    if (lastIdx !== -1) {
+        if (type === 'n') { cart[lastIdx].vN = val; cart[lastIdx].ex = extra; }
+        if (type === 'm') cart[lastIdx].vM = val;
+        if (type === 'r') cart[lastIdx].vR = val;
+        if (type === 's') cart[lastIdx].vS = val;
+        
+        // Efek visual: beri warna hijau pada tombol yang dipilih
+        // (Bisa dikembangkan dengan menambahkan class .active pada tombol)
+        console.log(`Varian ${val} terpilih untuk ${id}`);
+        refreshUI();
+    }
 }
 
 function refreshUI() {
