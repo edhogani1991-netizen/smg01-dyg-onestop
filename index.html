@@ -855,92 +855,82 @@ async function startApp() {
     }
 
 function renderMenu(filterKat = 'ALL') {
-        const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
-        const counts = {}; 
-        cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
+    const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
+    const counts = {}; 
+    cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
-        // Daftar menu yang tidak boleh ada pilihan Suhu (Es/Panas)
-        const noSuhuList = [
-            "Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", 
-            "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", 
-            "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", 
-            "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", 
-            "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api", "Kopi ABC Susu", "Nutrisari Jeruk", "Extra Joss", "Kukubima"
-        ];
+    // Daftar menu sesuai instruksi terakhir Anda (Tanpa pilihan Suhu)
+    const noSuhuList = [
+        "Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", 
+        "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", 
+        "Es Bissu", "Es Jeruk Susu", "Es choco oren", "Es Jeruk Yakult", "Es Milksex Beri", 
+        "Es Matcha", "Es Squash Oren", "Jus Mangga", "Jus Stoberi", "Smoothies Mary", 
+        "Float Mangga", "Float Stoberi", "Nescafe Blue", "Kopi Kapal Api", "Kopi ABC Susu", 
+        "Nutrisari Jeruk", "Extra Joss", "Kukubima"
+    ];
 
-        document.getElementById('menu-container').innerHTML = items.map(m => {
-            const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
-            
-            // 1. Logika Varian Nasi
-// Tambahkan pengecualian agar menu "Mie Lik" tidak dianggap varian nasi meskipun ada kata "nasi" di kategori
-const isNasi = (kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"))) && !nl.includes("mie lik");
+    document.getElementById('menu-container').innerHTML = items.map(m => {
+        const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
+        
+        const isNasi = (kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"))) && !nl.includes("mie lik");
+        const isMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik") && !nl.includes("mie lik");
+        const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
+        
+        // Logika Suhu: Muncul jika kategori drink/sachetan/paket hemat, KECUALI ada di noSuhuList
+        const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(m.nama);
 
-// 2. Logika Varian Mie
-// Tambahkan pengecualian spesifik agar "mie lik" tidak memicu varian mie goreng/rebus
-const isMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik") && !nl.includes("mie lik");
-const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
-
-// 3. Logika Varian Suhu
-// Karena menu ini mengandung kata "[PH]" (Paket Hemat), maka kl.includes("paket hemat") akan bernilai true.
-// Jadi menu ini otomatis akan mendapatkan varian suhu tanpa perlu diubah logikanya.
-const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(m.nama);
-
-            return `
-            <div class="menu-item">
-                <div class="menu-info">
-                    <h4 data-name="${m.nama}">${m.nama}</h4>
-                    <div class="price">Rp ${m.harga.toLocaleString()}</div>
-                    <div class="variant-area">
-                        ${isNasi ? `<select id="n-${m.id}" class="variant-select">${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}</select>` : ''}
-                        ${isMieG ? `<select id="m-${m.id}" class="variant-select">${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isMieR ? `<select id="r-${m.id}" class="variant-select">${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                        ${isSuhu ? `<select id="s-${m.id}" class="variant-select">${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}</select>` : ''}
-                    </div>
+        return `
+        <div class="menu-item">
+            <div class="menu-info">
+                <h4 data-name="${m.nama}">${m.nama}</h4>
+                <div class="price">Rp ${m.harga.toLocaleString()}</div>
+                <div class="variant-area">
+                    ${isNasi ? `<select id="n-${m.id}" class="variant-select">
+                        <option value="">-- Pilih Nasi --</option>
+                        ${VARIAN_NASI.map(v => `<option value="${v.n}">${v.n}${v.e>0?' (+'+v.e+')':''}</option>`).join('')}
+                    </select>` : ''}
+                    
+                    ${isMieG ? `<select id="m-${m.id}" class="variant-select">
+                        <option value="">-- Pilih Rasa --</option>
+                        ${VARIAN_MIE_GORENG.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}
+                    </select>` : ''}
+                    
+                    ${isMieR ? `<select id="r-${m.id}" class="variant-select">
+                        <option value="">-- Pilih Rasa --</option>
+                        ${VARIAN_MIE_REBUS.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}
+                    </select>` : ''}
+                    
+                    ${isSuhu ? `<select id="s-${m.id}" class="variant-select">
+                        <option value="">-- Es / Panas? --</option>
+                        ${VARIAN_SUHU.map(v => `<option value="${v.n}">${v.n}</option>`).join('')}
+                    </select>` : ''}
                 </div>
-                <div class="qty-box">
-                    <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
-                    <span id="qty-${m.id}">${counts[m.id] || 0}</span>
-                    <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
-                </div>
-            </div>`;
-        }).join('');
-    }
+            </div>
+            <div class="qty-box">
+                <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
+                <span id="qty-${m.id}">${counts[m.id] || 0}</span>
+                <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
+            </div>
+        </div>`;
+    }).join('');
+}
 
-    function updateCart(id, change) {
+function updateCart(id, change) {
     const item = menuData.find(m => m.id === id);
     if (!item) return;
 
     if (change > 0) {
-        // Ambil elemen select varian (jika ada)
         const selNasi = document.getElementById(`n-${id}`);
         const selMieG = document.getElementById(`m-${id}`);
         const selMieR = document.getElementById(`r-${id}`);
         const selSuhu = document.getElementById(`s-${id}`);
 
-        // VALIDASI: Cek apakah pelanggan sudah memilih varian
-        // Jika ada dropdown tapi nilainya masih kosong (""), maka tampilkan peringatan
-        if (selNasi && selNasi.value === "") { 
-            alert("Silakan pilih jenis NASI terlebih dahulu!"); 
-            selNasi.focus(); 
-            return; 
-        }
-        if (selMieG && selMieG.value === "") { 
-            alert("Silakan pilih varian MIE GORENG!"); 
-            selMieG.focus(); 
-            return; 
-        }
-        if (selMieR && selMieR.value === "") { 
-            alert("Silakan pilih varian MIE KUAH!"); 
-            selMieR.focus(); 
-            return; 
-        }
-        if (selSuhu && selSuhu.value === "") { 
-            alert("Pilih ES atau PANAS terlebih dahulu!"); 
-            selSuhu.focus(); 
-            return; 
-        }
+        // VALIDASI: Wajib pilih jika elemen select tampil di layar
+        if (selNasi && selNasi.value === "") { alert("Silakan pilih jenis NASI terlebih dahulu!"); selNasi.focus(); return; }
+        if (selMieG && selMieG.value === "") { alert("Silakan pilih varian MIE GORENG!"); selMieG.focus(); return; }
+        if (selMieR && selMieR.value === "") { alert("Silakan pilih varian MIE KUAH!"); selMieR.focus(); return; }
+        if (selSuhu && selSuhu.value === "") { alert("Pilih ES atau PANAS terlebih dahulu!"); selSuhu.focus(); return; }
 
-        // Jika lolos validasi, baru masukkan ke keranjang
         let vData = {
             vN: selNasi?.value || null,
             vM: selMieG?.value || null,
@@ -952,7 +942,6 @@ const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.include
         cart.push({ ...item, ...vData });
 
     } else {
-        // Logika hapus (mencari item terakhir yang sama persis variannya)
         const sN = document.getElementById(`n-${id}`)?.value || null;
         const sM = document.getElementById(`m-${id}`)?.value || null;
         const sR = document.getElementById(`r-${id}`)?.value || null;
@@ -965,7 +954,6 @@ const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.include
         if (idx !== -1) {
             cart.splice(idx, 1);
         } else {
-            // Jika tidak ketemu yang spesifik, hapus yang mana saja dari ID tersebut
             let idxAny = cart.findLastIndex(c => c.id === id);
             if (idxAny !== -1) cart.splice(idxAny, 1);
         }
