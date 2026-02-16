@@ -920,48 +920,35 @@ function updateCart(id, change) {
     if (!item) return;
 
     if (change > 0) {
+        // 1. TAMBAH MENU DULU KE KERANJANG (Sesuai keinginan Anda)
+        // Kita masukkan ke keranjang, tapi datanya masih kosong/default
+        cart.push({ ...item, vN: null, vM: null, vR: null, vS: null, ex: 0 });
+
+        // 2. MUNCULKAN ALERT UNTUK MEMILIH VARIAN
+        // Kita beri tahu pelanggan bahwa menu sudah bertambah, sekarang pilih variannya
         const selNasi = document.getElementById(`n-${id}`);
         const selMieG = document.getElementById(`m-${id}`);
         const selMieR = document.getElementById(`r-${id}`);
         const selSuhu = document.getElementById(`s-${id}`);
 
-        // VALIDASI: Wajib pilih jika elemen select tampil di layar
-        if (selNasi && selNasi.value === "") { alert("Silakan pilih jenis NASI terlebih dahulu!"); selNasi.focus(); return; }
-        if (selMieG && selMieG.value === "") { alert("Silakan pilih varian MIE GORENG!"); selMieG.focus(); return; }
-        if (selMieR && selMieR.value === "") { alert("Silakan pilih varian MIE KUAH!"); selMieR.focus(); return; }
-        if (selSuhu && selSuhu.value === "") { alert("Pilih ES atau PANAS terlebih dahulu!"); selSuhu.focus(); return; }
-
-        let vData = {
-            vN: selNasi?.value || null,
-            vM: selMieG?.value || null,
-            vR: selMieR?.value || null,
-            vS: selSuhu?.value || null,
-            ex: (VARIAN_NASI.find(x => x.n === selNasi?.value)?.e || 0)
-        };
-        
-        cart.push({ ...item, ...vData });
-
-    } else {
-        const sN = document.getElementById(`n-${id}`)?.value || null;
-        const sM = document.getElementById(`m-${id}`)?.value || null;
-        const sR = document.getElementById(`r-${id}`)?.value || null;
-        const sS = document.getElementById(`s-${id}`)?.value || null;
-
-        let idx = cart.findLastIndex(c => 
-            c.id === id && c.vN === sN && c.vM === sM && c.vR === sR && c.vS === sS
-        );
-        
-        if (idx !== -1) {
-            cart.splice(idx, 1);
-        } else {
-            let idxAny = cart.findLastIndex(c => c.id === id);
-            if (idxAny !== -1) cart.splice(idxAny, 1);
+        if (selNasi || selMieG || selMieR || selSuhu) {
+            // Reset dropdown ke posisi kosong agar pelanggan memilih ulang untuk item baru
+            if(selNasi) selNasi.value = "";
+            if(selMieG) selMieG.value = "";
+            if(selMieR) selMieR.value = "";
+            if(selSuhu) selSuhu.value = "";
+            
+            alert("Menu ditambahkan! Sekarang pilih variannya di bawah nama menu.");
         }
+    } else {
+        // Logika hapus
+        let idx = cart.findLastIndex(c => c.id === id);
+        if (idx !== -1) cart.splice(idx, 1);
     }
     refreshUI();
 }
 
-    function refreshUI() {
+function refreshUI() {
         let subtotal = 0; 
         const counts = {};
         cart.forEach(c => { 
@@ -1357,6 +1344,34 @@ window.addEventListener('DOMContentLoaded', () => {
     function showOutOfRangeAlert() { alert("Lokasi terlalu jauh untuk Dine-In."); }
     function openComingSoon() { document.getElementById('modalComingSoon').style.display = 'flex'; }
     function closeComingSoon() { document.getElementById('modalComingSoon').style.display = 'none'; }
+// Listener otomatis: Setiap kali pelanggan mengubah pilihan di dropdown, 
+// sistem akan mencatatnya ke item paling terakhir di keranjang untuk menu tersebut.
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('variant-select')) {
+        const fullId = e.target.id; // Contoh: "n-101"
+        const type = fullId.split('-')[0]; // n, m, r, s
+        const id = fullId.split('-')[1];   // 101
+        const val = e.target.value;
+
+        // Cari item terakhir di keranjang yang ID-nya cocok
+        let lastIdx = cart.findLastIndex(c => c.id == id);
+        
+        if (lastIdx !== -1 && val !== "") {
+            if (type === 'n') {
+                cart[lastIdx].vN = val;
+                // Update harga tambahan jika nasi kuning (+2000)
+                const extraPrice = VARIAN_NASI.find(x => x.n === val)?.e || 0;
+                cart[lastIdx].ex = extraPrice;
+            }
+            if (type === 'm') cart[lastIdx].vM = val;
+            if (type === 'r') cart[lastIdx].vR = val;
+            if (type === 's') cart[lastIdx].vS = val;
+            
+            // Refresh UI agar total harga terupdate jika ada extra price
+            refreshUI();
+        }
+    }
+});
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
