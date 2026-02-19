@@ -27,8 +27,12 @@
         <div id="memberInfo" class="text-[8px] text-slate-400 italic truncate max-w-[100px]">Ready</div>
     </div>
     <div class="flex items-center gap-2">
-        <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">BUKA SHIFT</button>
-        <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
+    <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">BUKA SHIFT</button>
+    
+    <button id="btnCekPemasukan" onclick="cekPemasukan()" class="bg-amber-500 text-white px-2 py-1 rounded text-[9px] font-bold">CEK INCOME</button>
+    
+    <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
+    </div>
         <div class="flex items-center gap-1 border-l pl-2">
             <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
             <button onclick="cekMember()" class="bg-blue-600 text-white px-2 py-1 rounded text-[9px] font-bold">Cek</button>
@@ -78,11 +82,51 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxXZnTTul3Wmj_nev1k0I8swqmRfh69drVbKuyaIOGrlGhMqXrR549zmN8UH416MnMYXQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwgigtjGVU49_c1Ga2QsLpRSQWOEOvFygB2T27f8qPIuK-32xM9B0dJ6KS0_58Or7vM8w/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
 
 let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
+
+async function cekPemasukan() {
+    const btn = document.getElementById("btnCekPemasukan");
+    const originalText = btn.innerText;
+
+    try {
+        btn.innerText = "..."; 
+        btn.disabled = true;
+
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
+        const r = await res.json();
+
+        if (r.status === "NO_ACTIVE_SHIFT") {
+            alert("Belum ada shift yang dibuka!");
+            return;
+        }
+
+        const rincian = `
+=== REAL-TIME REPORT ===
+Shift : ${r.shiftName}
+Trx   : ${r.totalTrx}
+-----------------------
+CASH  : Rp ${(r.cash || 0).toLocaleString()}
+QRIS  : Rp ${(r.qris || 0).toLocaleString()}
+CARD  : Rp ${(r.card || 0).toLocaleString()}
+-----------------------
+TOTAL : Rp ${(r.totalPemasukan || 0).toLocaleString()}
+
+Poin Baru : ${r.totalPoinDapat}
+Poin Cair : ${r.totalPoinRedeem}
+        `;
+
+        alert(rincian);
+    } catch (e) {
+        alert("Gagal memuat data.");
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
 
 // FUNGSI LOAD AWAL
 async function checkShiftStatus() {
