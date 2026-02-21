@@ -846,6 +846,9 @@ document.addEventListener('click', function(event){
     }
 }); // Pastikan ada }); disini
 
+// 1. FUNGSI STARTAPP (Hanya dipanggil saat TOMBOL DIKLIK)
+// 1. Fungsi Utama untuk Masuk ke Aplikasi
+// --- PERBAIKAN FUNGSI STARTAPP ---
 async function startApp() {
     const startBtn = document.querySelector('#welcome-overlay button');
     const overlay = document.getElementById('welcome-overlay');
@@ -857,18 +860,16 @@ async function startApp() {
     startBtn.style.pointerEvents = "none";
 
     try {
-        // 1. Jalankan fungsi-fungsi pendukung
-        if (typeof renderMenu === 'function') renderMenu(); 
-        if (typeof initBanner === 'function') initBanner(); // Memunculkan Banner
+        // Pastikan fungsi ini ada sebelum dipanggil
+        if (typeof loadMenu === 'function') await loadMenu(); 
+        if (typeof initBanner === 'function') initBanner();
         
-        // 2. Minta lokasi (GPS)
+        // Minta lokasi hanya setelah klik mulai (opsional tapi lebih stabil)
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(updateLocationData, (err) => {
-                console.warn("GPS diabaikan user atau error");
-            });
+            navigator.geolocation.getCurrentPosition(updateLocationData);
         }
 
-        // 3. Animasi Menghilangkan Overlay
+        // Animasi keluar
         if (overlay) {
             overlay.style.opacity = '0';
             setTimeout(() => {
@@ -877,47 +878,50 @@ async function startApp() {
         }
     } catch (e) {
         console.error("Gagal memulai aplikasi:", e);
+        // Tetap hilangkan overlay agar user bisa masuk jika terjadi error kecil
         if (overlay) overlay.style.display = 'none';
     }
 }
-
 // 2. Logika GPS & Data (Jalan otomatis di background)
 function initAppData() {
-    // Jalankan fungsi dasar segera tanpa menunggu GPS
-    if (typeof loadMenu === 'function') loadMenu(); 
-    if (typeof syncQueue === 'function') syncQueue();
-    if (typeof initBanner === 'function') initBanner();
+    // Jalankan fungsi awal
+    if (typeof loadMenu === 'function') loadMenu();
+    if (typeof syncQueue === 'function') syncQueue(); 
 
-    // Hanya minta lokasi, tapi prosesnya dipindah ke updateLocationData
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(updateLocationData, (err) => {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude, longitude } = pos.coords;
+            window.userLat = latitude;
+            window.userLng = longitude;
+
+            const dineBtn = document.getElementById('mDineIn');
+            const deliBtn = document.getElementById('mDelivery');
+
+            // Hitung jarak
+            const warungLoc = L.latLng(CONFIG.WARUNG_LOCATION);
+            const userLoc = L.latLng(latitude, longitude);
+            const straightLineDist = userLoc.distanceTo(warungLoc);
+            userDist = straightLineDist * 1.45; 
+
+            // Update status tombol layanan
+            if(dineBtn && userDist > CONFIG.RADIUS_DINE_IN) dineBtn.classList.add('disabled', 'too-far');
+            if(deliBtn && userDist < 200) deliBtn.classList.add('disabled', 'too-close');
+
+            if (typeof initMap === 'function') initMap(latitude, longitude);
+            if (typeof initBanner === 'function') initBanner();
+            
+            // Update No Antrean jika elemennya ada
+            const antreanEl = document.getElementById("noAntrean");
+            if(antreanEl) antreanEl.innerText = "#" + (window.antrean || "0");
+
+        }, (err) => {
             console.warn("GPS Gagal:", err.message);
         }, { enableHighAccuracy: true });
     }
 }
 
-function updateLocationData(pos) {
-    const { latitude, longitude } = pos.coords;
-    window.userLat = latitude;
-    window.userLng = longitude;
-
-    const dineBtn = document.getElementById('mDineIn');
-    const deliBtn = document.getElementById('mDelivery');
-
-    // Hitung jarak
-    const warungLoc = L.latLng(CONFIG.WARUNG_LOCATION);
-    const userLoc = L.latLng(latitude, longitude);
-    const straightLineDist = userLoc.distanceTo(warungLoc);
-    userDist = straightLineDist * 1.45; // Faktor koreksi jalan raya
-
-    // Update status tombol layanan (Sinkronisasi UI)
-    if(dineBtn && userDist > CONFIG.RADIUS_DINE_IN) dineBtn.classList.add('disabled', 'too-far');
-    if(deliBtn && userDist < 200) deliBtn.classList.add('disabled', 'too-close');
-
-    // Inisialisasi peta setelah lokasi didapat
-    if (typeof initMap === 'function') initMap(latitude, longitude);
-}
-
+// 3. Panggil inisialisasi saat script dimuat
+initAppData();
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
@@ -1019,33 +1023,38 @@ function renderMenu(filterKat = 'ALL') {
     }).join('');
 }
 
-function updateCart(itemName, change, price, variantName = '') {
-    // Membuat ID Unik: Contoh "Nasi Ayam (Nasi Uduk)"
-    const cartId = variantName ? `${itemName} (${variantName})` : itemName;
+function updateCart(id, change) {
+    const item = menuData.find(m => m.id === id);
+    if (!item) return;
 
-    // Cari di keranjang berdasarkan cartId unik tersebut
-    const itemIndex = cart.findIndex(item => item.cartId === cartId);
-
-    if (itemIndex > -1) {
-        // Jika item dengan varian tersebut sudah ada, tambah jumlahnya
-        cart[itemIndex].qty += change;
-        if (cart[itemIndex].qty <= 0) {
-            cart.splice(itemIndex, 1);
-        }
-    } else if (change > 0) {
-        // Jika belum ada, masukkan sebagai item baru
-        cart.push({
-            cartId: cartId, // Penanda unik
-            name: itemName,
-            variant: variantName,
-            price: price,
-            qty: 1
+    if (change > 0) {
+        // SETIAP KLIK + : Tambahkan porsi baru sebagai objek terpisah
+        // Kita beri 'cartId' unik agar porsi 1 dan porsi 2 tidak bertabrakan
+        cart.push({ 
+            ...item, 
+            cartId: Date.now() + Math.random(), 
+            vN: null, vM: null, vR: null, vS: null, ex: 0 
         });
-    }
+        
+        // Munculkan area varian
+        const vDisplay = document.getElementById(`variant-display-${id}`);
+        if (vDisplay) vDisplay.style.display = 'block';
 
-    renderCart(); // Render ulang daftar belanja
-    updateBottomBar(); // Update total harga
+    } else {
+        // SETIAP KLIK - : Hapus porsi terakhir dari menu tersebut
+        let idx = cart.findLastIndex(c => c.id === id);
+        if (idx !== -1) cart.splice(idx, 1);
+        
+        // Sembunyikan area varian jika jumlah menu tersebut sudah 0
+        const currentQty = cart.filter(c => c.id === id).length;
+        if (currentQty === 0) {
+            const vDisplay = document.getElementById(`variant-display-${id}`);
+            if (vDisplay) vDisplay.style.display = 'none';
+        }
+    }
+    refreshUI();
 }
+
 function setVariant(id, type, val, extra = 0, event) {
     // 1. Cari porsi dari menu ini yang variannya masih kosong (null)
     // Supaya porsi 1 dan porsi 2 bisa punya pilihan beda
@@ -1470,24 +1479,10 @@ function changeMode(m, el) {
     }
 
     function initBanner() {
-    const track = document.getElementById('banner-track');
-    if (!track) return;
-    
-    // Bersihkan track sebelum mengisi
-    track.innerHTML = ''; 
-    
-    MY_BANNERS.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        track.appendChild(img);
-    });
-
-    // Auto slide setiap 3 detik
-    setInterval(() => {
-        bannerIdx = (bannerIdx + 1) % MY_BANNERS.length;
-        track.style.transform = `translateX(-${bannerIdx * 100}%)`;
-    }, 3000);
-}
+        const track = document.getElementById('banner-track');
+        track.innerHTML = MY_BANNERS.map(img => `<img src="${img}">`).join('');
+        setInterval(() => { bannerIdx = (bannerIdx + 1) % MY_BANNERS.length; track.style.transform = `translateX(-${bannerIdx * 100}%)`; }, 5000);
+    }
 
     function filterMenu() {
     const q = document.getElementById('searchMenu').value.toLowerCase();
