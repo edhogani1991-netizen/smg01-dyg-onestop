@@ -922,7 +922,10 @@ async function startApp() {
 
 function renderMenu(filterKat = 'ALL') {
     const items = filterKat === 'ALL' ? menuData : menuData.filter(m => m.kat === filterKat);
+    const counts = {}; 
+    cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
+    // Daftar menu tanpa pilihan suhu sesuai instruksi Anda
     const noSuhuList = [
         "Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", 
         "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", 
@@ -935,12 +938,11 @@ function renderMenu(filterKat = 'ALL') {
     document.getElementById('menu-container').innerHTML = items.map(m => {
         const nl = m.nama.toLowerCase(), kl = m.kat.toLowerCase();
         
-        // Ambil total Qty menggunakan fungsi baru
-        const totalQty = getMenuTotalQty(m.id);
-        
         const isNasi = (kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"))) && !nl.includes("mie lik");
         const isMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik") && !nl.includes("mie lik");
         const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
+        
+        // Logika Suhu: Muncul jika kategori drink/sachetan/paket hemat, KECUALI ada di noSuhuList
         const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(m.nama);
 
         return `
@@ -949,7 +951,7 @@ function renderMenu(filterKat = 'ALL') {
                 <h4 data-name="${m.nama}">${m.nama}</h4>
                 <div class="price">Rp ${m.harga.toLocaleString()}</div>
                 
-                <div id="variant-display-${m.id}" class="variant-grid" style="${totalQty > 0 ? 'display:block' : 'display:none'}; margin-top:10px;">
+                <div id="variant-display-${m.id}" class="variant-grid" style="${counts[m.id] > 0 ? 'display:block' : 'display:none'}; margin-top:10px;">
                     
                     ${isNasi ? `
                     <div class="variant-group">
@@ -986,13 +988,14 @@ function renderMenu(filterKat = 'ALL') {
                 </div>
             </div>
             <div class="qty-box">
-                <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${totalQty === 0 ? 'disabled' : ''}>−</button>
-                <span id="qty-${m.id}">${totalQty}</span>
+                <button class="qty-btn" onclick="updateCart('${m.id}', -1)" ${!(counts[m.id]) ? 'disabled' : ''}>−</button>
+                <span id="qty-${m.id}">${counts[m.id] || 0}</span>
                 <button class="qty-btn" onclick="updateCart('${m.id}', 1)">+</button>
             </div>
         </div>`;
     }).join('');
 }
+
 function updateCart(id, change) {
     const item = menuData.find(m => m.id === id);
     if (!item) return;
@@ -1538,11 +1541,6 @@ document.addEventListener('change', function(e) {
     }
 });
 
-function getMenuTotalQty(menuId) {
-    // Fungsi ini menghitung total porsi dari menu yang sama meskipun variannya beda-beda
-    // Karena sekarang di cart porsinya dipisah-pisah (qty selalu 1 per objek)
-    return cart.filter(item => item.id === menuId).length;
-}
 
 </script>
 
