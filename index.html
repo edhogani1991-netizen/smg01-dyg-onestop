@@ -995,7 +995,6 @@ function renderMenu(filterKat = 'ALL') {
 }
 
 function updateCart(id, change) {
-function updateCart(id, change) {
     const item = menuData.find(m => m.id === id);
     if (!item) return;
 
@@ -1026,6 +1025,7 @@ function updateCart(id, change) {
     }
     refreshUI();
 }
+
 function setVariant(id, type, val, extra = 0, event) {
     // 1. Cari porsi dari menu ini yang variannya masih kosong (null)
     // Supaya porsi 1 dan porsi 2 bisa punya pilihan beda
@@ -1144,7 +1144,6 @@ function refreshUI() {
     // 4. UPDATE Rincian Pesanan (Swipe Up Panel)
     updateOrderSummary();
 }
-
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
         if (cart.length === 0) {
