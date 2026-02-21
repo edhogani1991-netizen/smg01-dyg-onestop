@@ -137,6 +137,13 @@
     100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
 }
 
+mark {
+    background-color: #FFEB3B;
+    color: black;
+    padding: 0 2px;
+    border-radius: 4px;
+    font-weight: 800;
+}
         .search-wrapper { margin: 12px 0; background: white; border-radius: 12px; border: 1.2px solid var(--soft); padding: 0 10px; display: flex; align-items: center; }
         #searchMenu { width: 100%; padding: 8px 0; border: none; font-size: 13px; background: transparent; }
 
@@ -825,7 +832,7 @@ function toggleMenuDropdown() {
 }
 
 // Tambahan: Tutup dropdown otomatis jika pengguna klik di luar menu
-document.addEventListener('click', function(event){
+window.onclick = function(event) {
     if (!event.target.matches('[onclick="toggleMenuDropdown()"]')) {
         const dropdown = document.getElementById('menuDropdown');
         if (dropdown && dropdown.style.display === 'block') {
@@ -834,33 +841,14 @@ document.addEventListener('click', function(event){
     }
 }
 
-function startApp() {
+async function startApp() {
     const startBtn = document.querySelector('#welcome-overlay button');
-    
-    // Memberi efek loading saat diklik
     if (startBtn) {
         startBtn.innerHTML = "⌛ Menyiapkan...";
         startBtn.style.opacity = "0.7";
-        startBtn.style.pointerEvents = "none"; 
+        startBtn.style.pointerEvents = "none";
     }
 
-    // Simulasi pengecekan data atau langsung masuk
-    setTimeout(() => {
-        const overlay = document.getElementById('welcome-overlay');
-        if (overlay) {
-            overlay.style.display = 'none'; // Sembunyikan overlay
-        }
-        
-        // --- INI KUNCINYA ---
-        // Kita kembalikan status tombol agar jika user kembali ke menu utama, 
-        // tombolnya sudah AKTIF lagi.
-        if (startBtn) {
-            startBtn.innerHTML = "MULAI SEKARANG";
-            startBtn.style.opacity = "1";
-            startBtn.style.pointerEvents = "auto";
-        }
-    }, 500); 
-}
     // Jalankan load menu & sync antrean secara paralel
     loadMenu();
     syncQueue(); 
