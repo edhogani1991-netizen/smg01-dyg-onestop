@@ -809,7 +809,7 @@ async function apiCekMember() {
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxqnYKLMnjSSSUAKNm3FLI8S--bzwllrnBXIxCjFbkuyAMQ5pkOvLX9guYswHSnEmj-eg/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbzJxja2FCGlzlAXhfNemp1gwhnKEooX3oULR2z6dk9OaYBys6QPrqkOLN3VI4R-U6HGYg/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1001,24 +1001,26 @@ function updateCart(id, change) {
     if (!item) return;
 
     if (change > 0) {
-        // SETIAP KLIK + : Tambahkan porsi baru sebagai objek terpisah
-        // Kita beri 'cartId' unik agar porsi 1 dan porsi 2 tidak bertabrakan
-        cart.push({ 
-            ...item, 
-            cartId: Date.now() + Math.random(), 
-            vN: null, vM: null, vR: null, vS: null, ex: 0 
-        });
+        // 1. Tambah ke keranjang
+        cart.push({ ...item, vN: null, vM: null, vR: null, vS: null, ex: 0 });
         
-        // Munculkan area varian
+        // 2. Tampilkan pilihan varian (langsung muncul di bawah menu)
         const vDisplay = document.getElementById(`variant-display-${id}`);
-        if (vDisplay) vDisplay.style.display = 'block';
-
+        if (vDisplay) {
+            vDisplay.style.display = 'block'; // Langsung muncul tanpa klik lagi
+            
+            // Beri highlight tipis agar user fokus ke pilihan
+            vDisplay.style.background = "#fff9e6";
+            setTimeout(() => vDisplay.style.background = "transparent", 1000);
+            
+            // Opsional: Gunakan alert jika ingin lebih tegas
+            // alert("Pilih varian untuk porsi yang baru ditambah!");
+        }
     } else {
-        // SETIAP KLIK - : Hapus porsi terakhir dari menu tersebut
         let idx = cart.findLastIndex(c => c.id === id);
         if (idx !== -1) cart.splice(idx, 1);
         
-        // Sembunyikan area varian jika jumlah menu tersebut sudah 0
+        // Sembunyikan varian jika qty jadi 0
         const currentQty = cart.filter(c => c.id === id).length;
         if (currentQty === 0) {
             const vDisplay = document.getElementById(`variant-display-${id}`);
@@ -1028,48 +1030,42 @@ function updateCart(id, change) {
     refreshUI();
 }
 
+// Fungsi baru untuk menangani klik pada tombol varian (Chip)
 function setVariant(id, type, val, extra = 0, event) {
-    // 1. Cari porsi dari menu ini yang variannya masih kosong (null)
-    // Supaya porsi 1 dan porsi 2 bisa punya pilihan beda
-    let targetItem = cart.find(c => c.id === id && (
+    // Cari porsi dari menu ini yang variannya masih kosong (untuk tipe tersebut)
+    // Jika semua sudah terisi, ambil yang terakhir
+    let targetIdx = cart.findIndex(c => c.id === id && (
         (type === 'n' && !c.vN) || 
         (type === 'm' && !c.vM) || 
         (type === 'r' && !c.vR) || 
         (type === 's' && !c.vS)
     ));
 
-    // Jika semua porsi sudah terisi varian, timpa porsi yang paling terakhir
-    if (!targetItem) {
-        targetItem = cart.filter(c => c.id === id).pop();
+    if (targetIdx === -1) {
+        targetIdx = cart.findLastIndex(c => c.id === id);
     }
     
-    if (targetItem) {
-        if (type === 'n') { targetItem.vN = val; targetItem.ex = extra; }
-        if (type === 'm') targetItem.vM = val;
-        if (type === 'r') targetItem.vR = val;
-        if (type === 's') targetItem.vS = val;
+    if (targetIdx !== -1) {
+        if (type === 'n') { cart[targetIdx].vN = val; cart[targetIdx].ex = extra; }
+        if (type === 'm') cart[targetIdx].vM = val;
+        if (type === 'r') cart[targetIdx].vR = val;
+        if (type === 's') cart[targetIdx].vS = val;
 
-        // 2. Feedback Visual pada Tombol (Chips)
+        // UI Feedback (Warna & Badge)
         const container = event.target.closest('.chips-area');
-        
-        // Bersihkan status selected dan badge lama di baris tombol ini
         container.querySelectorAll('.chip').forEach(btn => {
             btn.classList.remove('selected');
             const oldBadge = btn.querySelector('.variant-badge');
             if(oldBadge) oldBadge.remove();
         });
 
-        // Tandai tombol yang diklik
         const clickedBtn = event.target.closest('.chip');
         clickedBtn.classList.add('selected');
 
-        // Tambahkan Badge Angka Porsi (misal: porsi 1 atau porsi 2)
-        const allPorsiMenuIni = cart.filter(c => c.id === id);
-        const porsiKe = allPorsiMenuIni.indexOf(targetItem) + 1;
-
         const badge = document.createElement('span');
         badge.className = 'variant-badge';
-        badge.innerText = porsiKe; 
+        // Menampilkan porsi ke-berapa yang baru saja disetel
+        badge.innerText = (targetIdx - cart.findIndex(c => c.id === id) + 1); 
         clickedBtn.appendChild(badge);
 
         refreshUI();
@@ -1158,18 +1154,14 @@ function refreshUI() {
         `).join('');
     }
 
-    function changeQty(cartKey, delta) {
-    const item = cart.find(i => i.cartKey === cartKey);
-    if (!item) return;
-
-    item.qty += delta;
-    if (item.qty <= 0) {
-        cart = cart.filter(i => i.cartKey !== cartKey);
+    function changeQtyFromSummary(groupKey, delta) {
+        const sample = cart.find(c => `${c.id}-${c.vN}-${c.vM}-${c.vR}-${c.vS}` === groupKey);
+        if (sample) {
+            updateCart(sample.id, delta, {
+                vN: sample.vN, vM: sample.vM, vR: sample.vR, vS: sample.vS, ex: sample.ex
+            });
+        }
     }
-    
-    renderCart();
-    renderMenu();
-}
 
 async function submitOrder() {
     // 1. VALIDASI LAYANAN (Dine In, dll)
@@ -1253,22 +1245,16 @@ async function submitOrder() {
     }
 
     // --- 2. Rangkai Rincian Pesanan & Hitung Total ---
-    // Cari bagian ini di fungsi submitOrder Anda:
-const summary = {};
-cart.forEach(c => {
-    let label = c.nama;
-    // Buat label unik: "Nama Menu [Varian1, Varian2]"
-    let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
-    if(tags) label += ` [${tags}]`;
-    
-    const itemKey = label; 
-    const itemPrice = c.harga + (c.ex || 0);
-    
-    if (!summary[itemKey]) {
-        summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
-    }
-    summary[itemKey].qty++;
-});
+    const summary = {};
+    cart.forEach(c => {
+        let label = c.nama;
+        let tags = [c.vN, c.vM, c.vR, c.vS].filter(x => x).join(', ');
+        if(tags) label += ` [${tags}]`;
+        const itemKey = label;
+        const itemPrice = c.harga + (c.ex || 0);
+        if (!summary[itemKey]) summary[itemKey] = { qty: 0, pricePerItem: itemPrice };
+        summary[itemKey].qty++;
+    });
 
     const pRowsWA = Object.entries(summary).map(([name, data]) => 
         `📍 *${data.qty}x* ${name} (Rp ${(data.qty * data.pricePerItem).toLocaleString('id-ID')})`
@@ -1540,8 +1526,6 @@ document.addEventListener('change', function(e) {
         }
     }
 });
-
-
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
