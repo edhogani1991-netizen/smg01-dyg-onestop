@@ -1046,22 +1046,54 @@ function updateCart(itemName, change, price, variantName = '') {
     renderCart(); // Render ulang daftar belanja
     updateBottomBar(); // Update total harga
 }
+function setVariant(id, type, val, extra = 0, event) {
+    // 1. Cari porsi dari menu ini yang variannya masih kosong (null)
+    // Supaya porsi 1 dan porsi 2 bisa punya pilihan beda
+    let targetItem = cart.find(c => c.id === id && (
+        (type === 'n' && !c.vN) || 
+        (type === 'm' && !c.vM) || 
+        (type === 'r' && !c.vR) || 
+        (type === 's' && !c.vS)
+    ));
 
-function selectVariant(itemName, variantName, additionalPrice, element) {
-    // Ambil container menu terkait
-    const parent = element.closest('.menu-item');
+    // Jika semua porsi sudah terisi varian, timpa porsi yang paling terakhir
+    if (!targetItem) {
+        targetItem = cart.filter(c => c.id === id).pop();
+    }
     
-    // Update visual chip (warna tombol varian)
-    parent.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-    element.classList.add('selected');
+    if (targetItem) {
+        if (type === 'n') { targetItem.vN = val; targetItem.ex = extra; }
+        if (type === 'm') targetItem.vM = val;
+        if (type === 'r') targetItem.vR = val;
+        if (type === 's') targetItem.vS = val;
 
-    // Ambil harga dasar dari atribut data (pastikan di renderMenu sudah ada)
-    const basePrice = parseInt(parent.querySelector('.price').getAttribute('data-base-price'));
-    const finalPrice = basePrice + additionalPrice;
+        // 2. Feedback Visual pada Tombol (Chips)
+        const container = event.target.closest('.chips-area');
+        
+        // Bersihkan status selected dan badge lama di baris tombol ini
+        container.querySelectorAll('.chip').forEach(btn => {
+            btn.classList.remove('selected');
+            const oldBadge = btn.querySelector('.variant-badge');
+            if(oldBadge) oldBadge.remove();
+        });
 
-    // Masukkan ke keranjang dengan varian yang dipilih
-    updateCart(itemName, 1, finalPrice, variantName);
+        // Tandai tombol yang diklik
+        const clickedBtn = event.target.closest('.chip');
+        clickedBtn.classList.add('selected');
+
+        // Tambahkan Badge Angka Porsi (misal: porsi 1 atau porsi 2)
+        const allPorsiMenuIni = cart.filter(c => c.id === id);
+        const porsiKe = allPorsiMenuIni.indexOf(targetItem) + 1;
+
+        const badge = document.createElement('span');
+        badge.className = 'variant-badge';
+        badge.innerText = porsiKe; 
+        clickedBtn.appendChild(badge);
+
+        refreshUI();
+    }
 }
+
 function refreshUI() {
     let subtotal = 0; 
     const counts = {}; // Tetap gunakan counts untuk mempermudah update elemen UI
