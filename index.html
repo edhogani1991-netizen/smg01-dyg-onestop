@@ -993,7 +993,6 @@ function renderMenu(filterKat = 'ALL') {
         </div>`;
     }).join('');
 }
-
 function updateCart(id, change) {
     const item = menuData.find(m => m.id === id);
     if (!item) return;
@@ -1075,75 +1074,55 @@ function setVariant(id, type, val, extra = 0, event) {
 }
 
 function refreshUI() {
-    let subtotal = 0; 
-    const counts = {}; // Tetap gunakan counts untuk mempermudah update elemen UI
-    
-    // 1. HITUNG SUBTOTAL DAN TOTAL PER MENU
-    cart.forEach(c => { 
-        // Tambahkan harga menu + extra harga varian (jika ada, misal Nasi Kecombrang)
-        subtotal += (c.harga + (c.ex || 0)); 
-        // Hitung berapa kali menuId muncul di keranjang
-        counts[c.id] = (counts[c.id] || 0) + 1; 
-    });
+        let subtotal = 0; 
+        const counts = {};
+        cart.forEach(c => { 
+            subtotal += (c.harga + (c.ex || 0)); 
+            counts[c.id] = (counts[c.id] || 0) + 1; 
+        });
 
-    // 2. UPDATE ANGKA JUMLAH DI TAMPILAN MENU
-    menuData.forEach(m => {
-        const el = document.getElementById(`qty-${m.id}`);
-        const vDisplay = document.getElementById(`variant-display-${m.id}`);
-        
-        if(el) {
-            const val = counts[m.id] || 0;
-            el.innerText = val;
-            
-            // Disable tombol minus jika qty 0
-            if (el.previousElementSibling) {
+        menuData.forEach(m => {
+            const el = document.getElementById(`qty-${m.id}`);
+            if(el) {
+                const val = counts[m.id] || 0;
+                el.innerText = val;
                 el.previousElementSibling.disabled = val === 0;
             }
-        }
+        });
 
-        // OTOMATIS BUKA/TUTUP AREA VARIAN:
-        // Jika menu ada di keranjang, pastikan area varian terbuka
-        if (vDisplay) {
-            vDisplay.style.display = (counts[m.id] > 0) ? 'block' : 'none';
-        }
-    });
+        const sInd = document.getElementById('swipeInd');
+        const distEl = document.getElementById('dist-info');
+        const ongEl = document.getElementById('ongkir-label');
+        const priceEl = document.getElementById('miniPrice');
 
-    // 3. LOGIKA FOOTER (SWIPE INDICATOR & HARGA)
-    const sInd = document.getElementById('swipeInd');
-    const distEl = document.getElementById('dist-info');
-    const ongEl = document.getElementById('ongkir-label');
-    const priceEl = document.getElementById('miniPrice');
-    const btnOrder = document.getElementById('btnOrder');
-
-    if (subtotal > 0) {
-        sInd.style.display = 'block';
-        if (currentMode === 'DELIVERY') {
-            let ongkir = calculateOngkir(userDist);
-            priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
-            distEl.style.display = 'block';
-            distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
-            ongEl.style.display = 'block';
-            ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+        if (subtotal > 0) {
+            sInd.style.display = 'block';
+            if (currentMode === 'DELIVERY') {
+                let ongkir = calculateOngkir(userDist);
+                priceEl.innerText = (subtotal + ongkir).toLocaleString('id-ID');
+                distEl.style.display = 'block';
+                distEl.innerText = `Rute: ${(userDist/1000).toFixed(1)} KM`;
+                ongEl.style.display = 'block';
+                ongEl.innerText = `+ Ongkir Rp ${ongkir.toLocaleString('id-ID')}`;
+            } else {
+                priceEl.innerText = subtotal.toLocaleString('id-ID');
+                distEl.style.display = 'none';
+                ongEl.style.display = 'none';
+            }
+            document.getElementById('btnOrder').disabled = false;
+            document.getElementById('btnOrder').innerText = 'PESAN SEKARANG';
         } else {
-            priceEl.innerText = subtotal.toLocaleString('id-ID');
+            sInd.style.display = 'none';
             distEl.style.display = 'none';
             ongEl.style.display = 'none';
+            priceEl.innerText = "0";
+            document.getElementById('btnOrder').disabled = true;
+            document.getElementById('btnOrder').innerText = 'PILIH MENU';
+            toggleSummary(false); // Tutup rincian jika item habis
         }
-        btnOrder.disabled = false;
-        btnOrder.innerText = 'PESAN SEKARANG';
-    } else {
-        sInd.style.display = 'none';
-        distEl.style.display = 'none';
-        ongEl.style.display = 'none';
-        priceEl.innerText = "0";
-        btnOrder.disabled = true;
-        btnOrder.innerText = 'PILIH MENU';
-        toggleSummary(false); 
+        updateOrderSummary();
     }
 
-    // 4. UPDATE Rincian Pesanan (Swipe Up Panel)
-    updateOrderSummary();
-}
     function updateOrderSummary() {
         const container = document.getElementById('summaryItems');
         if (cart.length === 0) {
