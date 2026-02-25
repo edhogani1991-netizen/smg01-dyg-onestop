@@ -1015,7 +1015,7 @@ function renderMenu(filterKat = 'ALL') {
         const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
         const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(m.nama);
 
-        return `
+return `
         <div class="menu-item">
             <div class="menu-info">
                 <h4 data-name="${m.nama}">${m.nama}</h4>
