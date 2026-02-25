@@ -6,6 +6,51 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
+
+.info-btn {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    padding: 2px 8px;
+    font-size: 10px; /* Ukuran kecil agar tidak memenuhi layar */
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 4px;
+    display: inline-block;
+    transition: all 0.2s;
+}
+
+.info-btn:active {
+    background: var(--primary);
+    color: white;
+}
+/* Modal Pop-up Deskripsi */
+.desc-modal {
+    display: none; 
+    position: fixed; 
+    inset: 0; 
+    background: rgba(0,0,0,0.7); 
+    z-index: 10005; 
+    align-items: center; 
+    justify-content: center; 
+    padding: 20px;
+    backdrop-filter: blur(4px);
+}
+.desc-card {
+    background: white;
+    width: 100%;
+    max-width: 320px;
+    padding: 25px;
+    border-radius: 25px;
+    text-align: center;
+    animation: popScale 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes popScale {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
         :root { 
             --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
             --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
@@ -913,17 +958,27 @@ async function startApp() {
     }
 
     async function loadMenu() {
-        try {
-            const resp = await fetch(CONFIG.MENU_CSV_URL);
-            const csv = await resp.text();
-            menuData = csv.split('\n').slice(1).map((row, i) => {
-                const cols = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(v => v.replace(/^"|"$/g, '')) || [];
-                return { id: 'm'+i, kat: cols[0] || '', nama: cols[1] || '', harga: parseInt(cols[2]) || 0 };
-            }).filter(m => m.nama);
-            renderTabs();
-            renderMenu();
-        } catch (e) { console.error("Menu error:", e); }
-    }
+    try {
+        const resp = await fetch(CONFIG.MENU_CSV_URL);
+        const csv = await resp.text();
+        menuData = csv.split('\n').slice(1).map((row, i) => {
+            // Regex ini disempurnakan agar bisa menangkap kolom kosong (,,) 
+            // dan teks di dalam tanda kutip (deskripsi panjang)
+            const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+            
+            return { 
+                id: 'm'+i, 
+                kat: cols[0] || '', 
+                nama: cols[1] || '', 
+                harga: parseInt(cols[2]) || 0,
+                deskripsi: cols[3] || '' // <--- TAMBAHKAN INI (Kolom ke-4 di CSV)
+            };
+        }).filter(m => m.nama);
+        
+        renderTabs();
+        renderMenu();
+    } catch (e) { console.error("Menu error:", e); }
+}
     function renderTabs() {
         const cats = [...new Set(menuData.map(m => m.kat))];
         document.getElementById('cat-tabs').innerHTML = `<div class="tab active" onclick="filterByTab('ALL', this)">Semua</div>` + 
@@ -935,7 +990,6 @@ function renderMenu(filterKat = 'ALL') {
     const counts = {}; 
     cart.forEach(c => counts[c.id] = (counts[c.id] || 0) + 1);
 
-    // Daftar menu tanpa pilihan suhu sesuai instruksi Anda
     const noSuhuList = [
         "Kopi Klothok", "Kopi Lelet", "Kopi Coklat", "Kopi Jahe", "Es Kopi Item", 
         "Es Kopiko", "Kopi Ka'Amel", "Kopi Susu Beri", "Es Susu Mantan", "Es Jossu", 
@@ -951,8 +1005,6 @@ function renderMenu(filterKat = 'ALL') {
         const isNasi = (kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"))) && !nl.includes("mie lik");
         const isMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik") && !nl.includes("mie lik");
         const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
-        
-        // Logika Suhu: Muncul jika kategori drink/sachetan/paket hemat, KECUALI ada di noSuhuList
         const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(m.nama);
 
         return `
@@ -960,6 +1012,12 @@ function renderMenu(filterKat = 'ALL') {
             <div class="menu-info">
                 <h4 data-name="${m.nama}">${m.nama}</h4>
                 <div class="price">Rp ${m.harga.toLocaleString()}</div>
+                
+                ${m.deskripsi ? `
+                <button class="info-btn" onclick="openDesc('${m.nama}', '${m.deskripsi.replace(/'/g, "\\'")}')">
+                    Info Menu
+                </button>
+                ` : ''}
                 
                 <div id="variant-display-${m.id}" class="variant-grid" style="${counts[m.id] > 0 ? 'display:block' : 'display:none'}; margin-top:10px;">
                     
@@ -1606,6 +1664,17 @@ document.addEventListener('change', function(e) {
         }
     }
 });
+
+function openDesc(nama, teks) {
+    document.getElementById('descTitle').innerText = nama;
+    document.getElementById('descContent').innerText = teks;
+    document.getElementById('modalDesc').style.display = 'flex';
+}
+
+function closeDesc() {
+    document.getElementById('modalDesc').style.display = 'none';
+}
+
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
@@ -1677,6 +1746,14 @@ document.addEventListener('change', function(e) {
     </div>
 </div>
 // Fungsi untuk mengambil angka antrean terbaru dari server
+
+<div id="modalDesc" class="desc-modal" onclick="closeDesc()">
+    <div class="desc-card" onclick="event.stopPropagation()">
+        <h3 id="descTitle" style="margin-top:0; color:var(--primary); font-weight:900;"></h3>
+        <p id="descContent" style="font-size: 14px; color: #555; line-height: 1.6; margin: 15px 0 20px;"></p>
+        <button onclick="closeDesc()" style="width:100%; padding:14px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; font-size:14px;">Tutup</button>
+    </div>
+</div>
 
 </body>
 </html>
