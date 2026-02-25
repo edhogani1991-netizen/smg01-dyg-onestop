@@ -27,16 +27,16 @@
 }
 /* Modal Pop-up Deskripsi */
 .desc-modal {
-    display: none; 
-    position: fixed; 
-    inset: 0; 
-    background: rgba(0,0,0,0.7); 
-    z-index: 10005; 
-    align-items: center; 
-    justify-content: center; 
+    display: none; /* Tersembunyi saat awal */
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 99999; /* Pastikan angkanya sangat besar */
+    align-items: center;
+    justify-content: center;
     padding: 20px;
-    backdrop-filter: blur(4px);
 }
+
 .desc-card {
     background: white;
     width: 100%;
@@ -1666,15 +1666,31 @@ document.addEventListener('change', function(e) {
 });
 
 function openDesc(nama, teks) {
-    document.getElementById('descTitle').innerText = nama;
-    document.getElementById('descContent').innerText = teks;
-    document.getElementById('modalDesc').style.display = 'flex';
+    const modal = document.getElementById('modalDesc');
+    const title = document.getElementById('descTitle');
+    const content = document.getElementById('descContent');
+    
+    if (modal && title && content) {
+        title.innerText = nama;
+        content.innerText = teks || 'Tidak ada deskripsi tambahan.';
+        modal.style.display = 'flex';
+    }
 }
 
 function closeDesc() {
-    document.getElementById('modalDesc').style.display = 'none';
+    const modal = document.getElementById('modalDesc');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
+<div id="modalDesc" class="desc-modal" onclick="closeDesc()">
+    <div class="desc-card" onclick="event.stopPropagation()">
+        <h3 id="descTitle" style="margin-top:0; color:var(--primary); font-weight:900;"></h3>
+        <p id="descContent" style="font-size: 14px; color: #555; line-height: 1.6; margin: 15px 0 20px;"></p>
+        <button onclick="closeDesc()" style="width:100%; padding:14px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; font-size:14px;">Tutup</button>
+    </div>
+</div>
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
@@ -1746,14 +1762,6 @@ function closeDesc() {
     </div>
 </div>
 // Fungsi untuk mengambil angka antrean terbaru dari server
-
-<div id="modalDesc" class="desc-modal" onclick="closeDesc()">
-    <div class="desc-card" onclick="event.stopPropagation()">
-        <h3 id="descTitle" style="margin-top:0; color:var(--primary); font-weight:900;"></h3>
-        <p id="descContent" style="font-size: 14px; color: #555; line-height: 1.6; margin: 15px 0 20px;"></p>
-        <button onclick="closeDesc()" style="width:100%; padding:14px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; font-size:14px;">Tutup</button>
-    </div>
-</div>
 
 </body>
 </html>
