@@ -690,10 +690,10 @@ mark {
     </div>
 </div>
 
-</div> </div> <div id="modalDesc" class="desc-modal" onclick="closeDesc()">
+<div id="modalDesc" class="desc-modal" onclick="closeDesc()">
     <div class="desc-card" onclick="event.stopPropagation()">
         <h3 id="descTitle" style="margin-top:0; color:var(--primary); font-weight:900;"></h3>
-        <p id="descContent" style="font-size: 14px; color: #555; line-height: 1.6; margin: 15px 0 20px;"></p>
+        <p id="descContent" style="font-size: 14px; color: #555; line-height: 1.6; margin: 15px 0 20px; white-space: pre-wrap;"></p>
         <button onclick="closeDesc()" style="width:100%; padding:14px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; font-size:14px;">TUTUP</button>
     </div>
 </div>
@@ -1021,11 +1021,15 @@ return `
                 <h4 data-name="${m.nama}">${m.nama}</h4>
                 <div class="price">Rp ${m.harga.toLocaleString()}</div>
                 
-                ${m.deskripsi ? `
-                <button class="info-btn" onclick="openDesc('${m.nama}', '${m.deskripsi.replace(/'/g, "\\'")}')">
-                    Info Menu
-                </button>
-                ` : ''}
+${m.deskripsi ? `
+<button 
+    class="info-btn" 
+    data-nama="${m.nama.replace(/"/g, '&quot;')}" 
+    data-desc="${m.deskripsi.replace(/"/g, '&quot;')}"
+>
+    Info Menu
+</button>
+` : ''}
                 
                 <div id="variant-display-${m.id}" class="variant-grid" style="${counts[m.id] > 0 ? 'display:block' : 'display:none'}; margin-top:10px;">
                     
@@ -1673,12 +1677,11 @@ document.addEventListener('change', function(e) {
     }
 });
 
-function openDesc(nama, teks) {
+function openDesc(title, content) {
     const modal = document.getElementById('modalDesc');
     if (modal) {
-        document.getElementById('descTitle').innerText = nama;
-        // Jika deskripsi kosong di CSV, beri teks standar
-        document.getElementById('descContent').innerText = teks && teks !== 'undefined' ? teks : 'Belum ada deskripsi untuk menu ini.';
+        document.getElementById('descTitle').innerText = title;
+        document.getElementById('descContent').innerText = content || 'Tidak ada deskripsi.';
         modal.style.display = 'flex';
     }
 }
@@ -1688,6 +1691,18 @@ function closeDesc() {
     if (modal) modal.style.display = 'none';
 }
 
+document.addEventListener('click', function(e) {
+    // Mencari apakah yang diklik adalah tombol info-btn
+    const btn = e.target.closest('.info-btn');
+    if (!btn) return;
+
+    // Ambil data yang disimpan di data-attribute tadi
+    const nama = btn.getAttribute('data-nama');
+    const desc = btn.getAttribute('data-desc');
+
+    // Jalankan fungsi popup
+    openDesc(nama, desc);
+});
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
