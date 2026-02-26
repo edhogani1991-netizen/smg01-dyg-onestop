@@ -425,7 +425,7 @@ async function cekDaftarTransaksi() {
 
         if (data.status === "NO_ACTIVE_SHIFT") { alert("Belum ada shift!"); return; }
 
-        // PENTING: Simpan data ke variabel global agar bisa dicetak semua nantinya
+        // SIMPAN DATA KE GLOBAL
         window.currentShiftData = data.transactions;
 
         document.getElementById("modalTrx").classList.remove("hidden");
@@ -438,10 +438,13 @@ async function cekDaftarTransaksi() {
         }
 
         let html = "";
-        // Kita salin dan reverse supaya tidak merusak data asli di window.currentShiftData
+        // Kita tampilkan data terbaru di atas (reverse)
         const displayData = [...data.transactions].reverse();
 
-        displayData.forEach((t) => {
+        displayData.forEach((t, index) => {
+            // Hitung index asli di window.currentShiftData
+            const realIndex = data.transactions.length - 1 - index;
+
             const infoMember = t.namaMember && t.namaMember !== "-" ? 
                 `<div class="mt-1.5 py-1 px-2 bg-blue-50 border border-blue-100 rounded text-[8px] text-blue-700 flex justify-between">
                     <span>👤 ${t.namaMember}</span>
@@ -452,20 +455,8 @@ async function cekDaftarTransaksi() {
             const infoPotongan = totalPotongan > 0 ?
                 `<div class="text-[8px] text-rose-500 font-bold italic">Potongan: -Rp ${totalPotongan.toLocaleString()}</div>` : '';
 
-            // Data untuk dikirim ke fungsi reprintStruk
-            const strData = JSON.stringify({
-                id: t.id,
-                waktu: t.waktu,
-                pesanan: t.pesanan,
-                total: t.total,
-                metode: t.metode,
-                member: t.namaMember,
-                poin: t.poinDapat,
-                diskon: t.diskon
-            }).replace(/'/g, "\\'"); // Escape tanda kutip
-
             html += `
-            <div class="bg-white p-2.5 rounded border border-slate-200 shadow-sm">
+            <div class="bg-white p-2.5 rounded border border-slate-200 shadow-sm mb-2">
                 <div class="flex justify-between items-center border-b pb-1.5 mb-1.5 text-[8px]">
                     <span class="font-bold text-indigo-700 uppercase">[${t.metode}]</span>
                     <span class="text-slate-400">${t.waktu}</span>
@@ -482,8 +473,8 @@ async function cekDaftarTransaksi() {
                 </div>
                 ${infoMember}
                 
-                <button onclick="reprintStruk('${strData}')" class="w-full mt-2 py-1 bg-slate-800 text-white text-[8px] font-bold rounded uppercase active:bg-black">
-                    🖨️ Cetak Ulang Struk
+                <button onclick="reprintStruk(${realIndex})" class="w-full mt-2 py-2 bg-slate-800 text-white text-[9px] font-bold rounded uppercase active:bg-black flex items-center justify-center gap-1">
+                    🖨️ CETAK ULANG STRUK
                 </button>
             </div>`;
         });
@@ -495,39 +486,48 @@ async function cekDaftarTransaksi() {
     }
 }
 
-// FUNGSI REPRINT STRUK SATUAN
-function reprintStruk(jsonStr) {
-    const data = JSON.parse(jsonStr);
+function reprintStruk(index) {
+    // Ambil data dari variabel global yang sudah disimpan saat cekDaftarTransaksi
+    const data = window.currentShiftData[index];
     
-    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
-    esc += "(CETAK ULANG)\n";
-    esc += "ID: " + data.id + "\n--------------------------------\n\x1B\x61\x00";
-    
-    // Pecah pesanan jika berupa string koma
-    const items = data.pesanan.split(", ");
-    items.forEach(item => {
-        esc += item + "\n";
-    });
-    
-    esc += "--------------------------------\n";
-    esc += "Metode        : " + data.metode + "\n";
-    
-    if (data.member && data.member !== "-") {
-        esc += "Nama Member   : " + data.member + "\n";
-        esc += "Poin Didapat  : +" + data.poin + "\n";
+    if (!data) {
+        alert("Data transaksi tidak ditemukan!");
+        return;
     }
 
-    esc += "Diskon        : Rp " + Number(data.diskon).toLocaleString() + "\n";
-    esc += "--------------------------------\n";
-    esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + Number(data.total).toLocaleString() + "\x1B\x21\x00\n";
-    esc += "--------------------------------\n";
-    esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
+    try {
+        let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
+        esc += "(COPY STRUK)\n";
+        esc += "ID: " + data.id + "\n--------------------------------\n\x1B\x61\x00";
+        
+        // Pecah pesanan
+        const items = data.pesanan.split(", ");
+        items.forEach(item => {
+            esc += item + "\n";
+        });
+        
+        esc += "--------------------------------\n";
+        esc += "Metode        : " + (data.metode || "CASH") + "\n";
+        
+        if (data.namaMember && data.namaMember !== "-") {
+            esc += "Nama Member   : " + data.namaMember + "\n";
+            esc += "Poin Didapat  : +" + (data.poinDapat || 0) + "\n";
+        }
 
-    if (window.AppInventor) {
-        window.AppInventor.setWebViewString("PRINT|" + esc);
-    } else {
-        console.log(esc);
-        alert("Mode Browser: Data dikirim ke konsol");
+        esc += "Diskon        : Rp " + (Number(data.diskon) || 0).toLocaleString() + "\n";
+        esc += "--------------------------------\n";
+        esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + (Number(data.total) || 0).toLocaleString() + "\x1B\x21\x00\n";
+        esc += "--------------------------------\n";
+        esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
+
+        if (window.AppInventor) {
+            window.AppInventor.setWebViewString("PRINT|" + esc);
+        } else {
+            console.log("HASIL PRINT:\n", esc);
+            alert("Berhasil! (Cek Console Log karena bukan di App)");
+        }
+    } catch (err) {
+        alert("Gagal memproses struk: " + err.message);
     }
 }
 
