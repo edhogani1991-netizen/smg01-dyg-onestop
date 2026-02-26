@@ -487,7 +487,6 @@ async function cekDaftarTransaksi() {
 }
 
 function reprintStruk(index) {
-    // Ambil data dari variabel global yang sudah disimpan saat cekDaftarTransaksi
     const data = window.currentShiftData[index];
     
     if (!data) {
@@ -496,35 +495,65 @@ function reprintStruk(index) {
     }
 
     try {
+        // --- HEADER (Sama dengan submitOrder) ---
         let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
         esc += "(COPY STRUK)\n";
         esc += "ID: " + data.id + "\n--------------------------------\n\x1B\x61\x00";
         
-        // Pecah pesanan
+        // --- DETAIL PESANAN ---
+        // Karena data.pesanan formatnya "Menu A x1, Menu B x2"
+        // Kita pecah kembali agar tampilannya rapi ke bawah
         const items = data.pesanan.split(", ");
-        items.forEach(item => {
-            esc += item + "\n";
+        let totalKotor = 0;
+
+        items.forEach(itemStr => {
+            // Memisahkan "Nama Menu" dan "Qty"
+            // Contoh: "Nasi Goreng x2" -> ["Nasi Goreng", "2"]
+            const parts = itemStr.split(" x");
+            const nama = parts[0];
+            const qty = parts[1] || 1;
+            
+            esc += `${nama}\n${qty} x (Terlampir) = ...\n`; 
+            // Catatan: Karena di database biasanya tidak simpan harga satuan per baris, 
+            // kita tampilkan daftar itemnya saja agar strukturnya serupa.
         });
         
         esc += "--------------------------------\n";
+        
+        // --- RINCIAN PEMBAYARAN ---
+        // Kalkulasi Total Kotor (Total Bersih + Diskon)
+        const bersih = Number(data.total) || 0;
+        const diskon = Number(data.diskon) || 0;
+        const kotor = bersih + diskon;
+
+        esc += "Total Kotor   : Rp " + kotor.toLocaleString() + "\n";
         esc += "Metode        : " + (data.metode || "CASH") + "\n";
         
+        // --- INFO MEMBER (Jika ada) ---
         if (data.namaMember && data.namaMember !== "-") {
             esc += "Nama Member   : " + data.namaMember + "\n";
             esc += "Poin Didapat  : +" + (data.poinDapat || 0) + "\n";
+            // Poin akumulasi tidak ditampilkan di cetak ulang karena data poin 
+            // di database mungkin sudah berubah sejak transaksi itu terjadi.
+            esc += "Poin Akumulasi: (Lihat Struk Asli)\n";
         }
 
-        esc += "Diskon        : Rp " + (Number(data.diskon) || 0).toLocaleString() + "\n";
+        esc += "Voucher       : Rp 0\n";
+        esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
         esc += "--------------------------------\n";
-        esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + (Number(data.total) || 0).toLocaleString() + "\x1B\x21\x00\n";
+        esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + bersih.toLocaleString() + "\x1B\x21\x00\n";
+        
+        // Info Bayar/Kembali biasanya tidak disimpan detail di database transaksi 
+        // per baris, jadi kita tutup dengan garis penutup yang sama.
         esc += "--------------------------------\n";
         esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
+        // --- EKSEKUSI ---
         if (window.AppInventor) {
             window.AppInventor.setWebViewString("PRINT|" + esc);
         } else {
-            console.log("HASIL PRINT:\n", esc);
-            alert("Berhasil! (Cek Console Log karena bukan di App)");
+            console.log(esc);
+            alert("Mode Browser: Cek Console");
         }
     } catch (err) {
         alert("Gagal memproses struk: " + err.message);
