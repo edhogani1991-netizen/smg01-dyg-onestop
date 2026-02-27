@@ -6,33 +6,33 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-/* Styling Hub Games */
+/* Styling Menu Games */
 .games-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    padding: 20px;
-    text-align: center;
+    gap: 12px;
+    padding: 10px 0;
 }
 .game-card {
-    background: #f8f9fa;
-    padding: 15px 10px;
+    background: #ffffff;
+    padding: 15px 5px;
     border-radius: 15px;
-    border: 2px solid #eee;
+    border: 1px solid #ddd;
+    text-align: center;
     cursor: pointer;
-    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
-.game-card:active { transform: scale(0.9); border-color: var(--primary); }
-.game-card img { width: 40px; height: 40px; margin-bottom: 8px; }
-.game-card div { font-size: 12px; font-weight: 800; color: var(--dark); }
+.game-card:active { transform: scale(0.9); background: #f0f0f0; }
+.game-card img { width: 35px; height: 35px; margin-bottom: 8px; }
+.game-card span { display: block; font-size: 11px; font-weight: 900; color: var(--dark); }
 
-/* Bingkai Iframe Game */
-#game-container {
+#game-frame-container {
     width: 100%;
     height: 450px;
-    border: none;
     border-radius: 15px;
+    overflow: hidden;
     display: none;
+    background: #000;
 }
 
 .info-btn {
@@ -728,32 +728,38 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
     </div>
 </div>
 <div id="modal-games" class="modal">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 450px; width: 90%;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 style="margin:0;">🎮 dyg++ Game Zone</h3>
+            <h3 style="margin:0; font-size: 16px;">🎮 dyg++ Game Zone</h3>
             <span class="close" onclick="closeGames()">&times;</span>
         </div>
-        
-        <p id="game-hint" style="font-size: 11px; color: #666;">Pilih game favoritmu sambil menunggu hidangan siap!</p>
 
-        <div id="games-menu" class="games-grid">
-            <div class="game-card" onclick="playGame('ludo')">
-                <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png" alt="Ludo">
-                <div>Ludo</div>
-            </div>
-            <div class="game-card" onclick="playGame('chess')">
-                <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png" alt="Catur">
-                <div>Catur</div>
-            </div>
-            <div class="game-card" onclick="playGame('snake')">
-                <img src="https://cdn-icons-png.flaticon.com/512/528/528105.png" alt="Ular">
-                <div>Ular</div>
+        <div id="games-menu">
+            <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Pilih game untuk menemani waktu tunggumu:</p>
+            <div class="games-grid">
+                <div class="game-card" onclick="startUrlGame('https://www.google.com/logos/2010/pacman10-i.html')">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3501/3501170.png" alt="Snake">
+                    <span>Ular / Pacman</span>
+                </div>
+                <div class="game-card" onclick="startUrlGame('https://lichess.org/export/embed/puzzle/daily?theme=brown&bg=light')">
+                    <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png" alt="Catur">
+                    <span>Catur</span>
+                </div>
+                <div class="game-card" onclick="startUrlGame('https://www.miniplay.com/embed/ludo-legend')">
+                    <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png" alt="Ludo">
+                    <span>Ludo</span>
+                </div>
             </div>
         </div>
 
-        <iframe id="game-iframe" src="" style="width:100%; height:400px; border:none; border-radius:15px; display:none;"></iframe>
-        
-        <button id="btn-back-games" onclick="backToGamesMenu()" class="btn-checkout" style="display:none; margin-top:10px; background:#666;">KEMBALI KE MENU GAME</button>
+        <div id="game-frame-container">
+            <iframe id="game-iframe" src="" style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+
+        <button id="btn-back-menu" onclick="resetGameMenu()" 
+            style="display:none; width:100%; margin-top:10px; padding:12px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:900; font-size:12px;">
+            KEMBALI KE PILIHAN GAME
+        </button>
     </div>
 </div>
 
