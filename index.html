@@ -727,34 +727,35 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
         <button onclick="closeDesc()" style="width:100%; padding:14px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; font-size:14px;">TUTUP</button>
     </div>
 </div>
-<div id="modal-games" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:white; max-width: 450px; width: 90%; padding:20px; border-radius:20px; position:relative;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h3 style="margin:0; font-size: 16px;">🎮 dyg++ Game Zone</h3>
-            <span class="close" onclick="closeGames()" style="cursor:pointer; font-size:24px; font-weight:bold;">&times;</span>
+<div id="modal-games" class="modal" style="display:none; position:fixed; inset:0; background:#fff; z-index:99999; flex-direction:column;">
+    <div style="padding: 10px 15px; background: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button onclick="resetGameMenu()" id="btn-back-games" style="display:none; background:#eee; border:none; border-radius:50%; width:30px; height:30px; font-weight:bold;">⬅</button>
+            <h3 style="margin:0; font-size: 14px; font-weight:900;">dyg++ GAME ZONE</h3>
         </div>
+        <span onclick="closeGames()" style="cursor:pointer; font-size: 24px; font-weight: bold; color: #ff0000; padding: 0 10px;">&times;</span>
+    </div>
 
-        <div id="games-menu-box">
-            <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Pilih game sambil menunggu pesanan:</p>
-            <div class="games-grid">
-                <div class="game-card" onclick="playTheGame('https://www.google.com/logos/2010/pacman10-i.html')">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3501/3501170.png">
-                    <span>Snake</span>
-                </div>
-                <div class="game-card" onclick="playTheGame('https://lichess.org/export/embed/puzzle/daily?theme=brown&bg=light')">
-                    <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png">
-                    <span>Catur</span>
-                </div>
-                <div class="game-card" onclick="playTheGame('https://www.miniplay.com/embed/ludo-legend')">
-                    <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png">
-                    <span>Ludo</span>
-                </div>
+    <div id="games-menu" style="padding: 20px; flex: 1; overflow-y: auto;">
+        <div class="games-grid">
+            <div class="game-card" onclick="startUrlGame('https://poki.com/id/g/ludo-multiplayer#fullscreen')">
+                <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png">
+                <span>Ludo Online</span>
+            </div>
+            <div class="game-card" onclick="startUrlGame('https://lichess.org/?embed=1')">
+                <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png">
+                <span>Catur Online</span>
+            </div>
+            <div class="game-card" onclick="startUrlGame('https://slither.io/')">
+                <img src="https://cdn-icons-png.flaticon.com/512/3501/3501170.png">
+                <span>Snake Online</span>
             </div>
         </div>
+    </div>
 
-        <div id="game-frame-container" style="display:none; width:100%; height:450px; border-radius:15px; overflow:hidden; background:#000;">
-            <iframe id="game-iframe" src="" style="width:100%; height:100%; border:none;"></iframe>
-        </div>
+    <div id="game-frame-container" style="display:none; flex: 1; width:100%; height:100%;">
+        <iframe id="game-iframe" src="" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen; gamepad"></iframe>
+    </div>
 
         <button id="btn-back-games" onclick="resetGames()" style="display:none; width:100%; margin-top:15px; padding:12px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:900;">⬅ PILIH GAME LAIN</button>
     </div>
@@ -766,23 +767,35 @@ let generatedOTP = null;
 
 function openGamesHub() {
     document.getElementById('modal-games').style.display = 'flex';
-    resetGames();
+    document.body.style.overflow = 'hidden'; // Kunci scroll layar utama
+    resetGameMenu();
 }
 
 function closeGames() {
     document.getElementById('modal-games').style.display = 'none';
+    document.body.style.overflow = 'auto'; // Aktifkan kembali scroll
     document.getElementById('game-iframe').src = ""; 
 }
 
-function playTheGame(url) {
-    document.getElementById('games-menu-box').style.display = 'none';
+function startUrlGame(url) {
+    document.getElementById('games-menu').style.display = 'none';
     document.getElementById('game-frame-container').style.display = 'block';
     document.getElementById('btn-back-games').style.display = 'block';
+    
+    // Tampilkan loading sebentar agar profesional
+    Swal.fire({
+        title: 'Memuat Game...',
+        text: 'Pastikan koneksi internet stabil',
+        timer: 2000,
+        showConfirmButton: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
     document.getElementById('game-iframe').src = url;
 }
 
-function resetGames() {
-    document.getElementById('games-menu-box').style.display = 'block';
+function resetGameMenu() {
+    document.getElementById('games-menu').style.display = 'block';
     document.getElementById('game-frame-container').style.display = 'none';
     document.getElementById('btn-back-games').style.display = 'none';
     document.getElementById('game-iframe').src = "";
