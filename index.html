@@ -727,18 +727,19 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
         <button onclick="closeDesc()" style="width:100%; padding:14px; border-radius:15px; border:none; background:var(--primary); color:white; font-weight:800; font-size:14px;">TUTUP</button>
     </div>
 </div>
-<div id="modal-games" class="modal" style="display:none; position:fixed; inset:0; background:#fff; z-index:99999; flex-direction:column;">
-    <div style="padding: 10px 15px; background: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee;">
+<div id="modal-games" class="modal" style="display:none; position:fixed; inset:0; background:#f2f4f7; z-index:99999; flex-direction:column;">
+    <div style="padding: 15px; background: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
         <div style="display: flex; align-items: center; gap: 10px;">
-            <button onclick="resetGameMenu()" id="btn-back-games" style="display:none; background:#eee; border:none; border-radius:50%; width:30px; height:30px; font-weight:bold;">⬅</button>
-            <h3 style="margin:0; font-size: 14px; font-weight:900;">dyg++ GAME ZONE</h3>
+            <button onclick="resetGameMenu()" id="btn-back-games" style="display:none; background:none; border:none; font-size: 20px;">⬅</button>
+            <h3 style="margin:0; font-size: 16px;">🎮 dyg++ Game Zone</h3>
         </div>
-        <span onclick="closeGames()" style="cursor:pointer; font-size: 24px; font-weight: bold; color: #ff0000; padding: 0 10px;">&times;</span>
+        <span onclick="closeGames()" style="cursor:pointer; font-size: 28px; font-weight: bold; padding: 0 10px;">&times;</span>
     </div>
 
-    <div id="games-menu" style="padding: 20px; flex: 1; overflow-y: auto;">
+    <div id="games-menu" style="padding: 20px; overflow-y: auto; flex: 1;">
+        <p style="text-align:center; font-size: 12px; color: #666; margin-bottom: 25px;">Mainkan Game Online sambil menunggu pesananmu!</p>
         <div class="games-grid">
-            <div class="game-card" onclick="startUrlGame('https://poki.com/id/g/ludo-multiplayer#fullscreen')">
+            <div class="game-card" onclick="startUrlGame('https://m.ludo.com/')">
                 <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png">
                 <span>Ludo Online</span>
             </div>
@@ -748,16 +749,13 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
             </div>
             <div class="game-card" onclick="startUrlGame('https://slither.io/')">
                 <img src="https://cdn-icons-png.flaticon.com/512/3501/3501170.png">
-                <span>Snake Online</span>
+                <span>Snake (Slither.io)</span>
             </div>
         </div>
     </div>
 
-    <div id="game-frame-container" style="display:none; flex: 1; width:100%; height:100%;">
-        <iframe id="game-iframe" src="" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen; gamepad"></iframe>
-    </div>
-
-        <button id="btn-back-games" onclick="resetGames()" style="display:none; width:100%; margin-top:15px; padding:12px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:900;">⬅ PILIH GAME LAIN</button>
+    <div id="game-frame-container" style="display:none; flex: 1; width:100%; height:100%; background:white;">
+        <iframe id="game-iframe" src="" style="width:100%; height:100%; border:none;"></iframe>
     </div>
 </div>
 
