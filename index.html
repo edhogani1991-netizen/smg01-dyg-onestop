@@ -728,33 +728,45 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
     </div>
 </div>
 <div id="modal-games" class="modal" style="display:none; position:fixed; inset:0; background:#fff; z-index:99999; flex-direction:column;">
-    <div style="padding: 15px; background: #fff; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0;">
+    <div style="padding: 15px; background: white; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0;">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <button onclick="resetGameMenu()" id="btn-back-games" style="display:none; background:#f5f5f5; border:none; border-radius:50%; width:35px; height:35px; font-size:18px; cursor:pointer;">⬅</button>
-            <span style="font-weight: 900; letter-spacing: 1px; color: #333; font-size: 14px;">dyg++ ENTERTAINMENT</span>
+            <button onclick="resetGameMenu()" id="btn-back-games" style="display:none; background:#f5f5f5; border:none; border-radius:50%; width:35px; height:35px; cursor:pointer;">⬅</button>
+            <span style="font-weight: 900; letter-spacing: 1px; color: #333; font-size: 13px;">dyg++ ENTERTAINMENT</span>
         </div>
-        <button onclick="closeGames()" style="background:#fff5f5; border:none; color:#ff4d4d; padding: 8px 15px; border-radius:10px; font-weight:bold; cursor:pointer;">TUTUP</button>
+        <button onclick="closeGames()" style="background:#fff5f5; border:none; color:#ff4d4d; padding: 8px 15px; border-radius:10px; font-weight:bold;">TUTUP</button>
     </div>
 
-    <div id="games-menu" style="padding: 30px 20px; flex: 1; overflow-y: auto;">
-        <h2 style="text-align:center; font-size: 18px; margin-bottom: 30px;">Apa yang ingin Anda mainkan?</h2>
-        <div class="games-grid" style="grid-template-columns: 1fr; gap: 15px; max-width: 300px; margin: 0 auto;">
-            <div class="game-card-long" onclick="startUrlGame('ludo')" style="display:flex; align-items:center; gap:20px; padding:20px; background:#fff; border:2px solid #eee; border-radius:20px; cursor:pointer;">
-                <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png" style="width:40px;">
-                <span style="font-weight:900;">LUDO MULTIPLAYER</span>
+    <div id="games-menu" style="padding: 30px 20px; flex: 1; overflow-y: auto; background: #fafafa;">
+        <div style="max-width: 400px; margin: 0 auto;">
+            <h2 style="text-align:center; font-size: 16px; margin-bottom: 30px; color:#555;">PILIH ARENA PERMAINAN</h2>
+            
+            <div class="game-item" onclick="startUrlGame('ludo')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
+                <img src="https://cdn-icons-png.flaticon.com/512/806/806131.png" style="width:45px;">
+                <div>
+                    <div style="font-weight:900; font-size:15px;">LUDO ONLINE</div>
+                    <div style="font-size:11px; color:#999;">Main multiplayer bersama pemain lain</div>
+                </div>
             </div>
-            <div class="game-card-long" onclick="startUrlGame('chess')" style="display:flex; align-items:center; gap:20px; padding:20px; background:#fff; border:2px solid #eee; border-radius:20px; cursor:pointer;">
-                <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png" style="width:40px;">
-                <span style="font-weight:900;">CHESS STRATEGY</span>
+
+            <div class="game-item" onclick="startUrlGame('chess')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
+                <img src="https://cdn-icons-png.flaticon.com/512/1071/1071195.png" style="width:45px;">
+                <div>
+                    <div style="font-weight:900; font-size:15px;">CHESS STRATEGY</div>
+                    <div style="font-size:11px; color:#999;">Uji kecerdasan strategi Anda</div>
+                </div>
             </div>
-            <div class="game-card-long" onclick="startUrlGame('snake')" style="display:flex; align-items:center; gap:20px; padding:20px; background:#fff; border:2px solid #eee; border-radius:20px; cursor:pointer;">
-                <img src="https://cdn-icons-png.flaticon.com/512/3501/3501170.png" style="width:40px;">
-                <span style="font-weight:900;">CLASSIC SNAKE</span>
+
+            <div class="game-item" onclick="startUrlGame('snake')" style="display:flex; align-items:center; gap:20px; padding:18px; background:white; border-radius:20px; margin-bottom:15px; box-shadow:0 4px 15px rgba(0,0,0,0.05); cursor:pointer;">
+                <img src="https://cdn-icons-png.flaticon.com/512/3501/3501170.png" style="width:45px;">
+                <div>
+                    <div style="font-weight:900; font-size:15px;">CLASSIC SNAKE</div>
+                    <div style="font-size:11px; color:#999;">Game ular legendaris yang adiktif</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="game-frame-container" style="display:none; flex: 1; width:100%; height:100%;">
+    <div id="game-frame-container" style="display:none; flex: 1; width:100%; height:100%; background:#000;">
         <iframe id="game-iframe" src="" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen; gamepad"></iframe>
     </div>
 </div>
@@ -767,13 +779,13 @@ function startUrlGame(type) {
     let url = "";
     
     if (type === 'ludo') {
-        // Ludo Legend - Versi bersih khusus embed
+        // Ludo Multiplayer (Versi ringan & stabil)
         url = "https://html5.gamedistribution.com/669f6e67606e46939f727409f5f08833/";
     } else if (type === 'chess') {
-        // Lichess Training Mode - Elegan dan Minimalis
+        // Catur (Lichess Embed Mode - Professional)
         url = "https://lichess.org/training/frame?theme=brown&bg=light";
     } else if (type === 'snake') {
-        // Google Snake / Pacman - Sangat Elegan dan Ringan
+        // Snake (Google Pacman/Snake - Ringan & Fullscreen)
         url = "https://www.google.com/logos/2010/pacman10-i.html";
     }
 
@@ -782,10 +794,9 @@ function startUrlGame(type) {
         document.getElementById('game-frame-container').style.display = 'block';
         document.getElementById('btn-back-games').style.display = 'block';
         
-        // Animasi Loading Profesional dengan SweetAlert
+        // Animasi loading agar elegan
         Swal.fire({
             title: 'Menyiapkan Arena...',
-            text: 'Silakan tunggu sebentar',
             timer: 1500,
             showConfirmButton: false,
             didOpen: () => { Swal.showLoading(); }
@@ -797,13 +808,13 @@ function startUrlGame(type) {
 
 function openGamesHub() {
     document.getElementById('modal-games').style.display = 'flex';
-    document.body.style.overflow = 'hidden'; 
+    document.body.style.overflow = 'hidden'; // Kunci scroll layar utama
     resetGameMenu();
 }
 
 function closeGames() {
     document.getElementById('modal-games').style.display = 'none';
-    document.body.style.overflow = 'auto'; 
+    document.body.style.overflow = 'auto'; // Aktifkan scroll kembali
     document.getElementById('game-iframe').src = ""; 
 }
 
