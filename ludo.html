@@ -1,68 +1,164 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ludo dyg++</title>
-    <style>
-        :root { --red: #ff4d4d; --blue: #2e86de; --green: #2ecc71; --yellow: #f1c40f; --primary: #1B4332; }
-        body { margin: 0; background: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        #ludo-board { width: 320px; height: 320px; display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); border: 4px solid #333; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .cell { border: 0.1px solid #ddd; background: white; }
-        /* Area Rumah */
-        .home-red { grid-column: 1/7; grid-row: 1/7; background: var(--red); border: 4px solid white; }
-        .home-green { grid-column: 10/16; grid-row: 1/7; background: var(--green); border: 4px solid white; }
-        .home-yellow { grid-column: 1/7; grid-row: 10/16; background: var(--yellow); border: 4px solid white; }
-        .home-blue { grid-column: 10/16; grid-row: 10/16; background: var(--blue); border: 4px solid white; }
-        .center-finish { grid-column: 7/10; grid-row: 7/10; background: #333; color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; }
-        /* Jalur Warna */
-        .path-red { background: var(--red); } .path-green { background: var(--green); }
-        .path-yellow { background: var(--yellow); } .path-blue { background: var(--blue); }
-        /* Kontrol */
-        .controls { margin-top: 20px; text-align: center; }
-        #dice { width: 60px; height: 60px; background: white; border: 3px solid var(--primary); border-radius: 12px; font-size: 30px; font-weight: 900; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 0 var(--primary); transition: 0.1s; margin: 0 auto; }
-        #dice:active { transform: translateY(4px); box-shadow: none; }
-        .status { margin-top: 10px; font-weight: 900; color: var(--primary); }
-    </style>
+<meta charset="UTF-8">
+<title>🎲 LUDO PRO FULL</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{
+    margin:0;
+    background:#0b3d2e;
+    color:#fff;
+    font-family:Segoe UI,Arial;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+.app{
+    width:420px;
+    background:#111;
+    border-radius:18px;
+    box-shadow:0 0 40px #00ffcc;
+    padding:12px;
+}
+h1{text-align:center;color:#00ffcc}
+canvas{
+    background:#fff;
+    border-radius:12px;
+    display:block;
+    margin:auto;
+}
+.controls{text-align:center;margin-top:10px}
+button,select{
+    width:100%;
+    padding:10px;
+    border-radius:10px;
+    border:none;
+    margin-top:6px;
+    font-weight:bold;
+}
+button{background:linear-gradient(135deg,#00ffcc,#00ccff)}
+.dice{font-size:40px;margin:6px}
+.info{font-size:14px}
+</style>
 </head>
+
 <body>
-    <div style="font-weight: 900; color: var(--primary); margin-bottom: 15px;">LUDO ARENA dyg++</div>
-    
-    <div id="ludo-board">
-        <div class="home-red"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="home-green"></div>
-        <div class="cell path-red"></div><div class="cell path-red"></div><div class="cell path-red"></div>
-        <div class="center-finish">FINISH</div>
-        <div class="home-yellow"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="home-blue"></div>
-    </div>
+<div class="app">
+<h1>🎲 LUDO PRO</h1>
 
-    <div class="controls">
-        <div id="dice" onclick="rollDice()">🎲</div>
-        <div class="status" id="status">KLIK DADU UNTUK JALAN</div>
-    </div>
+<select id="mode">
+  <option value="1">1 Player vs AI</option>
+  <option value="2">2 Player</option>
+  <option value="4">4 Player</option>
+</select>
 
-    <script>
-        function rollDice() {
-            const dice = document.getElementById('dice');
-            const status = document.getElementById('status');
-            dice.style.pointerEvents = 'none';
-            
-            let count = 0;
-            let interval = setInterval(() => {
-                dice.innerHTML = Math.floor(Math.random() * 6) + 1;
-                count++;
-                if(count > 10) {
-                    clearInterval(interval);
-                    let result = Math.floor(Math.random() * 6) + 1;
-                    dice.innerHTML = result;
-                    status.innerHTML = "ANDA MENDAPAT ANGKA " + result;
-                    dice.style.pointerEvents = 'auto';
-                    
-                    if(result == 6) {
-                        status.innerHTML = "ANGKA 6! KELUARKAN BIDAK!";
-                    }
-                }
-            }, 50);
-        }
-    </script>
+<button onclick="startGame()">▶ MULAI</button>
+
+<canvas id="board" width="360" height="360"></canvas>
+
+<div class="controls">
+  <div class="dice" id="dice">🎲</div>
+  <button onclick="rollDice()">ROLL</button>
+  <div class="info" id="info"></div>
+</div>
+</div>
+
+<script>
+/* ====== CORE DATA ====== */
+const canvas=document.getElementById("board");
+const ctx=canvas.getContext("2d");
+const diceEl=document.getElementById("dice");
+const info=document.getElementById("info");
+
+const COLORS=["red","green","yellow","blue"];
+const EMOJI=["🔴","🟢","🟡","🔵"];
+const SAFE=[0,8,13,21,26,34,39,47];
+
+const PATH=[
+  [6,0],[7,0],[8,0],[8,1],[8,2],[8,3],[8,4],
+  [9,4],[10,4],[11,4],[12,4],[13,4],
+  [14,5],[14,6],[13,6],[12,6],[11,6],[10,6],[9,6],[8,6],
+  [8,7],[8,8],[7,8],[6,8],[5,8],[4,8],[3,8],[2,8],[1,8],
+  [0,9],[0,10],[1,10],[2,10],[3,10],[4,10],[5,10],[6,10],
+  [6,11],[6,12],[6,13],[6,14],[7,14],[8,14],
+  [8,13],[8,12],[8,11],[9,10],[10,10],[11,10],[12,10],[13,10]
+];
+
+let players=[],current=0,dice=0,mode=1,gameOn=false;
+
+/* ====== GAME START ====== */
+function startGame(){
+  mode=parseInt(document.getElementById("mode").value);
+  players=[];
+  for(let i=0;i<mode;i++){
+    players.push({
+      color:COLORS[i],
+      bot:(mode===1 && i===1),
+      tokens:[-1,-1,-1,-1]
+    });
+  }
+  current=0;
+  gameOn=true;
+  draw();
+  info.textContent=`Giliran ${EMOJI[current]}`;
+}
+
+/* ====== DRAW ====== */
+function draw(){
+  ctx.clearRect(0,0,360,360);
+  ctx.fillStyle="#eee";
+  ctx.fillRect(0,0,360,360);
+
+  PATH.forEach(p=>{
+    ctx.fillStyle="#ccc";
+    ctx.fillRect(p[0]*24,p[1]*24,24,24);
+  });
+
+  players.forEach((pl,i)=>{
+    pl.tokens.forEach(pos=>{
+      if(pos>=0){
+        const p=PATH[(pos+i*13)%52];
+        ctx.fillStyle=pl.color;
+        ctx.beginPath();
+        ctx.arc(p[0]*24+12,p[1]*24+12,9,0,Math.PI*2);
+        ctx.fill();
+      }
+    });
+  });
+}
+
+/* ====== DICE ====== */
+function rollDice(){
+  if(!gameOn)return;
+  dice=Math.floor(Math.random()*6)+1;
+  diceEl.textContent=dice;
+  info.textContent=`${EMOJI[current]} dapat ${dice}`;
+  setTimeout(moveAuto,600);
+}
+
+/* ====== MOVE ====== */
+function moveAuto(){
+  const pl=players[current];
+  let best=-1,bestScore=-999;
+
+  pl.tokens.forEach((pos,i)=>{
+    let score=0;
+    if(pos===-1 && dice===6) score+=50;
+    if(pos>=0) score+=pos;
+    if(score>bestScore){bestScore=score;best=i;}
+  });
+
+  if(best!==-1){
+    if(pl.tokens[best]===-1 && dice===6) pl.tokens[best]=0;
+    else if(pl.tokens[best]>=0) pl.tokens[best]+=dice;
+  }
+
+  if(dice!==6) current=(current+1)%players.length;
+  draw();
+  info.textContent=`Giliran ${EMOJI[current]}`;
+}
+</script>
 </body>
 </html>
