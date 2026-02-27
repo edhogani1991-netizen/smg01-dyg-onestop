@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Snake dyg++</title>
+    <style>
+        :root { --primary: #1B4332; --accent: #F39C12; }
+        body { margin: 0; background: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        #game-container { position: relative; width: 320px; height: 320px; background: #fafafa; border: 4px solid var(--primary); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        canvas { display: block; border-radius: 15px; }
+        .hud { width: 320px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .score-box { background: var(--primary); color: white; padding: 5px 15px; border-radius: 10px; font-weight: 900; }
+        /* Kontroler HP */
+        .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 30px; }
+        .btn { width: 60px; height: 60px; background: #f0f0f0; border: none; border-radius: 15px; font-size: 24px; font-weight: bold; color: var(--primary); cursor: pointer; }
+        .btn:active { background: var(--primary); color: white; transform: scale(0.9); }
+    </style>
+</head>
+<body>
+    <div class="hud">
+        <div style="font-weight: 900; color: var(--primary);">dyg++ SNAKE</div>
+        <div class="score-box">SKOR: <span id="score">0</span></div>
+    </div>
+
+    <div id="game-container">
+        <canvas id="snakeGame" width="320" height="320"></canvas>
+    </div>
+
+    <div class="controls">
+        <div></div><button class="btn" onclick="changeDir('UP')">▲</button><div></div>
+        <button class="btn" onclick="changeDir('LEFT')">◀</button>
+        <button class="btn" onclick="changeDir('DOWN')">▼</button>
+        <button class="btn" onclick="changeDir('RIGHT')">▶</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("snakeGame");
+        const ctx = canvas.getContext("2d");
+        const box = 16;
+        let score = 0;
+        let snake = [{x: 9 * box, y: 10 * box}];
+        let food = {x: Math.floor(Math.random()*19+1)*box, y: Math.floor(Math.random()*19+1)*box};
+        let d;
+
+        function changeDir(dir) {
+            if(dir == 'LEFT' && d != 'RIGHT') d = 'LEFT';
+            else if(dir == 'UP' && d != 'DOWN') d = 'UP';
+            else if(dir == 'RIGHT' && d != 'LEFT') d = 'RIGHT';
+            else if(dir == 'DOWN' && d != 'UP') d = 'DOWN';
+        }
+
+        function draw() {
+            ctx.fillStyle = "#fafafa";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for(let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = (i == 0) ? "#1B4332" : "#2D6A4F";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                ctx.strokeStyle = "#fff";
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            ctx.fillStyle = "#F39C12";
+            ctx.fillRect(food.x, food.y, box, box);
+
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            if( d == "LEFT") snakeX -= box;
+            if( d == "UP") snakeY -= box;
+            if( d == "RIGHT") snakeX += box;
+            if( d == "DOWN") snakeY += box;
+
+            if(snakeX == food.x && snakeY == food.y) {
+                score++;
+                document.getElementById("score").innerHTML = score;
+                food = {x: Math.floor(Math.random()*19+1)*box, y: Math.floor(Math.random()*19+1)*box};
+            } else {
+                snake.pop();
+            }
+
+            let newHead = {x: snakeX, y: snakeY};
+
+            if(snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
+                clearInterval(game);
+                alert("Game Over! Skor Anda: " + score);
+                location.reload();
+            }
+
+            snake.unshift(newHead);
+        }
+
+        function collision(head, array) {
+            for(let i = 0; i < array.length; i++) {
+                if(head.x == array[i].x && head.y == array[i].y) return true;
+            }
+            return false;
+        }
+
+        let game = setInterval(draw, 120);
+    </script>
+</body>
+</html>
