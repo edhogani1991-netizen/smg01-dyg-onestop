@@ -3,39 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DYG FEAST MASTER PRO</title>
+    <title>DYG FEAST MASTER - PRO PATCH</title>
     <style>
         :root {
-            --accent: #00ff99; --danger: #ff3366; --cafe-wall: #2c3e50; --wood: #5d4037;
+            --accent: #00ff99; --danger: #ff3366; --wood: #5d4037;
         }
         * { box-sizing: border-box; touch-action: none; overflow: hidden; }
         body { 
-            margin: 0; background: #1a1a1a; color: #fff; 
+            margin: 0; background: #000; color: #fff; 
             font-family: 'Segoe UI', sans-serif;
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* ANIMASI BACKGROUND CAFE */
         #game-container {
             position: relative; width: 360px; height: 100vh;
-            background: var(--cafe-wall);
-            border-left: 5px solid #333; border-right: 5px solid #333;
+            border-left: 4px solid #333; border-right: 4px solid #333;
             overflow: hidden;
-        }
-        
-        .cafe-window {
-            position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
-            width: 220px; height: 160px; background: #87ceeb;
-            border: 10px solid var(--wood); box-shadow: 0 0 30px rgba(135,206,235,0.3);
-            display: flex; justify-content: center; align-items: center;
-        }
-        .cafe-window::after { content: ''; position: absolute; width: 100%; height: 5px; background: var(--wood); }
-        .cafe-window::before { content: ''; position: absolute; height: 100%; width: 5px; background: var(--wood); }
-
-        .table-top {
-            position: absolute; bottom: 0; width: 100%; height: 120px;
-            background: linear-gradient(to bottom, #4e342e, #2a1b18);
-            border-top: 8px solid #3e2723;
         }
 
         /* UI OVERLAY */
@@ -44,13 +27,12 @@
             display: flex; justify-content: space-between; z-index: 50;
         }
         .status-pill {
-            background: rgba(0,0,0,0.7); padding: 8px 15px; border-radius: 20px;
-            border: 1px solid var(--accent); min-width: 80px; text-align: center;
+            background: rgba(0,0,0,0.8); padding: 8px 15px; border-radius: 20px;
+            border: 2px solid var(--accent); min-width: 90px; text-align: center;
         }
-        .val { font-size: 18px; font-weight: 900; color: var(--accent); display: block; }
-        .lbl { font-size: 9px; text-transform: uppercase; opacity: 0.7; }
+        .val { font-size: 20px; font-weight: 900; color: var(--accent); display: block; }
+        .lbl { font-size: 10px; text-transform: uppercase; opacity: 0.8; letter-spacing: 1px; }
 
-        /* MODAL / MENU */
         .modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.95);
             z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -58,7 +40,7 @@
         .btn-start {
             background: var(--accent); color: #000; border: none; padding: 15px 45px;
             border-radius: 50px; font-weight: 900; font-size: 18px; cursor: pointer;
-            box-shadow: 0 6px 0 #00965e; margin: 10px;
+            box-shadow: 0 6px 0 #00965e; margin: 10px; transition: 0.1s;
         }
         .btn-start:active { transform: translateY(4px); box-shadow: none; }
 
@@ -68,16 +50,13 @@
 <body>
 
     <div id="game-container">
-        <div class="cafe-window"></div>
-        <div class="table-top"></div>
-
         <div class="ui-layer">
             <div class="status-pill">
-                <span class="lbl">Skor</span>
+                <span class="lbl">SCORE</span>
                 <span id="score-text" class="val">0</span>
             </div>
             <div class="status-pill">
-                <span class="lbl">Level</span>
+                <span class="lbl">LEVEL</span>
                 <span id="level-text" class="val">1</span>
             </div>
         </div>
@@ -85,15 +64,15 @@
         <canvas id="gameCanvas"></canvas>
 
         <div id="overlay" class="modal">
-            <h1 style="color:var(--accent); margin:0;">FEAST MASTER</h1>
-            <p style="opacity:0.6; margin-bottom:20px;">Tangkap Makanan Dengan Mulut!</p>
+            <h1 style="color:var(--accent); font-size: 36px; margin: 0;">FEAST MASTER</h1>
+            <p style="opacity:0.6; margin-bottom:25px;">PRO VERSION: BRUTAL DIFFICULTY</p>
             
-            <button class="btn-start" onclick="beginGame('boy')">👦 PAKAI COWOK</button>
-            <button class="btn-start" onclick="beginGame('girl')" style="background:#ff75a0; box-shadow: 0 6px 0 #c2406a;">👧 PAKAI CEWEK</button>
+            <button class="btn-start" onclick="beginGame('boy')">👦 PLAY AS BOY</button>
+            <button class="btn-start" onclick="beginGame('girl')" style="background:#ff75a0; box-shadow: 0 6px 0 #c2406a;">👧 PLAY AS GIRL</button>
 
-            <div style="margin-top:30px; width:250px; background:rgba(255,255,255,0.05); padding:15px; border-radius:15px;">
-                <h4 style="margin:0 0 10px 0; font-size:12px; text-align:center;">🏆 TOP LEADERBOARD</h4>
-                <div id="rank-display" style="font-size:11px;"></div>
+            <div style="margin-top:30px; width:280px; background:rgba(255,255,255,0.05); padding:20px; border-radius:20px; border: 1px solid rgba(255,255,255,0.1);">
+                <h4 style="margin:0 0 10px 0; text-align:center; color:var(--accent)">🏆 TOP RANKINGS</h4>
+                <div id="rank-display" style="font-size:12px;"></div>
             </div>
         </div>
     </div>
@@ -105,9 +84,8 @@
     canvas.height = window.innerHeight;
 
     let score = 0, level = 1, gameActive = false, charType = 'boy';
-    let items = [], particles = [];
-    let playerX = 180;
-    let mouthOpen = 0; 
+    let items = [], particles = [], bgOffset = 0;
+    let playerX = 180, mouthOpen = 0; 
 
     const foodIcons = ['🍔', '🍕', '🍗', '🍟', '🍦', '🍩', '🥤', '🍰'];
 
@@ -120,27 +98,101 @@
         loop();
     }
 
+    // 🌆 BACKGROUND RESTO HIDUP (PATCH)
+    function drawBackground(){
+        bgOffset += 0.05 + level * 0.01;
+
+        // Warna dinding berubah tiap level (makin panas/gelap)
+        ctx.fillStyle = `hsl(${200 - level * 15}, 25%, ${20 - level}%)`;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+
+        // Awan / Asap Cafe
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        for(let i=0; i<4; i++){
+            ctx.beginPath();
+            let cloudX = (bgOffset * 30 + i * 120) % (canvas.width + 100) - 50;
+            ctx.arc(cloudX, 100 + i * 40, 50, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Meja
+        ctx.fillStyle = '#3e2723';
+        ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+    }
+
+    // ⚙️ SPAWN LOGIC (PATCH: BRUTAL DIFFICULTY)
     function spawnLogic() {
         if(!gameActive) return;
-        
-        // TINGKAT KESULITAN: Probabilitas bom naik sesuai level
-        const bombChance = 0.05 + (level * 0.03);
-        const isBomb = Math.random() < bombChance;
-        
+
+        // Probabilitas bom naik s/d 45% di level tinggi
+        const bombChance = Math.min(0.05 + level * 0.045, 0.45);
+        const isActuallyBomb = Math.random() < bombChance;
+
         items.push({
-            x: 30 + Math.random() * (canvas.width - 60),
+            x: 40 + Math.random() * (canvas.width - 80),
             y: -50,
-            icon: isBomb ? '💣' : foodIcons[Math.floor(Math.random() * foodIcons.length)],
-            isBomb: isBomb,
-            // TINGKAT KESULITAN: Kecepatan jatuh naik sesuai level
-            speed: (2.5 + Math.random() * 2) + (level * 0.6),
-            wobble: Math.random() * 0.1,
-            wobbleDir: Math.random() > 0.5 ? 1 : -1
+            icon: isActuallyBomb ? '💣' : foodIcons[Math.floor(Math.random() * foodIcons.length)],
+            isBomb: isActuallyBomb,
+            speed: 3 + (level * 0.8), // Speed naik drastis
+            wobble: 0.2 + (level * 0.03)
         });
 
-        // TINGKAT KESULITAN: Jeda spawn makin cepat
-        let nextSpawn = Math.max(400, 1300 - (level * 120));
+        const nextSpawn = Math.max(250, 1200 - (level * 110));
         setTimeout(spawnLogic, nextSpawn);
+    }
+
+    // 🔁 LOOP (PATCH: FOR LOOP BACKWARDS + FIX COLLISION)
+    function loop() {
+        if(!gameActive) return;
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+
+        drawBackground();
+
+        let nearestDist = 999;
+        const catchY = canvas.height - 130; 
+
+        // Loop mundur (Backwards) agar splice aman
+        for(let i = items.length - 1; i >= 0; i--) {
+            const item = items[i];
+
+            item.y += item.speed;
+            item.x += Math.sin(item.y / 25) * (item.wobble * 15);
+
+            ctx.font = '45px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(item.icon, item.x, item.y);
+
+            // Cek Jarak ke mulut
+            let d = Math.hypot(item.x - playerX, item.y - catchY);
+            if(d < nearestDist) nearestDist = d;
+
+            // Collision Detection Presisi
+            if(item.y > catchY - 30 && item.y < catchY + 30 &&
+               Math.abs(item.x - playerX) < 40) {
+
+                if(item.isBomb){
+                    endGame();
+                    return;
+                } else {
+                    score += 10;
+                    if(score % 100 === 0) level++;
+                    createFx(item.x, item.y);
+                    items.splice(i, 1);
+                    updateStats();
+                }
+            }
+
+            // Hapus jika lewat bawah
+            if(item.y > canvas.height + 60) items.splice(i, 1);
+        }
+
+        // Animasi Mulut (Smooth)
+        let targetOpen = (nearestDist < 180) ? (180 - nearestDist) / 130 : 0;
+        mouthOpen += (Math.min(targetOpen, 1) - mouthOpen) * 0.25;
+
+        drawPlayer();
+        drawFx();
+        requestAnimationFrame(loop);
     }
 
     function drawPlayer() {
@@ -148,101 +200,57 @@
         ctx.save();
         ctx.translate(playerX, headY);
 
-        // RAMBUT (Belakang)
+        // Rambut
         ctx.fillStyle = (charType === 'boy') ? '#3e2723' : '#880e4f';
-        ctx.beginPath();
-        ctx.arc(0, -5, 48, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(0, -10, 50, 0, Math.PI * 2); ctx.fill();
 
-        // MUKA
+        // Muka
         ctx.fillStyle = '#ffdbac';
-        ctx.beginPath();
-        ctx.arc(0, 0, 42, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, 44, 0, Math.PI * 2); ctx.fill();
 
-        // MATA
+        // Mata
         ctx.fillStyle = '#222';
         ctx.beginPath();
-        ctx.arc(-15, -5, 5, 0, Math.PI * 2);
-        ctx.arc(15, -5, 5, 0, Math.PI * 2);
+        ctx.arc(-16, -5, 5, 0, Math.PI * 2);
+        ctx.arc(16, -5, 5, 0, Math.PI * 2);
         ctx.fill();
 
-        // MULUT DINAMIS (Logika Realistic)
+        // Mulut (Dynamic)
         ctx.fillStyle = '#4a1412';
-        // Mulut melebar ke bawah saat mouthOpen (0-1)
-        let mSize = mouthOpen * 38;
+        let mSize = mouthOpen * 40;
         ctx.beginPath();
-        ctx.ellipse(0, 18, 22, 5 + mSize, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, 20, 22, 5 + mSize, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // GIGI (Hanya saat buka)
-        if(mouthOpen > 0.4) {
+        // Gigi (Jika buka lebar)
+        if(mouthOpen > 0.5) {
             ctx.fillStyle = '#fff';
-            ctx.fillRect(-12, 18 - (5 + mSize), 24, 6);
+            ctx.fillRect(-15, 18 - (5 + mSize), 30, 8);
         }
 
         ctx.restore();
     }
 
-    function loop() {
-        if(!gameActive) return;
-        ctx.clearRect(0,0, canvas.width, canvas.height);
-
-        let nearestDist = 999;
-        const catchY = canvas.height - 122; // Posisi pas di mulut
-
-        items.forEach((item, i) => {
-            // Gerak Jatuh + Wobble (Goyang)
-            item.y += item.speed;
-            item.x += Math.sin(item.y / 20) * (item.wobble * 15);
-
-            // Gambar Makanan
-            ctx.font = '42px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(item.icon, item.x, item.y);
-
-            // Jarak ke Mulut
-            let d = Math.hypot(item.x - playerX, item.y - catchY);
-            if(d < nearestDist) nearestDist = d;
-
-            // COLLISION DETECTION (ANTI-BUG)
-            if(item.y > catchY - 20 && item.y < catchY + 30) {
-                if(Math.abs(item.x - playerX) < 35) {
-                    if(item.isBomb) {
-                        endGame();
-                    } else {
-                        score += 10;
-                        if(score % 100 === 0) {
-                            level++;
-                            updateStats();
-                        }
-                        createFx(item.x, item.y);
-                        items.splice(i, 1);
-                        updateStats();
-                    }
-                }
-            }
-
-            // Hapus jika lewat bawah
-            if(item.y > canvas.height + 50) items.splice(i, 1);
-        });
-
-        // Update Animasi Mulut (Buka jika makanan mendekat < 180px)
-        let targetOpen = (nearestDist < 180) ? (180 - nearestDist) / 130 : 0;
-        if(targetOpen > 1) targetOpen = 1;
-        mouthOpen += (targetOpen - mouthOpen) * 0.2;
-
-        drawPlayer();
-        drawFx();
-        requestAnimationFrame(loop);
+    // 🖱️ INPUT FIX (BOUNDING CLIENT RECT)
+    function setPlayerX(clientX){
+        const rect = canvas.getBoundingClientRect();
+        // Konversi koordinat mouse/touch ke koordinat lokal canvas
+        let localX = clientX - rect.left;
+        playerX = Math.max(40, Math.min(localX, canvas.width - 40));
     }
 
+    window.addEventListener('mousemove', e => setPlayerX(e.clientX));
+    window.addEventListener('touchmove', e => {
+        setPlayerX(e.touches[0].clientX);
+        e.preventDefault();
+    }, {passive:false});
+
     function createFx(x, y) {
-        for(let i=0; i<8; i++) {
+        for(let i=0; i<10; i++) {
             particles.push({
                 x, y,
-                vx: (Math.random()-0.5)*8,
-                vy: (Math.random()-0.5)*8,
+                vx: (Math.random()-0.5)*10,
+                vy: (Math.random()-0.5)*10,
                 a: 1
             });
         }
@@ -250,7 +258,7 @@
 
     function drawFx() {
         particles.forEach((p, i) => {
-            p.x += p.vx; p.y += p.vy; p.a -= 0.04;
+            p.x += p.vx; p.y += p.vy; p.a -= 0.05;
             ctx.fillStyle = `rgba(255,255,255,${p.a})`;
             ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
             if(p.a <= 0) particles.splice(i, 1);
@@ -265,31 +273,26 @@
     function endGame() {
         gameActive = false;
         saveLeaderboard(score);
-        alert("💥 MELEDAK! Mulut kamu kena Bom!\nSkor Akhir: " + score);
+        alert("💥 KENA BOM!\nMakanan Berbahaya Masuk Mulut.\nLevel Tercapai: " + level + "\nSkor: " + score);
         location.reload();
     }
 
-    // Input Control
-    window.addEventListener('mousemove', e => playerX = e.clientX);
-    window.addEventListener('touchmove', e => {
-        playerX = e.touches[0].clientX;
-        e.preventDefault();
-    }, {passive: false});
-
     function saveLeaderboard(s) {
-        let h = JSON.parse(localStorage.getItem('dyg_feeder_rank')) || [];
+        let h = JSON.parse(localStorage.getItem('dyg_feeder_pro')) || [];
         h.push({score: s, date: new Date().toLocaleDateString()});
         h.sort((a,b) => b.score - a.score);
-        localStorage.setItem('dyg_feeder_rank', JSON.stringify(h.slice(0, 5)));
+        localStorage.setItem('dyg_feeder_pro', JSON.stringify(h.slice(0, 5)));
     }
 
     function showRank() {
-        const h = JSON.parse(localStorage.getItem('dyg_feeder_rank')) || [];
+        const h = JSON.parse(localStorage.getItem('dyg_feeder_pro')) || [];
         document.getElementById('rank-display').innerHTML = h.map((x,i) => `
-            <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #333">
-                <span>#${i+1}</span><span>${x.date}</span><b>${x.score}</b>
+            <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.1)">
+                <span style="color:var(--accent)">#${i+1}</span>
+                <span>${x.date}</span>
+                <b style="color:white">${x.score}</b>
             </div>
-        `).join('') || "<p style='text-align:center; opacity:0.5'>Belum ada rekor</p>";
+        `).join('') || "<p style='text-align:center; opacity:0.5'>NO RECORD YET</p>";
     }
 
     showRank();
