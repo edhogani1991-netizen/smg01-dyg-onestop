@@ -7,551 +7,83 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-/* Styling Menu Games */
-.games-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    padding: 10px 0;
+/* --- 1. GLOBAL & ROOT --- */
+:root { 
+    --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
+    --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
+    --soft: #F0F0F0; --danger: #D63031; --success: #00B894;
 }
-.game-card {
-    background: #ffffff;
-    padding: 15px 5px;
-    border-radius: 15px;
-    border: 1px solid #ddd;
-    text-align: center;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+body { margin: 0; padding: 0; background: var(--bg); font-family: 'Inter', system-ui, -apple-system, sans-serif; color: var(--text); overflow-x: hidden; }
+
+/* --- 2. HEADER & NAVIGATION --- */
+.header-top { background: var(--primary); padding: 10px 15px 25px; color: white; border-radius: 0 0 25px 25px; position: sticky; top: 0; z-index: 1100; }
+.nav-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.brand-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; letter-spacing: -0.3px; }
+.brand-icon { width: 26px; height: 26px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 10px; font-weight: 800; }
+.queue-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+
+/* --- 3. BANNER & MAP --- */
+.banner-container { margin: -10px 15px 15px; position: relative; overflow: hidden; border-radius: 15px; height: 180px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); background: #eee; }
+#banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
+#banner-track img { min-width: 100%; object-fit: cover; }
+#map { height: 130px; border-radius: 18px; margin: 0 18px 10px; border: 1px solid #EFEFEF; }
+
+/* --- 4. GRID MENU & GAMES --- */
+.menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.menu-item { background: white; border-radius: 16px; padding: 0; border: 1px solid #F0F0F0; display: flex; flex-direction: column; overflow: hidden; }
+.menu-image {
+    width: 100%;
+    height: 180px; /* Atur sesuai selera */
+    object-fit: cover; /* Agar gambar tidak gepeng */
+    border-radius: 12px 12px 0 0; /* Mengikuti radius item menu */
+    display: block;
 }
+.menu-info { padding: 10px; flex: 1; }
+.menu-info h4 { margin: 0 0 4px; font-size: 12px; font-weight: 800; min-height: 32px; line-height: 1.3; }
+.menu-info .price { font-size: 13px; font-weight: 900; color: var(--primary); margin-bottom: 8px; }
+
+.games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 10px 0; }
+.game-card { background: #ffffff; padding: 15px 5px; border-radius: 15px; border: 1px solid #ddd; text-align: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 .game-card:active { transform: scale(0.9); background: #f0f0f0; }
 .game-card img { width: 35px; height: 35px; margin-bottom: 8px; }
 .game-card span { display: block; font-size: 11px; font-weight: 900; color: var(--dark); }
 
-#game-frame-container {
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    min-height: 500px; /* Memberikan tinggi minimal */
-    background: #fff; /* Pastikan background putih, bukan hitam */
-}
+/* --- 5. SERVICES, CHIPS, QUANTITY & FORMS --- */
+.service-mode { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 15px 12px; justify-items: center; }
+.service-btn { width: 100%; max-width: 80px; display: flex; flex-direction: column; align-items: center; cursor: pointer; position: relative; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.service-btn .icon { width: 70px; height: 70px; background: #FFFFFF; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; margin-bottom: 8px; position: relative; animation: floatIcon 3s ease-in-out infinite; }
+.service-icon-img { width: 170%; height: 170%; object-fit: contain; }
+.service-btn.active .icon { background: linear-gradient(135deg, #1B4332, #2D6A4F); box-shadow: 0 15px 25px rgba(27,67,50,0.3); transform: scale(1.1) translateY(-5px); }
+.service-btn.active .service-icon-img { filter: brightness(0) invert(1); transform: scale(1.1); }
+.service-btn.disabled .service-icon-img { filter: grayscale(1); opacity: 0.5; }
 
-#game-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-.info-btn {
-    background: transparent;
-    color: var(--primary);
-    border: 1px solid var(--primary);
-    border-radius: 8px;
-    padding: 2px 8px;
-    font-size: 10px; /* Ukuran kecil agar tidak memenuhi layar */
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 4px;
-    display: inline-block;
-    transition: all 0.2s;
-}
+.variant-grid { background: #fdfdfd; padding: 12px; border: 1px dashed var(--primary); border-radius: 12px; margin-top: 10px; animation: fadeIn 0.3s ease; }
+.chip { background: white; border: 1.5px solid #ddd; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.chip.selected { background: var(--primary) !important; color: white !important; border-color: var(--primary) !important; }
 
-.info-btn:active {
-    background: var(--primary);
-    color: white;
-}
-/* Modal Pop-up Deskripsi */
-.desc-modal {
-    display: none; /* Tersembunyi saat awal */
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 99999; /* Pastikan angkanya sangat besar */
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
+.qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: 8px; }
+.qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
+.form-group input, .form-group textarea { width: 100%; padding: 5px 7px; font-size: 10.5px; border-radius: 6px; border: 1px solid #E2E2E2; }
 
-.desc-card {
-    background: white;
-    width: 100%;
-    max-width: 320px;
-    padding: 25px;
-    border-radius: 25px;
-    text-align: center;
-    animation: popScale 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-@keyframes popScale {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
+/* --- 6. MODALS, SUMMARY & OVERLAYS --- */
+.desc-modal, .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; }
+.desc-card, .modal-card { background: white; width: 100%; max-width: 320px; padding: 25px; border-radius: 25px; text-align: center; }
+.order-summary-mini { position: fixed; bottom: -100%; left: 0; right: 0; background: white; border-radius: 25px 25px 0 0; box-shadow: 0 -10px 35px rgba(0,0,0,0.15); z-index: 999; transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+.order-summary-mini.active { bottom: 0; }
+.bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 20px 25px; border-radius: 25px 25px 0 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
 
-        :root { 
-            --primary: #1B4332; --accent: #F39C12; --bg: #F8FBF8; 
-            --surface: #FFFFFF; --text: #2D3436; --muted: #636E72;
-            --soft: #F0F0F0; --danger: #D63031; --success: #00B894;
-        }
+/* --- 7. ANIMATIONS & UTILITIES --- */
+@keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+@keyframes popScale { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-yellow { 0% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); } 100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); } }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { 
-            margin: 0; padding: 0; background: var(--bg); 
-            font-family: 'Inter', system-ui, -apple-system, sans-serif; color: var(--text); 
-            overflow-x: hidden;
-        }
-.header-top { 
-    background: var(--primary); 
-    padding: 10px 15px 25px; 
-    color: white; 
-    border-radius: 0 0 25px 25px;
-    position: sticky;
-    top: 0;
-    z-index: 1100;
-}
-
-.nav-row { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 5px; /* Jarak dikurangi */
-}
-        .brand-logo { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 6px; letter-spacing: -0.3px; }
-        .brand-icon { width: 26px; height: 26px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 10px; font-weight: 800; }
-        .queue-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
-
-        /* TIMPA KODE LAMA ANDA DENGAN INI */
-.banner-container { 
-    margin: -10px 15px 15px; /* Margin atas dikurangi supaya naik */
-    position: relative; 
-    overflow: hidden; 
-    border-radius: 15px; 
-    height: 180px; /* Ditambah dari 145px ke 180px agar gambar lebih besar */
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
-    background: #eee; 
-}
-        #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
-        #banner-track img { min-width: 100%; object-fit: cover; }
-.mode-item.disabled {
-    background: #F1F1F1;
-    color: #AAA;
-    border-color: #DDD;
-    pointer-events: auto;
-    position: relative;
-}
-/* TAMBAHKAN KODE INI */
-.mode-selection { /* Pastikan nama class pembungkus tombol Anda benar */
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Membagi 3 kolom sama rata */
-    gap: 8px;
-    padding: 0 18px;
-}
-
-.mode-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 45px; /* Tinggi seragam agar presisi */
-    font-size: 11px;
-    border-radius: 8px;
-    padding: 5px;
-}
-.mode-item.disabled::after {
-    content: "Di luar jangkauan";
-    position: absolute;
-    bottom: -14px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 8px;
-    color: #999;
-}
-.mode-container.secondary {
-    padding-top: 0;
-    margin-top: -6px;
-}
-
-.mode-item.alt {
-    background: #F6F6F6;
-    border: 1px dashed #DDD;
-    color: var(--muted);
-    font-weight: 800;
-}
-.mode-item.alt:active {
-    transform: scale(0.97);
-}
-
-        .mode-container { display: flex; gap: 8px; overflow-x: auto; padding: 0 18px 12px; scrollbar-width: none; }
-        .mode-item { white-space: nowrap; padding: 10px 16px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1.2px solid #EFEFEF; cursor: pointer; }
-        .mode-item.active { background: #E8F5E9; border-color: var(--success); color: var(--primary); }
-
-        #map { height: 130px; border-radius: 18px; margin: 0 18px 10px; border: 1px solid #EFEFEF; }
-
-        /* --- Perubahan Area Merah (Input Form) --- */
-        .main-content { padding: 0 18px 180px; }
-        .input-card { background: white; border-radius: 14px; padding: 7px 14px; margin-bottom: 4px; border: 1.2px solid #F0F0F0; transition: all 0.3s ease; }
-        .input-card label { display: block; font-size: 9px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 1px; letter-spacing: 0.5px; }
-        .input-card input, .input-card textarea { width: 100%; border: none; font-size: 13px; font-weight: 600; outline: none; background: transparent; color: var(--text); }
-        .input-card input::placeholder, .input-card textarea::placeholder { font-weight: 400; color: #BBB; }
-
-/* --- Validasi & Animasi --- */
-.error-field { 
-    border: 2px solid var(--danger) !important; 
-    background-color: #FFF5F5 !important; 
-    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-}
-
-@keyframes shake { 
-    0%, 100% { transform: translateX(0); } 
-    25% { transform: translateX(-6px); } 
-    50% { transform: translateX(6px); } 
-    75% { transform: translateX(-6px); } 
-}
-
-.pulse-attention {
-    animation: pulse-yellow 1.5s infinite;
-    border: 2px solid var(--accent) !important;
-}
-
-@keyframes pulse-yellow {
-    0% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
-}
-
-mark {
-    background-color: #FFEB3B;
-    color: black;
-    padding: 0 2px;
-    border-radius: 4px;
-    font-weight: 800;
-}
-        .search-wrapper { margin: 12px 0; background: white; border-radius: 12px; border: 1.2px solid var(--soft); padding: 0 10px; display: flex; align-items: center; }
-        #searchMenu { width: 100%; padding: 8px 0; border: none; font-size: 13px; background: transparent; }
-
-        .category-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-bottom: 12px; }
-        .tab { padding: 8px 15px; border-radius: 10px; background: white; font-size: 12px; font-weight: 700; border: 1px solid #F0F0F0; white-space: nowrap; }
-        .tab.active { background: var(--primary); color: white; }
-
-        .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.menu-image {
-    width: 100%; height: 120px; object-fit: cover; display: block;
-    background: #f8f8f8; /* Placeholder */
-        .menu-item { background: white; border-radius: 16px; padding: 10px; border: 1px solid #F0F0F0; display: flex; flex-direction: column; justify-content: space-between; }
-        .menu-info h4 { margin: 0 0 4px; font-size: 12px; font-weight: 800; min-height: 32px; line-height: 1.3; }
-        .menu-info .price { font-size: 13px; font-weight: 900; color: var(--primary); margin-bottom: 8px; }
-/* Container utama area varian */
-.variant-grid {
-    background: #fdfdfd;
-    padding: 12px;
-    border: 1px dashed var(--primary); /* Garis putus-putus hijau agar terlihat spesial */
-    border-radius: 12px;
-    margin-top: 10px;
-    animation: fadeIn 0.3s ease; /* Efek muncul halus */
-}
-
-.variant-group { 
-    margin-bottom: 10px; 
-}
-
-.variant-group span { 
-    font-size: 11px; 
-    font-weight: 800; 
-    color: var(--primary); 
-    display: block; 
-    margin-bottom: 6px;
-    text-transform: uppercase;
-}
-
-/* Container tombol-tombolnya */
-.chips-area { 
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 8px; 
-}
-
-/* Gaya tombol (Chip) */
-.chip {
-    background: white;
-    border: 1.5px solid #ddd;
-    color: var(--text);
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-/* Efek saat ditekan sebentar */
-.chip:active {
-    transform: scale(0.95);
-}
-
-/* Animasi muncul */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-/* Gaya tombol (Chip) saat dipilih */
-.chip.selected {
-    background: var(--primary) !important;
-    color: white !important;
-    border-color: var(--primary) !important;
-}
-
-/* Badge angka di samping teks varian */
-.variant-badge {
-    background: var(--accent);
-    color: white;
-    font-size: 9px;
-    padding: 2px 5px;
-    border-radius: 50%;
-    margin-left: 5px;
-    vertical-align: middle;
-    display: inline-block;
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
-}
-.shake-ani {
-    animation: shake 0.2s ease-in-out 0s 3;
-}
-
-        .qty-box { display: flex; align-items: center; justify-content: space-between; background: #F8F9FA; border-radius: 8px; padding: 4px; margin-top: 8px; }
-        .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: var(--primary); color: white; font-weight: 900; }
-        .qty-btn:disabled { background: #EEE; color: #CCC; }
-
-        .order-summary-mini {
-            position: fixed; bottom: -100%; left: 0; right: 0; 
-            background: white; border-radius: 25px 25px 0 0; 
-            box-shadow: 0 -10px 35px rgba(0,0,0,0.15); 
-            z-index: 999; max-height: 75vh; border-top: 1px solid #eee;
-            transition: bottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; flex-direction: column;
-        }
-        .order-summary-mini.active { bottom: 0; }
-        
-        .sheet-header { padding: 12px 18px; text-align: center; background: white; border-radius: 25px 25px 0 0; border-bottom: 1px solid #F5F5F5; }
-        .sheet-handle { width: 40px; height: 4px; background: #E0E0E0; border-radius: 10px; margin: 0 auto 8px; }
-        .sheet-title { font-size: 11px; font-weight: 800; color: var(--muted); letter-spacing: 0.8px; }
-
-        .summary-scroll { flex: 1; overflow-y: auto; padding: 8px 18px 140px; }
-        .summary-item { background: white; padding: 12px 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #F5F5F5; }
-
-        .item-detail-name { flex: 1; margin-right: 8px; }
-        .item-detail-name b { display: block; font-size: 13px; margin-bottom: 2px; }
-        .item-detail-name span { font-size: 10px; color: var(--muted); }
-
-        .mini-qty-box { display: flex; align-items: center; gap: 10px; background: #F8F9FA; padding: 5px 8px; border-radius: 10px; }
-        .mini-qty-btn { width: 26px; height: 26px; border-radius: 7px; border: none; background: white; color: var(--primary); font-weight: 800; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
-
-        #summaryOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 998; backdrop-filter: blur(2px); }
-
-        .bottom-bar { 
-            position: fixed; bottom: 0; left: 0; right: 0; background: white; 
-            padding: 12px 20px 25px; border-radius: 25px 25px 0 0; 
-            box-shadow: 0 -8px 25px rgba(0,0,0,0.08); z-index: 1000; 
-            display: flex; justify-content: space-between; align-items: center; 
-        }
-        
-        .swipe-hint {
-            position: absolute; top: -18px; left: 50%; transform: translateX(-50%);
-            background: var(--primary); color: white; padding: 3px 10px; border-radius: 15px;
-            font-size: 9px; font-weight: 700; display: none;
-        }
-
-        .price-total { font-size: 18px; font-weight: 900; color: var(--primary); }
-        .dist-info { font-size: 8px; color: var(--muted); font-weight: 700; display: none; margin-bottom: 1px; text-transform: uppercase; }
-        .ongkir-tag { font-size: 10px; color: var(--success); font-weight: 800; display: none; margin-bottom: 2px; }
-        .order-btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; font-size: 13px; }
-        .order-btn:disabled { opacity: 0.5; }
-        
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-card { background: white; width: 100%; max-width: 360px; padding: 25px; border-radius: 20px; text-align: center; }
-.summary-item.removing {
-    opacity: 0;
-    transform: translateX(-20px);
-    transition: all 0.25s ease;
-}
-
-/* Efek stabilo kuning untuk teks yang cocok dengan pencarian */
-mark {
-    background-color: #FFEB3B; /* Warna kuning stabilo */
-    color: black;
-    padding: 0 2px;
-    border-radius: 2px;
-    font-weight: 800;
-}
-/* Animasi tombol saat ditekan (Touch Effect) */
-.order-btn:active, .modal-card button:active {
-    transform: scale(0.92); /* Mengecil sedikit */
-    filter: brightness(1.2); /* Menjadi lebih terang */
-    transition: transform 0.1s ease;
-}
-
-/* Tambahan agar transisi kembali ke ukuran normal tidak kaku */
-.order-btn {
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-/* === SUPER-APP GRID STYLE (4 Tombol per Baris) === */
-.service-mode {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    padding: 15px 12px;
-    justify-items: center;
-}
-
-.service-btn {
-    width: 100%;
-    max-width: 80px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative; /* Penting untuk posisi badge */
-}
-
-/* CONTAINER ICON */
-.service-btn .icon {
-    width: 70px;
-    height: 70px;
-    background: #FFFFFF;
-    border-radius: 20px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.06);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 8px;
-    position: relative;
-    overflow: visible;
-    transition: all 0.3s ease;
-    animation: floatIcon 3s ease-in-out infinite;
-}
-
-.service-icon-img {
-    width: 170%; /* Ukuran ideal agar tidak 'bocor' keluar kotak */
-    height: 170%;
-    object-fit: contain;
-    transition: transform 0.3s ease;
-}
-
-/* TEKS DI BAWAH ICON */
-.service-btn span {
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--text);
-    text-align: center;
-    white-space: nowrap;
-    letter-spacing: -0.2px;
-}
-
-/* === EFEK STATE (AKTIF & DISABLED) === */
-.service-btn.active .icon {
-    background: linear-gradient(135deg, #1B4332, #2D6A4F);
-    box-shadow: 0 15px 25px rgba(27,67,50,0.3);
-    transform: scale(1.1) translateY(-5px);
-}
-
-.service-btn.active .service-icon-img {
-    filter: brightness(0) invert(1);
-    transform: scale(1.1);
-}
-
-.service-btn.active span {
-    color: var(--primary);
-    font-weight: 900;
-}
-
-.service-btn.disabled .service-icon-img {
-    filter: grayscale(1);
-    opacity: 0.5;
-}
-
-.service-btn:active { transform: scale(0.9); }
-
-/* === BADGE SYSTEM (RINGKAS & CENTER) === */
-/* Properti umum untuk semua badge */
-.service-btn.disabled.too-far::after,
-.service-btn.disabled.too-close::after {
-    position: absolute;
-    bottom: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-size: 7px;
-    font-weight: 900;
-    padding: 3px 6px;
-    border-radius: 8px;
-    white-space: nowrap;
-    z-index: 10;
-    letter-spacing: 0.5px;
-    border: 1.5px solid white;
-    animation: badgePop 0.3s ease-out forwards;
-}
-
-/* Pembeda warna & isi konten */
-.service-btn.disabled.too-far::after {
-    content: "TERLALU JAUH";
-    background: #e74c3c;
-    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.4);
-}
-
-.service-btn.disabled.too-close::after {
-    content: "TERLALU DEKAT";
-    background: #f39c12;
-    box-shadow: 0 4px 8px rgba(243, 156, 18, 0.4);
-}
-
-/* === ANIMASI === */
-@keyframes floatIcon {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
-}
-
-@keyframes badgePop {
-    0% { transform: translateX(-50%) scale(0) translateY(10px); opacity: 0; }
-    100% { transform: translateX(-50%) scale(1) translateY(0); opacity: 1; }
-}
-/* === FORM EXTRA RINGKAS === */
-.form-group {
-    margin-bottom: 4px;
-}
-
-.form-group label {
-    font-size: 10px;
-    font-weight: 700;
-    margin-bottom: 2px;
-    display: block;
-    color: #777;
-}
-
-.form-group input,
-.form-group textarea {
-    width: 100%;
-    padding: 5px 7px;
-    font-size: 10.5px;
-    border-radius: 6px;
-    border: 1px solid #E2E2E2;
-    background: #FFFFFF;
-}
-
-/* textarea alamat jangan tinggi */
-.form-group textarea {
-    resize: none;
-}
-
-/* fokus tetap kelihatan */
-.form-group input:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
-}
-
-    </style>
+.shake-ani { animation: shake 0.2s ease-in-out 3; }
+.error-field { border: 2px solid var(--danger) !important; background-color: #FFF5F5 !important; animation: shake 0.4s both; }
+mark { background-color: #FFEB3B; color: black; padding: 0 2px; border-radius: 4px; font-weight: 800; }
+    </style>
 </head>
 <body>
 
