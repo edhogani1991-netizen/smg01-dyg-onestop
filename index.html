@@ -554,7 +554,52 @@ mark {
     border-color: var(--accent);
     box-shadow: 0 0 0 1.5px rgba(243,156,18,0.15);
 }
+/* ===== MODAL V2 ===== */
 
+.fullscreen-modal{
+position:fixed;
+inset:0;
+background:white;
+z-index:9999;
+display:none;
+flex-direction:column;
+overflow:auto;
+}
+
+.modal-header{
+padding:16px;
+font-weight:800;
+display:flex;
+justify-content:space-between;
+border-bottom:1px solid #eee;
+background:white;
+position:sticky;
+top:0;
+z-index:10;
+}
+
+.category-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:12px;
+padding:20px;
+}
+
+.category-card{
+background:white;
+border:1px solid #eee;
+border-radius:14px;
+padding:18px 10px;
+font-size:12px;
+font-weight:800;
+text-align:center;
+cursor:pointer;
+box-shadow:0 4px 8px rgba(0,0,0,0.05);
+}
+
+.category-card:active{
+transform:scale(0.95);
+}
     </style>
 </head>
 <body>
@@ -1575,6 +1620,7 @@ async function submitOrder() {
     }
 
 function changeMode(m, el) {
+
     // PROTEKSI: Cek alasan tombol di-disable
     if (el.classList.contains('too-far')) {
         return alert("Jarak Anda terlalu jauh untuk layanan Dine-In.");
@@ -1612,7 +1658,6 @@ function changeMode(m, el) {
         if(boxKatering) {
             boxKatering.style.display = 'block'; 
             
-            // Set Tanggal Otomatis (H+1)
             const inputTgl = document.getElementById('tglKatering');
             if(inputTgl) {
                 const besok = new Date();
@@ -1621,6 +1666,11 @@ function changeMode(m, el) {
                 inputTgl.value = besok.toISOString().split('T')[0];
             }
         }
+    }
+
+    // ⭐ TAMBAHAN V2
+    if(typeof openCategoryModal === "function"){
+        openCategoryModal();
     }
 
     if (typeof refreshUI === "function") refreshUI();
@@ -1836,6 +1886,120 @@ document.addEventListener('click', function(e) {
     // Jalankan fungsi popup
     openDesc(nama, desc);
 });
+/* ===== V2 CATEGORY SYSTEM ===== */
+
+let currentService=null
+
+function selectService(mode){
+
+currentService=mode
+
+openCategoryModal()
+
+}
+
+function openCategoryModal(){
+
+loadCategories()
+
+document.getElementById("categoryModal").style.display="flex"
+
+}
+
+function closeCategory(){
+
+document.getElementById("categoryModal").style.display="none"
+
+}
+
+function closeMenu(){
+
+document.getElementById("menuModal").style.display="none"
+
+}
+
+/* LOAD CATEGORY DARI CSV MENU */
+
+function loadCategories(){
+
+if(!window.menuData) return
+
+let cats=[...new Set(menuData.map(m=>m.kategori))]
+
+let html=""
+
+cats.forEach(cat=>{
+
+html+=`
+<div class="category-card" onclick="openMenu('${cat}')">
+${cat}
+</div>
+`
+
+})
+
+document.getElementById("categoryGrid").innerHTML=html
+
+}
+
+/* BUKA MENU PER KATEGORI */
+
+function openMenu(category){
+
+document.getElementById("menuTitle").innerText=category
+
+let filtered=menuData.filter(m=>m.kategori==category)
+
+let html=""
+
+filtered.forEach(menu=>{
+
+html+=`
+
+<div class="menu-item">
+
+<img src="${menu.gambar}" class="menu-img">
+
+<div class="menu-info">
+
+<h4>${menu.nama}</h4>
+
+<div class="price">${menu.harga}</div>
+
+</div>
+
+</div>
+
+`
+
+})
+
+document.getElementById("menuList").innerHTML=html
+
+document.getElementById("menuModal").style.display="flex"
+
+}
+function openCategoryModal(){
+
+    if(typeof loadCategories === "function"){
+        loadCategories()
+    }
+
+    const modal = document.getElementById("categoryModal")
+    if(modal){
+        modal.style.display="flex"
+    }
+
+}
+
+function closeCategory(){
+
+    const modal = document.getElementById("categoryModal")
+    if(modal){
+        modal.style.display="none"
+    }
+
+}
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
@@ -1907,5 +2071,27 @@ document.addEventListener('click', function(e) {
     </div>
 </div>
 // Fungsi untuk mengambil angka antrean terbaru dari server
+<!-- MODAL KATEGORI -->
+<div id="categoryModal" class="fullscreen-modal">
+
+<div class="modal-header">
+<span>Pilih Kategori</span>
+<button onclick="closeCategory()">✕</button>
+</div>
+
+<div id="categoryGrid" class="category-grid"></div>
+
+</div>
+<!-- MODAL MENU -->
+<div id="menuModal" class="fullscreen-modal">
+
+<div class="modal-header">
+<span id="menuTitle"></span>
+<button onclick="closeMenu()">✕</button>
+</div>
+
+<div id="menuList" class="menu-grid"></div>
+
+</div>
 </body>
 </html>
