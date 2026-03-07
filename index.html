@@ -7,7 +7,13 @@
     <title>cloudkitchen.dyg++ | Pemesanan Online</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
-
+.menu-img{
+    width:100%;
+    height:110px;
+    object-fit:cover;
+    border-radius:12px;
+    margin-bottom:8px;
+}
 /* Styling Menu Games */
 .games-grid {
     display: grid;
@@ -1098,12 +1104,13 @@ async function startApp() {
             const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
             
             return { 
-                id: 'm'+i, 
-                kat: cols[0] || '', 
-                nama: cols[1] || '', 
-                harga: parseInt(cols[2]) || 0,
-                deskripsi: cols[3] || '' // <--- TAMBAHKAN INI (Kolom ke-4 di CSV)
-            };
+    id: 'm'+i, 
+    kat: cols[0] || '', 
+    nama: cols[1] || '', 
+    harga: parseInt(cols[2]) || 0,
+    deskripsi: cols[3] || '',
+    foto: cols[4] || ''
+};
         }).filter(m => m.nama);
         
         renderTabs();
@@ -1140,7 +1147,10 @@ function renderMenu(filterKat = 'ALL') {
 
 return `
         <div class="menu-item">
-            <div class="menu-info">
+
+    ${m.foto ? `<img src="${m.foto}" class="menu-img">` : ''}
+
+    <div class="menu-info">
                 <h4 data-name="${m.nama}">${m.nama}</h4>
                 <div class="price">Rp ${m.harga.toLocaleString()}</div>
                 
