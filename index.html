@@ -827,19 +827,6 @@ function forceSelectMode(){
 
     return true;
 }
-function unlockApp(){
-
-    const overlay = document.getElementById("lockOverlay");
-    if(overlay){
-        overlay.style.display = "none";
-    }
-
-    const layanan = document.getElementById("targetLayanan");
-    if(layanan){
-        layanan.classList.remove("mode-pulse");
-    }
-
-}
 let generatedOTP = null;
 function checkModeSelected() {
     if (!currentMode) {
@@ -1114,7 +1101,6 @@ window.onclick = function(event) {
 }
 
 async function startApp() {
-
     const startBtn = document.querySelector('#welcome-overlay button');
     if (startBtn) {
         startBtn.innerHTML = "⌛ Menyiapkan...";
@@ -1122,16 +1108,15 @@ async function startApp() {
         startBtn.style.pointerEvents = "none";
     }
 
-    // ✅ Banner langsung
+    // ✅ 1. BANNER LANGSUNG (ANTI BLANK)
     initBanner();
 
-    // ✅ Load data paralel
+    // ✅ 2. LOAD DATA PARALEL
     loadMenu();
     syncQueue(); 
 
-    // ✅ GPS
+    // ✅ 3. GPS (BOLEH LAMBAT / GAGAL)
     navigator.geolocation.getCurrentPosition(async (pos) => {
-
         const { latitude, longitude } = pos.coords;
         window.userLat = latitude;
         window.userLng = longitude;
@@ -1144,51 +1129,39 @@ async function startApp() {
 
         const straightLineDist = L.latLng(latitude, longitude)
             .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-
-        userDist = straightLineDist * 1.45;
+        userDist = straightLineDist * 1.45; 
 
         if (userDist > CONFIG.RADIUS_DINE_IN) {
-            dineBtn?.classList.add('disabled','too-far');
+            dineBtn?.classList.add('disabled', 'too-far');
         }
 
         const MIN_DELIVERY_DIST = 200;
         if (userDist < MIN_DELIVERY_DIST) {
-            deliBtn?.classList.add('disabled','too-close');
+            deliBtn?.classList.add('disabled', 'too-close');
         }
 
         initMap(latitude, longitude);
 
         document.getElementById("noAntrean").innerText = "#" + antrean;
-
-        // ✅ Tutup welcome
         document.getElementById('welcome-overlay').style.display = 'none';
 
-        // ✅ Aktifkan animasi layanan
-        document.getElementById("targetLayanan").classList.add("mode-pulse");
-
         currentMode = null;
-
         document.querySelectorAll('.service-btn')
             .forEach(btn => btn.classList.remove('active'));
 
     }, (err) => {
-
+        // ❗ GPS GAGAL → BANNER TETAP ADA
         alert("Gagal akses lokasi. Harap aktifkan GPS.");
 
         document.getElementById("noAntrean").innerText = "#" + antrean;
-
         document.getElementById('welcome-overlay').style.display = 'none';
 
-        // ✅ tetap kasih animasi layanan
-        document.getElementById("targetLayanan").classList.add("mode-pulse");
-
         currentMode = null;
-
         document.querySelectorAll('.service-btn')
             .forEach(btn => btn.classList.remove('active'));
-
     }, { enableHighAccuracy: true });
 }
+
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
@@ -1699,11 +1672,8 @@ function changeMode(m, el) {
         return alert("Jarak Anda sangat dekat (di bawah 200m). Silakan gunakan layanan Dine-In atau Take Away.");
     }
 
-   // 2. SET MODE AKTIF
-currentMode = m;
-
-// buka kunci aplikasi
-unlockApp();
+    // 2. SET MODE AKTIF
+    currentMode = m;
 
     // 3. UI: Beri warna hijau pada tombol yang dipilih
     document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
@@ -1995,41 +1965,6 @@ if (inputNama) {
         }
     });
 }
-document.addEventListener("click", function(e){
-
-    const welcome = document.getElementById("welcome-overlay");
-
-    // Jika masih di halaman welcome → jangan blok klik
-    if(welcome && welcome.style.display !== "none"){
-        return;
-    }
-
-    if(!currentMode){
-
-        const layanan = document.getElementById("targetLayanan");
-
-        if(layanan && !layanan.contains(e.target)){
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            forceSelectMode();
-        }
-
-    }
-
-}, true);
-
-
-document.addEventListener("DOMContentLoaded", function(){
-
-    const layanan = document.getElementById("targetLayanan");
-
-    if(layanan){
-        layanan.classList.add("mode-pulse");
-    }
-
-});
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
