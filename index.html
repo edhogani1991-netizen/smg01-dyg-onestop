@@ -1114,6 +1114,7 @@ window.onclick = function(event) {
 }
 
 async function startApp() {
+
     const startBtn = document.querySelector('#welcome-overlay button');
     if (startBtn) {
         startBtn.innerHTML = "⌛ Menyiapkan...";
@@ -1121,15 +1122,16 @@ async function startApp() {
         startBtn.style.pointerEvents = "none";
     }
 
-    // ✅ 1. BANNER LANGSUNG (ANTI BLANK)
+    // ✅ Banner langsung
     initBanner();
 
-    // ✅ 2. LOAD DATA PARALEL
+    // ✅ Load data paralel
     loadMenu();
     syncQueue(); 
 
-    // ✅ 3. GPS (BOLEH LAMBAT / GAGAL)
+    // ✅ GPS
     navigator.geolocation.getCurrentPosition(async (pos) => {
+
         const { latitude, longitude } = pos.coords;
         window.userLat = latitude;
         window.userLng = longitude;
@@ -1142,39 +1144,51 @@ async function startApp() {
 
         const straightLineDist = L.latLng(latitude, longitude)
             .distanceTo(L.latLng(CONFIG.WARUNG_LOCATION));
-        userDist = straightLineDist * 1.45; 
+
+        userDist = straightLineDist * 1.45;
 
         if (userDist > CONFIG.RADIUS_DINE_IN) {
-            dineBtn?.classList.add('disabled', 'too-far');
+            dineBtn?.classList.add('disabled','too-far');
         }
 
         const MIN_DELIVERY_DIST = 200;
         if (userDist < MIN_DELIVERY_DIST) {
-            deliBtn?.classList.add('disabled', 'too-close');
+            deliBtn?.classList.add('disabled','too-close');
         }
 
         initMap(latitude, longitude);
 
         document.getElementById("noAntrean").innerText = "#" + antrean;
+
+        // ✅ Tutup welcome
         document.getElementById('welcome-overlay').style.display = 'none';
 
+        // ✅ Aktifkan animasi layanan
+        document.getElementById("targetLayanan").classList.add("mode-pulse");
+
         currentMode = null;
+
         document.querySelectorAll('.service-btn')
             .forEach(btn => btn.classList.remove('active'));
 
     }, (err) => {
-        // ❗ GPS GAGAL → BANNER TETAP ADA
+
         alert("Gagal akses lokasi. Harap aktifkan GPS.");
 
         document.getElementById("noAntrean").innerText = "#" + antrean;
+
         document.getElementById('welcome-overlay').style.display = 'none';
 
+        // ✅ tetap kasih animasi layanan
+        document.getElementById("targetLayanan").classList.add("mode-pulse");
+
         currentMode = null;
+
         document.querySelectorAll('.service-btn')
             .forEach(btn => btn.classList.remove('active'));
+
     }, { enableHighAccuracy: true });
 }
-
 
     function calculateOngkir(distMeter) {
         const km = distMeter / 1000;
@@ -1983,11 +1997,18 @@ if (inputNama) {
 }
 document.addEventListener("click", function(e){
 
+    const welcome = document.getElementById("welcome-overlay");
+
+    // Jika masih di halaman welcome → jangan blok klik
+    if(welcome && welcome.style.display !== "none"){
+        return;
+    }
+
     if(!currentMode){
 
         const layanan = document.getElementById("targetLayanan");
 
-        if(!layanan.contains(e.target)){
+        if(layanan && !layanan.contains(e.target)){
 
             e.preventDefault();
             e.stopPropagation();
@@ -1998,19 +2019,14 @@ document.addEventListener("click", function(e){
     }
 
 }, true);
+
+
 document.addEventListener("DOMContentLoaded", function(){
 
     const layanan = document.getElementById("targetLayanan");
 
     if(layanan){
         layanan.classList.add("mode-pulse");
-
-        setTimeout(()=>{
-            layanan.scrollIntoView({
-                behavior:"smooth",
-                block:"center"
-            });
-        },400);
     }
 
 });
