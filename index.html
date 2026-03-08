@@ -652,7 +652,7 @@ mark {
         <span>Info Promo</span>
     </div>
 
-    <div class="service-btn secondary" onclick="openComingSoon()">
+    <div class="service-btn secondary" onclick="onclick="openMitraOptions()">
         <div class="icon"><img src="jadi-mitra3.png" class="service-icon-img"></div>
         <span>Jadi Mitra</span>
     </div>
@@ -1939,6 +1939,59 @@ if (inputNama) {
                 confirmButtonText: 'Oke, Saya Mengerti',
                 confirmButtonColor: '#1B4332'
             });
+        }
+    });
+}
+function openMitraOptions() {
+    Swal.fire({
+        title: 'Pilih Kategori Mitra',
+        text: 'Silakan pilih jenis kemitraan yang Anda inginkan:',
+        showConfirmButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'MITRA KERJA',
+        cancelButtonText: 'MITRA BISNIS',
+        confirmButtonColor: '#1B4332',
+        cancelButtonColor: '#1B4332',
+        customClass: {
+            confirmButton: 'btn-mitra-style',
+            cancelButton: 'btn-mitra-style'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            showMitraKerjaForm();
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+            // Mitra Bisnis tetap menggunakan pesan pengembangan
+            openComingSoon(); 
+        }
+    });
+}
+
+function showMitraKerjaForm() {
+    Swal.fire({
+        title: 'Pendaftaran Mitra Kerja',
+        html: `
+            <input type="text" id="mNama" class="swal2-input" placeholder="Nama Lengkap">
+            <input type="number" id="mUsia" class="swal2-input" placeholder="Usia">
+            <textarea id="mExp" class="swal2-textarea" placeholder="Pengalaman kerja..."></textarea>
+        `,
+        confirmButtonText: 'Kirim',
+        confirmButtonColor: '#1B4332',
+        preConfirm: () => {
+            const nama = document.getElementById('mNama').value;
+            const usia = document.getElementById('mUsia').value;
+            const exp = document.getElementById('mExp').value;
+            if (!nama || !usia || !exp) {
+                Swal.showValidationMessage('Mohon isi semua data!');
+                return false;
+            }
+            return { nama, usia, exp };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const { nama, usia, exp } = result.value;
+            const waNumber = "62895706092961";
+            const pesan = `Halo, saya ingin mendaftar Mitra Kerja:%0A%0A*Nama:* ${nama}%0A*Usia:* ${usia}%0A*Pengalaman:* ${exp}`;
+            window.open(`https://wa.me/${waNumber}?text=${pesan}`, '_blank');
         }
     });
 }
