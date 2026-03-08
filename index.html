@@ -1575,62 +1575,66 @@ async function submitOrder() {
     }
 
 function changeMode(m, el) {
-    if (el.classList.contains('too-far')) return alert("Jarak terlalu jauh.");
-    if (el.classList.contains('too-close')) return alert("Jarak sangat dekat.");
+    // PROTEKSI: Cek alasan tombol di-disable
+    if (el.classList.contains('too-far')) {
+        return alert("Jarak Anda terlalu jauh untuk layanan Dine-In.");
+    }
+    
+    if (el.classList.contains('too-close')) {
+        return alert("Jarak Anda sangat dekat (di bawah 200m). Silakan gunakan layanan Dine-In atau Take Away.");
+    }
 
+    // SET MODE AKTIF
     currentMode = m;
-    
-    // Buka Modal
-    const modal = document.getElementById('modalLayanan');
-    const content = document.getElementById('modalContent');
-    document.getElementById('modalTitle').innerText = "Layanan: " + m;
-    
-    // Bersihkan isi sebelumnya
-    content.innerHTML = '';
 
-    // Isi Form Dinamis ke dalam Modal
+    // UI: Beri warna hijau pada tombol yang dipilih
+    document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
+    el.classList.add('active');
+
+    const boxMeja = document.getElementById('boxMeja');
+    const boxAlamat = document.getElementById('boxAlamat');
+    const boxKatering = document.getElementById('boxKateringInfo');
+
+    // Reset Box Input
+    if(boxMeja) boxMeja.style.display = 'none';
+    if(boxAlamat) boxAlamat.style.display = 'none';
+    if(boxKatering) boxKatering.style.display = 'none';
+
+    // Tampilkan Form sesuai Pilihan
     if (m === 'DINE IN') {
-        content.innerHTML = '<input type="text" id="inputMeja" placeholder="Nomor Meja" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ccc;">';
+        if(boxMeja) boxMeja.style.display = 'block';
     } 
-    else if (m === 'TAKE AWAY') {
-        content.innerHTML = '<p>Anda memilih Take Away. Silakan lanjut pilih menu.</p>';
+    else if (m === 'DELIVERY') {
+        if(boxAlamat) boxAlamat.style.display = 'block';
+    } 
+    else if (m === 'KATERING') {
+        if(boxAlamat) boxAlamat.style.display = 'block'; 
+        if(boxKatering) {
+            boxKatering.style.display = 'block'; 
+            
+            // Set Tanggal Otomatis (H+1)
+            const inputTgl = document.getElementById('tglKatering');
+            if(inputTgl) {
+                const besok = new Date();
+                besok.setDate(besok.getDate() + 1);
+                inputTgl.min = besok.toISOString().split('T')[0];
+                inputTgl.value = besok.toISOString().split('T')[0];
+            }
+        }
     }
-    else if (m === 'DELIVERY' || m === 'KATERING') {
-        content.innerHTML = `
-            <input type="text" id="inputNama" placeholder="Nama Pelanggan" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ccc; margin-bottom:10px;">
-            <input type="text" id="inputAlamat" placeholder="Alamat Lengkap" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ccc; margin-bottom:10px;">
-            ${m === 'KATERING' ? '<input type="date" id="inputTgl" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ccc;">' : ''}
-        `;
-    }
 
-    modal.style.display = 'flex';
-}
-
-function closeModal() {
-    // Menutup modal dengan mengubah display ke none
-    document.getElementById('modalLayanan').style.display = 'none';
-}
-
-function konfirmasiLayanan() {
-    // 1. Logika untuk memproses data input (jika diperlukan)
-    // ... simpan data ke variabel global ...
-    
-    // 2. Tutup Modal
-    closeModal();
-
-    // 3. Beri efek aktif pada tombol asli di halaman utama
-    document.querySelectorAll('.service-btn').forEach(o => {
-        // Mencocokkan teks tombol dengan mode yang dipilih
-        o.classList.toggle('active', o.innerText.trim().toUpperCase() === currentMode.toUpperCase());
-    });
-
-    // 4. Auto-scroll ke menu
+    // --- TAMBAHAN AUTO-SCROLL KE AREA MENU ---
     setTimeout(() => {
-        const target = document.getElementById('searchMenu');
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+        const targetElement = document.getElementById('searchMenu'); // Menuju ke kolom pencarian menu
+        if (targetElement) {
+            targetElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' // Mengarahkan ke tengah layar agar tidak terlalu mepet atas
+            });
+        }
+    }, 300); // Jeda 300ms agar form selesai terbuka sebelum scroll berjalan
+    // ------------------------------------------
 
-    // 5. Refresh UI jika ada fungsi tambahan
     if (typeof refreshUI === "function") refreshUI();
 }
     function initMap(lat, lng) {
