@@ -954,7 +954,7 @@ async function apiCekMember() {
     const btn = document.querySelector('#m-view-input button'); // Ambil tombol cek
     const originalText = btn.innerText;
 
-    if (phone.length < 10) return alert("Masukkan nomor WA yang benar!");
+    if (phone.length < 10) return alert("Masukkan nomor WA yang benar untuk member yang sudah terdaftar, atau ingin mendaftar jadi member dengan diawali 628!");
 
     // UI UX: Beri feedback loading
     btn.disabled = true;
@@ -991,7 +991,7 @@ async function apiCekMember() {
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxvPOgnZYzJNP3PvJsUP2EMruLF2GmsWQWWLgBpJbtTFC7YtCCabtCtVE2s4LPwD3AVxQ/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbx5xhUlK6eaZNDmTccQa772BOVRGRDYq7x9CmsjHN7RQLxgKfkluBEAvGQ3OTkUCre4aQ/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1879,7 +1879,7 @@ document.addEventListener('click', function(e) {
                 <input type="text" id="m-phone" inputmode="numeric" placeholder="Contoh: 62812345678" 
                     style="width:100%; padding:15px; border:2px solid var(--soft); border-radius:15px; font-size:18px; font-weight:900; text-align:center; outline:none;">
             </div>
-            <button onclick="apiCekMember()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:15px; font-weight:900; cursor:pointer;">CEK POIN SAYA</button>
+            <button onclick="apiCekMember()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:15px; font-weight:900; cursor:pointer;">CEK POIN SAYA atau DAFTAR BARU</button>
             <button onclick="closeMemberModal()" style="background:none; border:none; color:var(--muted); font-size:12px; margin-top:15px; font-weight:bold;">Tutup</button>
         </div>
 
