@@ -1574,68 +1574,44 @@ async function submitOrder() {
         document.getElementById('summaryOverlay').style.display = open ? 'block' : 'none';
     }
 
+let selectedMode = '';
+
 function changeMode(m, el) {
-    // PROTEKSI: Cek alasan tombol di-disable
-    if (el.classList.contains('too-far')) {
-        return alert("Jarak Anda terlalu jauh untuk layanan Dine-In.");
-    }
+    if (el.classList.contains('too-far') || el.classList.contains('too-close')) return;
+
+    selectedMode = m; // Simpan mode sementara
     
-    if (el.classList.contains('too-close')) {
-        return alert("Jarak Anda sangat dekat (di bawah 200m). Silakan gunakan layanan Dine-In atau Take Away.");
-    }
+    // Tampilkan Modal
+    const modal = document.getElementById('modalLayanan');
+    const content = document.getElementById('dynamicFormContent');
+    modal.style.display = 'flex';
 
-    // SET MODE AKTIF
-    currentMode = m;
-
-    // UI: Beri warna hijau pada tombol yang dipilih
-    document.querySelectorAll('.service-btn').forEach(o => o.classList.remove('active'));
-    el.classList.add('active');
-
-    const boxMeja = document.getElementById('boxMeja');
-    const boxAlamat = document.getElementById('boxAlamat');
-    const boxKatering = document.getElementById('boxKateringInfo');
-
-    // Reset Box Input
-    if(boxMeja) boxMeja.style.display = 'none';
-    if(boxAlamat) boxAlamat.style.display = 'none';
-    if(boxKatering) boxKatering.style.display = 'none';
-
-    // Tampilkan Form sesuai Pilihan
+    // Isi konten form berdasarkan mode
     if (m === 'DINE IN') {
-        if(boxMeja) boxMeja.style.display = 'block';
-    } 
-    else if (m === 'DELIVERY') {
-        if(boxAlamat) boxAlamat.style.display = 'block';
-    } 
-    else if (m === 'KATERING') {
-        if(boxAlamat) boxAlamat.style.display = 'block'; 
-        if(boxKatering) {
-            boxKatering.style.display = 'block'; 
-            
-            // Set Tanggal Otomatis (H+1)
-            const inputTgl = document.getElementById('tglKatering');
-            if(inputTgl) {
-                const besok = new Date();
-                besok.setDate(besok.getDate() + 1);
-                inputTgl.min = besok.toISOString().split('T')[0];
-                inputTgl.value = besok.toISOString().split('T')[0];
-            }
-        }
+        content.innerHTML = '<input type="text" id="noMeja" placeholder="Nomor Meja" style="width:100%; padding:10px; margin-top:10px;">';
+    } else if (m === 'DELIVERY' || m === 'KATERING') {
+        content.innerHTML = `
+            <input type="text" id="nama" placeholder="Nama Pelanggan" style="width:100%; padding:10px; margin-bottom:10px;">
+            <input type="text" id="alamat" placeholder="Alamat Lengkap" style="width:100%; padding:10px;">
+            ${m === 'KATERING' ? '<input type="date" id="tglKatering" style="width:100%; padding:10px; margin-top:10px;">' : ''}
+        `;
     }
+}
 
-    // --- TAMBAHAN AUTO-SCROLL KE AREA MENU ---
-    setTimeout(() => {
-        const targetElement = document.getElementById('searchMenu'); // Menuju ke kolom pencarian menu
-        if (targetElement) {
-            targetElement.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' // Mengarahkan ke tengah layar agar tidak terlalu mepet atas
-            });
-        }
-    }, 300); // Jeda 300ms agar form selesai terbuka sebelum scroll berjalan
-    // ------------------------------------------
+function closeModal() {
+    document.getElementById('modalLayanan').style.display = 'none';
+}
 
-    if (typeof refreshUI === "function") refreshUI();
+function lanjutPilihMenu() {
+    // 1. Simpan data dari input modal ke variabel global atau localStorage
+    // 2. Tutup modal
+    closeModal();
+    
+    // 3. Panggil fungsi auto-scroll ke menu
+    const targetElement = document.getElementById('searchMenu');
+    if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
@@ -1919,5 +1895,17 @@ document.addEventListener('click', function(e) {
     </div>
 </div>
 // Fungsi untuk mengambil angka antrean terbaru dari server
+<div id="modalLayanan" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+    <div style="background:white; padding:20px; border-radius:20px; width:90%; max-width:400px; max-height:80vh; overflow-y:auto;">
+        <h3 id="modalTitle">Detail Layanan</h3>
+        
+        <div id="dynamicFormContent"></div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button onclick="closeModal()" style="flex:1; padding:10px; border-radius:10px; border:1px solid #ccc; background:#f0f0f0;">Kembali</button>
+            <button onclick="lanjutPilihMenu()" style="flex:1; padding:10px; border-radius:10px; border:none; background:var(--primary); color:white;">Lanjut</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
