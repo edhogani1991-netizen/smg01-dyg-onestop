@@ -787,33 +787,39 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
 <script>
 let generatedOTP = null;
 function checkModeSelected() {
-    if (typeof currentMode === 'undefined' || currentMode === null || currentMode === '') {
+    if (!currentMode) {
+
         Swal.fire({
             title: 'Oops! Belum Pilih Layanan',
             text: 'Silakan pilih Mode Layanan terlebih dahulu.',
             icon: 'warning',
-            confirmButtonText: 'Pilih Layanan Sekarang',
-            confirmButtonColor: '#1B4332'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Berikan jeda 100ms agar SweetAlert benar-benar tertutup dulu
-                setTimeout(() => {
-                    const el = document.getElementById('targetLayanan');
-                    if (el) {
-                        // Menggunakan teknik scroll manual agar lebih pasti
-                        const y = el.getBoundingClientRect().top + window.pageYOffset - 20;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
-                        
-                        // Opsional: Berikan efek kedip agar user tahu itu yang harus diklik
-                        el.style.border = "2px solid #1B4332";
-                        setTimeout(() => el.style.border = "none", 2000);
-                    }
-                }, 100);
+            confirmButtonText: 'Pilih Layanan',
+            confirmButtonColor: '#1B4332',
+
+            didClose: () => {
+                const el = document.getElementById('targetLayanan');
+                if (el) {
+
+                    el.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+
+                    // efek highlight
+                    el.style.boxShadow = "0 0 0 4px rgba(27,67,50,0.3)";
+                    setTimeout(()=>{
+                        el.style.boxShadow = "none";
+                    },2000);
+
+                }
             }
+
         });
-        return false; 
+
+        return false;
     }
-    return true; 
+
+    return true;
 }
 
 function startUrlGame(type) {
