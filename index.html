@@ -1623,6 +1623,18 @@ function changeMode(m, el) {
         }
     }
 
+    // --- TAMBAHAN AUTO-SCROLL KE AREA MENU ---
+    setTimeout(() => {
+        const targetElement = document.getElementById('searchMenu'); // Menuju ke kolom pencarian menu
+        if (targetElement) {
+            targetElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' // Mengarahkan ke tengah layar agar tidak terlalu mepet atas
+            });
+        }
+    }, 300); // Jeda 300ms agar form selesai terbuka sebelum scroll berjalan
+    // ------------------------------------------
+
     if (typeof refreshUI === "function") refreshUI();
 }
     function initMap(lat, lng) {
