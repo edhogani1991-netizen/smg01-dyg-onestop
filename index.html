@@ -1210,6 +1210,13 @@ ${m.deskripsi ? `
 }
 
 function updateCart(id, change) {
+    // --- VALIDASI TAMBAHAN ---
+    // Pastikan user sudah memilih mode layanan (Dine-in/Delivery/Katering)
+    if (change > 0 && !checkModeSelected()) {
+        return; // Hentikan fungsi jika belum pilih mode
+    }
+    // -------------------------
+
     const item = menuData.find(m => m.id === id);
     if (!item) return;
 
@@ -1217,17 +1224,22 @@ function updateCart(id, change) {
         // 1. Tambah ke keranjang
         cart.push({ ...item, vN: null, vM: null, vR: null, vS: null, ex: 0 });
         
-        // 2. Tampilkan pilihan varian (langsung muncul di bawah menu)
+        // 2. Tampilkan pilihan varian
         const vDisplay = document.getElementById(`variant-display-${id}`);
         if (vDisplay) {
-            vDisplay.style.display = 'block'; // Langsung muncul tanpa klik lagi
+            vDisplay.style.display = 'block'; 
             
-            // Beri highlight tipis agar user fokus ke pilihan
             vDisplay.style.background = "#fff9e6";
             setTimeout(() => vDisplay.style.background = "transparent", 1000);
             
-            // Opsional: Gunakan alert jika ingin lebih tegas
-            // alert("Pilih varian untuk porsi yang baru ditambah!");
+            // Pop-up instruksi yang lebih user-friendly dibanding alert
+            Swal.fire({
+                title: 'Pilih Varian',
+                text: 'Silakan tentukan varian untuk menu yang baru Anda pilih.',
+                icon: 'info',
+                timer: 2000,
+                showConfirmButton: false
+            });
         }
     } else {
         let idx = cart.findLastIndex(c => c.id === id);
@@ -1612,7 +1624,6 @@ function changeMode(m, el) {
         if(boxKatering) {
             boxKatering.style.display = 'block'; 
             
-            // Set Tanggal Otomatis (H+1)
             const inputTgl = document.getElementById('tglKatering');
             if(inputTgl) {
                 const besok = new Date();
@@ -1623,29 +1634,43 @@ function changeMode(m, el) {
         }
     }
 
-    // 6. POP-UP INSTRUKSI (SweetAlert2)
+    // 6. POP-UP INSTRUKSI (Menunggu klik dari user)
     Swal.fire({
         title: 'Layanan Dipilih!',
         text: 'Silakan masukkan data di kolom yang tersedia, kemudian lanjut pilih menu!',
         icon: 'success',
         confirmButtonText: 'Siap',
         confirmButtonColor: '#1B4332',
-        timer: 2500,
-        timerProgressBar: true
+        // timer dan timerProgressBar dihapus agar user harus klik tombol
+    }).then((result) => {
+        // 7. AUTO-SCROLL BERJALAN SETELAH USER KLIK 'SIAP'
+        if (result.isConfirmed) {
+            const targetElement = document.getElementById('searchMenu');
+            if (targetElement) {
+                targetElement.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center' 
+                });
+            }
+        }
     });
 
-    // 7. AUTO-SCROLL KE AREA MENU
-    setTimeout(() => {
-        const targetElement = document.getElementById('searchMenu');
-        if (targetElement) {
-            targetElement.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'center' 
-            });
-        }
-    }, 500); // Diberi jeda 500ms agar pop-up terasa lebih nyaman munculnya
-
     if (typeof refreshUI === "function") refreshUI();
+}
+
+function checkModeSelected() {
+    // Cek apakah variabel currentMode kosong atau belum di-set
+    if (typeof currentMode === 'undefined' || currentMode === null || currentMode === '') {
+        Swal.fire({
+            title: 'Oops!',
+            text: 'Silakan pilih Mode Layanan terlebih dahulu di bagian atas, ya!',
+            icon: 'warning',
+            confirmButtonText: 'Pilih Layanan',
+            confirmButtonColor: '#1B4332'
+        });
+        return false; // Berarti belum pilih
+    }
+    return true; // Berarti sudah pilih
 }
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
@@ -1858,6 +1883,27 @@ document.addEventListener('click', function(e) {
     // Jalankan fungsi popup
     openDesc(nama, desc);
 });
+
+// Menambahkan event listener ke input nama untuk mencegah input sebelum pilih mode
+const inputNama = document.getElementById('custName'); 
+
+if (inputNama) {
+    inputNama.addEventListener('focus', function(e) {
+        if (typeof currentMode === 'undefined' || !currentMode) {
+            // Hilangkan fokus agar user tidak bisa mengetik
+            inputNama.blur(); 
+            
+            // Berikan notifikasi
+            Swal.fire({
+                title: 'Pilih Mode Layanan Dulu!',
+                text: 'Silakan tentukan mode (Dine-In/Delivery/Katering) di atas sebelum mengisi data.',
+                icon: 'warning',
+                confirmButtonText: 'Oke, Saya Mengerti',
+                confirmButtonColor: '#1B4332'
+            });
+        }
+    });
+}
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
