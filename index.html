@@ -1659,18 +1659,27 @@ function changeMode(m, el) {
 }
 
 function checkModeSelected() {
-    // Cek apakah variabel currentMode kosong atau belum di-set
+    // Cek apakah currentMode sudah di-set
     if (typeof currentMode === 'undefined' || currentMode === null || currentMode === '') {
         Swal.fire({
-            title: 'Oops!',
-            text: 'Silakan pilih Mode Layanan terlebih dahulu di bagian atas, ya!',
+            title: 'Oops! Belum Pilih Layanan',
+            text: 'Silakan pilih Mode Layanan (Dine-In/Delivery/Katering) terlebih dahulu di bagian atas.',
             icon: 'warning',
-            confirmButtonText: 'Pilih Layanan',
+            confirmButtonText: 'Pilih Layanan Sekarang',
             confirmButtonColor: '#1B4332'
+        }).then((result) => {
+            // Setelah user klik tombol "Pilih Layanan Sekarang"
+            if (result.isConfirmed) {
+                // Scroll otomatis ke elemen pembungkus tombol layanan
+                const modeContainer = document.querySelector('.service-menu-container'); // Pastikan class ini ada di pembungkus tombol layanan Anda
+                if (modeContainer) {
+                    modeContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
         });
-        return false; // Berarti belum pilih
+        return false; 
     }
-    return true; // Berarti sudah pilih
+    return true; 
 }
     function initMap(lat, lng) {
         const map = L.map('map', { zoomControl: false }).setView([lat, lng], 15);
