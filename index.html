@@ -804,29 +804,7 @@ Jika semua sudah oke, silakan klik Kirim ke WhatsApp Cloud Kitchen dyg++ agar pe
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-function forceSelectMode(){
 
-    if(!currentMode){
-
-        const layanan = document.getElementById("targetLayanan");
-
-        layanan.scrollIntoView({
-            behavior:"smooth",
-            block:"center"
-        });
-
-        Swal.fire({
-            icon:'info',
-            title:'Pilih Mode Layanan',
-            text:'Silakan pilih Dine In, Take Away, Delivery, atau Katering dulu.',
-            confirmButtonColor:'#1B4332'
-        });
-
-        return false;
-    }
-
-    return true;
-}
 let generatedOTP = null;
 function checkModeSelected() {
     if (!currentMode) {
