@@ -12,18 +12,7 @@
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .main-container { height: calc(100vh - 45px); display: flex; }
         .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 4px; align-content: start; }
-    .menu-card { 
-    transition: all 0.1s; 
-    border: 1px solid #e2e8f0; 
-    position: relative; 
-    /* Tinggi dinaikkan menjadi 100px agar seragam & lega */
-    min-height: 100px; 
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 5px;
-    background-color: white;
-}
+        .menu-card { transition: all 0.1s; border: 1px solid #e2e8f0; position: relative; height: 82px; }
         .menu-card:active { transform: scale(0.97); }
         input, select { outline: none; }
         /* Style untuk tombol disabled */
@@ -47,10 +36,8 @@
         <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
     </div>
     <div class="flex items-center gap-1 border-l pl-2">
-        <input id="nohp" type="text"
-placeholder="4 digit terakhir WA"
-oninput="autoDetectMember()"
-class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
+        <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
+        <button onclick="cekMember()" class="bg-blue-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek</button>
     </div>
 </header>
 
@@ -102,8 +89,7 @@ const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv"; 
 const TOKEN = "dyg-access-v2";
 
-let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
-let MEMBER_LIST = [];
+let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null, let MEMBER_LIST = [];
 function closeModalTrx() {
     document.getElementById("modalTrx").classList.add("hidden");
     document.getElementById("modalTrx").classList.remove("flex");
@@ -283,30 +269,25 @@ function renderMenu() {
             const qty = cart[i] ? cart[i].qty : 0;
             
             html += `
-            <div class="menu-card rounded shadow-sm">
-                <div onclick="addItem(${i})" class="cursor-pointer flex-1">
-                    <div class="h-9 w-full mb-1 overflow-hidden flex items-center justify-center bg-slate-50 rounded shrink-0">
-                        ${m.gambar ? 
-                            `<img src="${m.gambar}" class="w-full h-full object-cover">` : 
-                            `<div class="text-[6px] text-slate-300 font-bold uppercase">No Image</div>`
-                        }
-                    </div>
+            <div class="menu-card bg-white p-2 rounded shadow-sm flex flex-col justify-between">
+                <div onclick="addItem(${i})" class="cursor-pointer">
+                    ${m.gambar ? `<div class="h-10 w-full mb-1 overflow-hidden flex items-center justify-center bg-slate-50 rounded">
+                        <img src="${m.gambar}" class="max-h-full object-cover" onerror="this.style.display='none'">
+                    </div>` : ''}
                     
-                    <div class="px-0.5">
-                        <div class="text-[5px] font-bold text-blue-500 uppercase leading-none mb-0.5">${m.kategori}</div>
-                        <div class="font-bold text-slate-800 text-[7px] leading-[8px] line-clamp-2">${m.nama}</div>
-                    </div>
+                    <div class="text-[6px] font-bold text-blue-500 uppercase">${m.kategori}</div>
+                    <div class="font-bold text-slate-800 text-[9px] leading-tight line-clamp-1">${m.nama}</div>
+                    
+                    ${qty > 0 ? `<div class="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white">${qty}</div>` : ''}
                 </div>
-
-                <div class="flex justify-between items-center mt-1 px-0.5 shrink-0 border-t border-slate-50 pt-1">
-                    <div class="text-[9px] font-black text-slate-900 leading-none">Rp${m.harga.toLocaleString()}</div>
-                    <div class="flex items-center gap-0.5">
+                
+                <div class="flex justify-between items-center mt-1">
+                    <div class="text-[9px] font-black text-slate-900">Rp${m.harga.toLocaleString()}</div>
+                    <div class="flex items-center gap-1">
                         ${qty > 0 ? `<button onclick="event.stopPropagation(); removeItem(${i})" class="w-4 h-4 bg-slate-100 rounded text-[10px] font-bold border border-slate-300">-</button>` : ''}
                         <button onclick="event.stopPropagation(); addItem(${i})" class="w-4 h-4 bg-blue-600 text-white rounded text-[10px] font-bold">+</button>
                     </div>
                 </div>
-                
-                ${qty > 0 ? `<div class="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white z-10">${qty}</div>` : ''}
             </div>`;
         }
     });
@@ -445,11 +426,7 @@ async function manageShift(type) {
     }
 }
 
-window.onload = () => { 
-    loadMenu();
-    loadMembers();
-    checkShiftStatus();
-};
+window.onload = () => { loadMenu(); checkShiftStatus(); };
 
 async function cekDaftarTransaksi() {
     const btn = document.getElementById("btnCekTrx");
@@ -653,62 +630,61 @@ function cetakSemuaTransaksi() {
         console.log(esc);
     }
 }
-// Tambahkan ini di bagian atas script Anda
-const infoEl = document.getElementById("memberInfo");
+async function loadMembers(){
 
-async function loadMembers() {
-    infoEl.innerText = "Loading Member..."; // Indikator saat proses mulai
-    try {
+    try{
+
         const res = await fetch(MEMBER_CSV);
         const text = await res.text();
-        const rows = text.split(/\r?\n/).slice(1);
 
-        MEMBER_LIST = rows.map(r => {
-            const c = r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-            return {
-                nama: c[1]?.replace(/"/g, '').trim(),
-                nohp: c[2]?.replace(/\D/g, ''), // Membersihkan semua karakter non-digit
-                poin: parseInt(c[3]) || 0
-            };
-        }).filter(m => m.nohp);
-        
-        infoEl.innerText = "Ready"; // Ubah kembali ke Ready setelah selesai
-        console.log("Member dimuat:", MEMBER_LIST.length, MEMBER_LIST);
-    } catch (e) {
-        infoEl.innerText = "Error Load!";
-        console.error("Gagal load member:", e);
+        const rows = text.split("\n").slice(1);
+
+        MEMBER_LIST = rows.map(r=>{
+            const c = r.split(",");
+
+            return{
+                nama: c[0]?.trim(),
+                nohp: c[1]?.trim(),
+                poin: parseInt(c[2]) || 0
+            }
+
+        }).filter(m=>m.nohp);
+
+    }catch(e){
+
+        console.log("Gagal load member");
+
     }
-}
 
-function autoDetectMember() {
+}
+function autoDetectMember(){
+
     const input = document.getElementById("nohp").value.trim();
-    
-    // Jika data belum dimuat sama sekali
-    if (MEMBER_LIST.length === 0) {
-        infoEl.innerText = "Loading Member...";
-        return;
-    }
 
-    if (input.length < 4) {
-        infoEl.innerText = "Ready";
-        member = null;
-        return;
-    }
+    if(input.length < 4) return;
 
-    // Pencarian dengan memastikan nohp dipotong menjadi 4 digit terakhir
-    const match = MEMBER_LIST.find(m => {
-        const last4 = m.nohp.slice(-4);
-        return last4 === input;
-    });
+    const match = MEMBER_LIST.find(m =>
+        m.nohp.endsWith(input)
+    );
 
-    if (match) {
+    if(match){
+
         member = match;
-        infoEl.innerHTML = `<span class="text-blue-600 font-bold">✅ ${match.nama} (${match.poin} P)</span>`;
-    } else {
-        infoEl.innerText = "Member tidak ditemukan";
-        member = null;
+
+        document.getElementById("memberInfo").innerHTML =
+        `<span class="text-blue-600 font-bold">
+        ✅ ${match.nama} (${match.poin} P)
+        </span>`;
+
+    }else{
+
+        document.getElementById("memberInfo").innerText = "Member tidak ditemukan";
+
     }
+
 }
+
+
 </script>
 <div id="modalMetode" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-xs overflow-hidden">
