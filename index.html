@@ -1820,18 +1820,59 @@ async function initBanner() {
                      onerror="this.src='https://dummyimage.com/800x300/cccccc/000&text=Promo'">
              </div>`
         ).join('');
-
-        bannerIdx = 0;
+bannerIdx = 0;
         track.style.transform = `translateX(0%)`;
         
-        // --- PENTING: KIRIM TOTAL BANNER KE FUNGSI AUTO SLIDE ---
-        startAutoSlide(banners.length); 
+        startAutoSlide(banners.length);
+        
+        // --- TAMBAHKAN PEMANGGILAN INI ---
+        setupSwipeListeners(); 
 
     } catch (e) { 
         console.error("Banner gagal dimuat", e); 
     }
 }
+        
+function setupSwipeListeners() {
+    const container = document.querySelector('.banner-container');
+    const track = document.getElementById('banner-track');
+    if (!container || !track) return;
 
+    let startX = 0;
+    let deltaX = 0;
+
+    container.addEventListener('touchstart', e => {
+        isBannerTouched = true;
+        stopAutoSlide();
+        startX = e.touches[0].clientX;
+        track.style.transition = 'none'; // Matikan animasi saat jari menempel
+    }, { passive: true });
+
+    container.addEventListener('touchmove', e => {
+        if (!isBannerTouched) return;
+        deltaX = e.touches[0].clientX - startX;
+        track.style.transform = `translateX(calc(-${bannerIdx * 100}% + ${deltaX}px))`;
+    }, { passive: true });
+
+    container.addEventListener('touchend', () => {
+        isBannerTouched = false;
+        const threshold = container.offsetWidth * 0.25; // 25% dari lebar kontainer
+
+        if (deltaX > threshold && bannerIdx > 0) {
+            bannerIdx--;
+        } else if (deltaX < -threshold) {
+            const banners = track.children; // Ambil jumlah banner yang sudah dirender
+            if (bannerIdx < banners.length - 1) {
+                bannerIdx++;
+            }
+        }
+
+        track.style.transition = 'transform 0.4s ease';
+        track.style.transform = `translateX(-${bannerIdx * 100}%)`;
+        deltaX = 0;
+        startAutoSlide(document.querySelectorAll('#banner-track > div').length);
+    }, { passive: true });
+}
 function stopAutoSlide() { if (bannerTimer) { clearInterval(bannerTimer); bannerTimer = null; } }
 function startAutoSlide(totalBanners) {
     stopAutoSlide(); // Bersihkan timer lama jika ada
