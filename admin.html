@@ -81,7 +81,8 @@ input:focus {
         <div id="cartList" class="flex-1 overflow-y-auto custom-scroll p-1.5 space-y-1">
             <div class="text-center text-slate-300 mt-10 text-[9px]">Kosong</div>
         </div>
-
+<div id="pointDiscWrapper" class="hidden flex flex-col text-[9px] animate-pulse px-1 border-b border-dashed mb-2 pb-1">
+    </div>
         <div class="p-2 bg-slate-50 border-t border-slate-200 space-y-2">
             <div id="pointDiscWrapper" class="hidden flex justify-between text-[9px] font-bold text-red-600 animate-pulse px-1">
                 <span>DISKON MEMBER</span><span>- Rp <span id="pointDiscNominal">0</span></span>
@@ -427,25 +428,25 @@ function renderCart() {
     const list = document.getElementById("cartList");
     let html = "";
     const items = Object.keys(cart);
+    const wrap = document.getElementById("pointDiscWrapper");
     
     // 1. Cek jika keranjang kosong
     if (items.length === 0) {
         list.innerHTML = '<div class="text-center text-slate-300 text-[10px] mt-10">Kosong</div>';
         document.getElementById("total").innerText = "0";
-        document.getElementById("pointDiscWrapper").classList.add("hidden");
+        wrap.classList.add("hidden");
         document.getElementById("cashBox").innerHTML = "";
         
-        // Reset juga voucher jika keranjang dikosongkan
         voucherDiscount = 0;
         currentVoucherCode = "";
         document.getElementById("voucherCode").value = "";
         return;
     }
 
-    // 2. Validasi voucher secara otomatis setiap keranjang berubah
+    // 2. Validasi voucher
     validateVoucher(); 
 
-    // 3. Hitung total kotor dan bangun HTML keranjang
+    // 3. Hitung total kotor
     const totalKotor = items.reduce((sum, i) => {
         const item = cart[i];
         html += `<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded border border-slate-100">
@@ -462,23 +463,37 @@ function renderCart() {
         return sum + (item.qty * item.harga);
     }, 0);
 
-    // 4. Hitung bersih (Total Kotor - Diskon Member - Diskon Voucher)
-    const bersih = Math.max(0, totalKotor - pointDiscount - voucherDiscount);
+    // 4. Logika Pembulatan (Murni Matematika)
+    const totalBersihAwal = Math.max(0, totalKotor - pointDiscount - voucherDiscount);
+    const sisa = totalBersihAwal % 1000;
+    const nominalPembulatan = (sisa >= 500) ? (1000 - sisa) : -sisa;
+    const totalFinal = totalBersihAwal + nominalPembulatan;
     
-    // 5. Update UI
+    // 5. Update UI (List & Total Final)
     list.innerHTML = html;
-    document.getElementById("total").innerText = bersih.toLocaleString();
+    document.getElementById("total").innerText = totalFinal.toLocaleString();
     
-    // 6. Tampilkan info diskon (gabungan point dan voucher)
+    // 6. Tampilkan info diskon & pembulatan secara rapi
     const totalDiskon = pointDiscount + voucherDiscount;
+    let infoHtml = "";
+    
     if (totalDiskon > 0) {
-        document.getElementById("pointDiscWrapper").classList.remove("hidden");
-        document.getElementById("pointDiscNominal").innerText = totalDiskon.toLocaleString();
-    } else {
-        document.getElementById("pointDiscWrapper").classList.add("hidden");
+        infoHtml += `<div class="flex justify-between text-red-600 font-bold"><span>DISKON</span><span>- Rp ${totalDiskon.toLocaleString()}</span></div>`;
     }
     
-    // Update input kas jika metode adalah CASH
+    if (nominalPembulatan !== 0) {
+        const label = nominalPembulatan > 0 ? "PEMBULATAN (+)" : "PEMBULATAN (-)";
+        infoHtml += `<div class="flex justify-between text-slate-500 font-bold"><span>${label}</span><span>Rp ${Math.abs(nominalPembulatan).toLocaleString()}</span></div>`;
+    }
+
+    if (infoHtml !== "") {
+        wrap.innerHTML = infoHtml; // Menampilkan baris diskon dan pembulatan
+        wrap.classList.remove("hidden");
+    } else {
+        wrap.classList.add("hidden");
+    }
+    
+    // 7. Update input kas jika metode adalah CASH
     if (document.getElementById("metode") && document.getElementById("metode").value === "CASH") {
         renderCash();
     }
