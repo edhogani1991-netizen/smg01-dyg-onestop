@@ -6,10 +6,6 @@
     <title>dyg++ POS Ultra Compact V3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-.stabilo-highlight {
-    background-color: #fef08a !important; /* Kuning soft */
-    transition: background-color 0.5s ease;
-}
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; overflow: hidden; background-color: #f1f5f9; font-size: 9px; }
         .custom-scroll::-webkit-scrollbar { width: 3px; }
@@ -40,8 +36,10 @@
         <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
     </div>
     <div class="flex items-center gap-1 border-l pl-2">
-        <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
-        <button onclick="cekMember()" class="bg-blue-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek</button>
+        <input id="nohp" type="text"
+placeholder="4 digit terakhir WA"
+oninput="autoDetectMember()"
+class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
     </div>
 </header>
 
@@ -90,9 +88,10 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbw-TBIjPXsjYSgXggh-AMI5wG5ZIi4Y5BV_dfVzkovHHfiSqxt8ATMpfP0F4Be-rPjRdQ/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
+const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv"; 
 const TOKEN = "dyg-access-v2";
 
-let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
+let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null, let MEMBER_LIST = [];
 function closeModalTrx() {
     document.getElementById("modalTrx").classList.add("hidden");
     document.getElementById("modalTrx").classList.remove("flex");
@@ -429,7 +428,11 @@ async function manageShift(type) {
     }
 }
 
-window.onload = () => { loadMenu(); checkShiftStatus(); };
+window.onload = () => { 
+    loadMenu();
+    loadMembers();
+    checkShiftStatus();
+};
 
 async function cekDaftarTransaksi() {
     const btn = document.getElementById("btnCekTrx");
@@ -633,6 +636,61 @@ function cetakSemuaTransaksi() {
         console.log(esc);
     }
 }
+async function loadMembers(){
+
+    try{
+
+        const res = await fetch(MEMBER_CSV);
+        const text = await res.text();
+
+        const rows = text.split("\n").slice(1);
+
+        MEMBER_LIST = rows.map(r=>{
+            const c = r.split(",");
+
+            return{
+                nama: c[0]?.trim(),
+                nohp: c[1]?.trim(),
+                poin: parseInt(c[2]) || 0
+            }
+
+        }).filter(m=>m.nohp);
+
+    }catch(e){
+
+        console.log("Gagal load member");
+
+    }
+
+}
+function autoDetectMember(){
+
+    const input = document.getElementById("nohp").value.trim();
+
+    if(input.length < 4) return;
+
+    const match = MEMBER_LIST.find(m =>
+        m.nohp.endsWith(input)
+    );
+
+    if(match){
+
+        member = match;
+
+        document.getElementById("memberInfo").innerHTML =
+        `<span class="text-blue-600 font-bold">
+        ✅ ${match.nama} (${match.poin} P)
+        </span>`;
+
+    }else{
+
+        document.getElementById("memberInfo").innerText = "Member tidak ditemukan";
+
+    }
+
+}
+
+
 </script>
 <div id="modalMetode" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-xs overflow-hidden">
