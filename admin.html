@@ -28,6 +28,13 @@
         input, select { outline: none; }
         /* Style untuk tombol disabled */
         button:disabled { background-color: #cbd5e1 !important; cursor: not-allowed; opacity: 0.7; }
+input {
+    outline: none; /* Menghilangkan garis biru bawaan browser saat diklik */
+    transition: all 0.2s;
+}
+input:focus {
+    border-color: #3b82f6; /* Memberi indikator biru saat sedang aktif */
+}
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -35,24 +42,25 @@
 <header class="h-[45px] bg-white border-b border-slate-200 px-3 flex justify-between items-center shrink-0">
     <div class="flex items-center gap-2">
         <h1 class="text-sm font-black text-blue-700 tracking-tighter">dyg++</h1>
-        <div id="memberInfo" class="text-[8px] text-slate-400 italic truncate max-w-[100px]">Ready</div>
+        <div id="memberInfo" class="text-[8px] text-slate-400 italic truncate max-w-[70px]">Ready</div>
     </div>
-    <div class="flex items-center gap-2">
-        <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">BUKA SHIFT</button>
-        
-        <button id="btnCekTrx" onclick="cekDaftarTransaksi()" class="bg-indigo-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek Trx</button>
-        
-        <button id="btnCekPemasukan" onclick="cekPemasukan()" class="bg-amber-500 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Income</button>
-        
-        <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
+    
+    <div class="flex items-center gap-1">
+        <button id="btnOpenShift" onclick="manageShift('open')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[8px] font-bold hidden">BUKA</button>
+        <button id="btnCekTrx" onclick="cekDaftarTransaksi()" class="bg-indigo-600 text-white px-2 py-1 rounded text-[8px] font-bold uppercase">Trx</button>
+        <button id="btnCekPemasukan" onclick="cekPemasukan()" class="bg-amber-500 text-white px-2 py-1 rounded text-[8px] font-bold uppercase">Income</button>
+        <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[8px] font-bold hidden">TUTUP</button>
     </div>
+
     <div class="flex items-center gap-1 border-l pl-2">
-        <input id="nohp" type="text"
-placeholder="4 digit terakhir WA"
-oninput="autoDetectMember()"
-class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
+        <input id="nohp" type="text" placeholder="WA" oninput="autoDetectMember()"
+            class="bg-slate-100 rounded px-1.5 py-1 text-[9px] w-14 text-center" title="4 digit terakhir WA">
+        
+        <input id="voucherCode" type="text" placeholder="Voucher" onchange="applyVoucher()"
+            class="bg-yellow-50 border border-yellow-200 rounded px-1.5 py-1 text-[9px] w-16 text-center uppercase">
     </div>
 </header>
+
 
 <main class="flex-1 overflow-hidden main-container">
     <section class="flex-1 flex flex-col bg-slate-50 overflow-hidden">
@@ -709,6 +717,25 @@ function autoDetectMember() {
         member = null;
     }
 }
+function applyVoucher() {
+    const voucherInput = document.getElementById("voucherCode");
+    const code = voucherInput.value.trim().toUpperCase();
+    
+    if (!code) return; // Keluar jika input kosong
+
+    // Contoh: Cek apakah voucher ada di daftar (misal kita simpan di array VOUCHER_LIST)
+    const validVoucher = VOUCHER_LIST.find(v => v.kode === code);
+    
+    if (validVoucher) {
+        alert("Voucher " + code + " berhasil diterapkan!");
+        // Update total belanja Anda di sini
+        // hitungTotal(); 
+    } else {
+        alert("Kode voucher tidak ditemukan!");
+        voucherInput.value = ""; // Kosongkan input jika salah
+    }
+}
+
 </script>
 <div id="modalMetode" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-xs overflow-hidden">
