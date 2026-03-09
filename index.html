@@ -220,17 +220,14 @@
         .queue-badge { background: var(--danger); color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
 
         /* TIMPA KODE LAMA ANDA DENGAN INI */
-.banner-container { 
-    margin: -10px 15px 15px; /* Margin atas dikurangi supaya naik */
-    position: relative; 
-    overflow: hidden; 
-    border-radius: 15px; 
-    height: 180px; /* Ditambah dari 145px ke 180px agar gambar lebih besar */
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
-    background: #eee; 
+.banner-container {
+    width: 100%;
+    overflow: hidden;
+    height: 200px; /* Atur tinggi tetap sesuai keinginan Anda */
+    position: relative;
 }
-        #banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
-        #banner-track img { min-width: 100%; object-fit: cover; }
+#banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
+#banner-track img { min-width: 100%; object-fit: cover; }
 .mode-item.disabled {
     background: #F1F1F1;
     color: #AAA;
@@ -1813,8 +1810,13 @@ async function initBanner() {
 
         // Render banner
         track.innerHTML = banners.map(b =>
-            `<a href="${b.link}" style="display:block; min-width:100%;"><img src="${b.image}" draggable="false" onerror="this.src='https://dummyimage.com/800x300/cccccc/000&text=Promo'"></a>`
-        ).join('');
+    `<div style="min-width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden;">
+        <img src="${b.image}" 
+             style="width: 100%; height: auto; object-fit: cover; display: block;" 
+             draggable="false" 
+             onerror="this.src='https://dummyimage.com/800x300/cccccc/000&text=Promo'">
+     </div>`
+).join('');
 
         bannerIdx = 0;
         track.style.transform = `translateX(0%)`;
