@@ -429,6 +429,12 @@ function renderMenu() {
 function addItem(i) {
     if (!cart[i]) cart[i] = { ...MENU[i], qty: 0 };
     cart[i].qty++;
+    
+    // Trigger pengecekan member jika nomor WA sudah diisi
+    if (document.getElementById("nohp").value.trim().length >= 4) {
+        cekMember(false); 
+    }
+    
     updateUI();
 }
 
@@ -545,22 +551,37 @@ function hitungKembali() {
     document.getElementById("kembali").innerText = Math.max(0, b - t).toLocaleString();
 }
 
-function cekMember() {
+async function cekMember(force = false) {
     const no = document.getElementById("nohp").value.trim();
     if (!no) return;
-    document.getElementById("memberInfo").innerText = "Checking...";
-    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`).then(r => r.json()).then(d => {
+    
+    // Jika sudah ada data member di memori dan bukan forced check, jangan fetch ulang
+    if (member && !force) return;
+
+    try {
+        const res = await fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`);
+        const d = await res.json();
+        
         if (d.exists) {
             member = d;
             document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin} P)</span>`;
-            if (d.poin >= 500) {
+            
+            // Logika Redeem Otomatis/Pop-up
+            if (d.poin >= 500 && redeemQty === 0) { // Cek poin jika belum pernah redeem di sesi ini
                 let maxTukar = Math.floor(d.poin / 500) * 500;
-                if (confirm(`Tukarkan ${maxTukar} poin (Rp${(maxTukar * 10).toLocaleString()})?`)) {
-                    redeemQty = maxTukar; pointDiscount = maxTukar * 10; renderCart();
+                if (confirm(`Poin ${d.nama} cukup! Tukarkan ${maxTukar} poin (Rp${(maxTukar * 10).toLocaleString()})?`)) {
+                    redeemQty = maxTukar; 
+                    pointDiscount = maxTukar * 10; 
+                    renderCart();
                 }
             }
-        } else { alert("Member Tidak Ditemukan"); member = null; }
-    });
+        } else { 
+            // alert("Member Tidak Ditemukan"); // Bisa dimatikan jika mengganggu
+            member = null; 
+        }
+    } catch (e) {
+        console.error("Gagal cek member:", e);
+    }
 }
 
 async function prosesSimpanKeCloud() {
