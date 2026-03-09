@@ -644,7 +644,7 @@ mark {
     <div class="icon"><img src="jadi-mitra3.png" class="service-icon-img"></div>
     <span>Jadi Mitra</span>
 </div>
-    <div class="service-btn secondary" onclick="openComingSoon()">
+    <div class="service-btn secondary" onclick="openIklanForm()">
         <div class="icon"><img src="ngiklan3.png" class="service-icon-img"></div>
         <span>NgIKLAN</span>
     </div>
@@ -1983,6 +1983,83 @@ function showMitraKerjaForm() {
         }
     });
 }
+function openIklanForm() {
+    Swal.fire({
+        title: 'Pasang Iklan Anda',
+        html: `
+            <input type="text" id="iNama" class="swal2-input" placeholder="Nama Lengkap">
+            <input type="text" id="iUsaha" class="swal2-input" placeholder="Nama Usaha">
+            <input type="text" id="iJenis" class="swal2-input" placeholder="Jenis Usaha">
+            <select id="iPaket" class="swal2-input" onchange="hitungTotal()">
+                <option value="0">Pilih Paket Iklan</option>
+                <option value="20000">Paket Supergold (20.000)</option>
+                <option value="10000">Paket Gold (10.000)</option>
+                <option value="5000">Paket Silver (5.000)</option>
+                <option value="3000">Paket Platinum (3.000)</option>
+                <option value="1000">Paket Basic (1.000)</option>
+            </select>
+            <input type="number" id="iLama" class="swal2-input" placeholder="Lama Sewa (Hari)" oninput="hitungTotal()">
+            <input type="text" id="iVoucher" class="swal2-input" placeholder="Voucher Diskon (Jika ada)">
+            <input type="text" id="iTotal" class="swal2-input" placeholder="Estimasi Harga Total" readonly style="background:#f0f0f0;">
+        `,
+        showConfirmButton: true,
+        confirmButtonText: 'Kirim via WhatsApp',
+        confirmButtonColor: '#1B4332',
+        showDenyButton: true,
+        denyButtonText: 'Info Paket',
+        denyButtonColor: '#F39C12',
+        preConfirm: () => {
+            const data = {
+                nama: document.getElementById('iNama').value,
+                usaha: document.getElementById('iUsaha').value,
+                paket: document.getElementById('iPaket').options[document.getElementById('iPaket').selectedIndex].text,
+                lama: document.getElementById('iLama').value,
+                total: document.getElementById('iTotal').value
+            };
+            if (!data.nama || !data.lama || document.getElementById('iPaket').value == "0") {
+                Swal.showValidationMessage('Mohon isi nama, paket, dan lama sewa!');
+                return false;
+            }
+            return data;
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const d = result.value;
+            const wa = "6289601522700";
+            const msg = `Halo, saya ingin pasang iklan:%0A%0A*Nama:* ${d.nama}%0A*Usaha:* ${d.usaha}%0A*Paket:* ${d.paket}%0A*Lama:* ${d.lama} Hari%0A*Total Estimasi:* ${d.total}`;
+            window.open(`https://wa.me/${wa}?text=${msg}`, '_blank');
+        } else if (result.isDenied) {
+            showInfoIklan();
+        }
+    });
+}
+
+// Fungsi Hitung Otomatis
+function hitungTotal() {
+    const harga = document.getElementById('iPaket').value;
+    const lama = document.getElementById('iLama').value;
+    const total = harga * lama;
+    document.getElementById('iTotal').value = total > 0 ? "Rp " + total.toLocaleString() : "";
+}
+function showInfoIklan() {
+    Swal.fire({
+        title: 'Pilih Strategi Iklan Terbaikmu!',
+        html: `
+            <div style="text-align:left; font-size:14px;">
+                <p><b>🏆 Supergold (20rb/hr)</b> - <i>Eksklusif!</i> Pajangan depan kasir, banner web app, all feed & story sosmed. (Min. 7 hari, 3 Postingan, Kuota: 2/7 hari).</p>
+                <p><b>⭐ Gold (10rb/hr)</b> - <i>Jangkauan Luas!</i> Banner web app, all feed & story sosmed. (2 Postingan, Kuota: 5/hr).</p>
+                <p><b>🥈 Silver (5rb/hr)</b> - <i>Pilihan Favorit!</i> Banner web app & story sosmed. (1 Postingan, Kuota: 10/hr).</p>
+                <p><b>💎 Platinum (3rb/hr)</b> - <i>Fokus Story!</i> Story semua sosmed. (1 Postingan, Kuota: 10/hr).</p>
+                <p><b>✨ Basic (1rb/hr)</b> - <i>Budget Friendly!</i> Story WA eksklusif. (1 Postingan).</p>
+                <hr>
+                <p><small><b>NB:</b> Postingan dilakukan setelah pembayaran terverifikasi & menyesuaikan kuota harian yang tersedia.</small></p>
+            </div>
+        `,
+        confirmButtonText: 'Kembali ke Form',
+        confirmButtonColor: '#1B4332'
+    }).then(() => openIklanForm()); // Kembali ke form setelah baca info
+}
+
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
