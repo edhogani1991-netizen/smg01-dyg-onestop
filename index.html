@@ -222,16 +222,18 @@
         /* TIMPA KODE LAMA ANDA DENGAN INI */
 .banner-container {
     width: 100%;
-    overflow: hidden;
-    position: relative;
-    /* Jangan kasih height tetap (misal 200px) agar bisa menyesuaikan */
+    padding: 0 15px;
+    box-sizing: border-box;
+    overflow: hidden; /* Penting untuk menyembunyikan sisa banner */
+    touch-action: pan-y; /* Memungkinkan scroll vertikal, tapi geser horizontal untuk banner */
 }
 
 #banner-track {
     display: flex;
     transition: transform 0.4s ease;
-}
-.mode-item.disabled {
+    cursor: grab; /* Menandakan elemen bisa digeser */
+
+}.mode-item.disabled {
     background: #F1F1F1;
     color: #AAA;
     border-color: #DDD;
@@ -1801,7 +1803,6 @@ async function initBanner() {
     const container = document.querySelector('.banner-container');
     if (!track || !container) return;
 
-    // Kita gabungkan URL Web App dengan parameter yang dibutuhkan
     const fetchURL = `${CONFIG.WEB_APP_URL}?action=getBanner&token=${CONFIG.TOKEN}`;
 
     try {
@@ -1811,19 +1812,21 @@ async function initBanner() {
 
         if (!banners || banners.length === 0) return;
 
-        // Render banner
         track.innerHTML = banners.map(b =>
-    `<div style="min-width: 100%; display: flex; justify-content: center; align-items: center; background-color: #f0f0f0;">
-        <img src="${b.image}" 
-             style="width: 100%; height: auto; object-fit: contain; display: block;" 
-             draggable="false" 
-             onerror="this.src='https://dummyimage.com/800x300/cccccc/000&text=Promo'">
-     </div>`
-).join('');
+            `<div style="min-width: 100%; display: flex; justify-content: center; align-items: center; padding: 0 5px;">
+                <img src="${b.image}" 
+                     style="width: 100%; height: auto; object-fit: contain; border-radius: 12px; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" 
+                     draggable="false" 
+                     onerror="this.src='https://dummyimage.com/800x300/cccccc/000&text=Promo'">
+             </div>`
+        ).join('');
 
         bannerIdx = 0;
         track.style.transform = `translateX(0%)`;
-        startAutoSlide(banners.length);
+        
+        // --- PENTING: KIRIM TOTAL BANNER KE FUNGSI AUTO SLIDE ---
+        startAutoSlide(banners.length); 
+
     } catch (e) { 
         console.error("Banner gagal dimuat", e); 
     }
