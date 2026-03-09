@@ -280,37 +280,45 @@ async function submitOrder() {
     btn.innerText = "MENCETAK..."; btn.disabled = true;
 
     // --- FORMULASI STRUK ---
-// Tambahkan header lokasi dan NPWPD
 let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
 esc += "UNNES, Gunungpati, Semarang\n";
 esc += "NPWPD P.1.9032024.14.11\n";
 esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
 
+// Tampilkan nama member jika ada
+if (typeof namaMember !== 'undefined' && namaMember) {
+    esc += "Member: " + namaMember + "\n--------------------------------\n";
+}
+
 Object.values(cart).forEach(i => {
     esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
 });
+
 esc += "--------------------------------\n";
-esc += "Subtotal      : Rp " + totalKotor.toLocaleString() + "\n";
-esc += "Diskon        : Rp " + (pointDiscount + voucherDiscount).toLocaleString() + "\n";
-esc += "Pembulatan    : Rp " + nominalPembulatan.toLocaleString() + "\n";
+esc += "Total Kotor       : Rp " + totalKotor.toLocaleString() + "\n";
+
+// Rincian potongan
+if (pointDiscount > 0) esc += "Pot. Poin         : Rp " + pointDiscount.toLocaleString() + "\n";
+if (voucherDiscount > 0) esc += "Pot. Voucher      : Rp " + voucherDiscount.toLocaleString() + "\n";
+esc += "Pembulatan        : Rp " + nominalPembulatan.toLocaleString() + "\n";
 esc += "--------------------------------\n";
 
-// Logika Pajak PB1 10%
+// Menghitung pajak berdasarkan total bersih (setelah diskon dan pembulatan)
 const totalSebelumPajak = totalFinal; 
 const pajak = Math.round(totalSebelumPajak * 0.1); 
 
-esc += "Total Sebelum PB1 : Rp " + totalSebelumPajak.toLocaleString() + "\n";
+esc += "Total Bersih      : Rp " + totalSebelumPajak.toLocaleString() + "\n";
 esc += "PB1 (10%)         : Rp " + pajak.toLocaleString() + " (Ditanggung Resto)\n";
 esc += "--------------------------------\n";
 esc += "\x1B\x21\x10TOTAL BAYAR       : Rp " + totalSebelumPajak.toLocaleString() + "\x1B\x21\x00\n";
-    
-    if (m === "CASH") {
-        const bVal = Number(document.getElementById("bayar").value);
-        esc += "Bayar         : Rp " + bVal.toLocaleString() + "\n";
-        esc += "Kembali       : Rp " + (bVal - totalFinal).toLocaleString() + "\n";
-    }
-    esc += "--------------------------------\n";
-    esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
+
+if (m === "CASH") {
+    const bVal = Number(document.getElementById("bayar").value);
+    esc += "Bayar             : Rp " + bVal.toLocaleString() + "\n";
+    esc += "Kembali           : Rp " + (bVal - totalSebelumPajak).toLocaleString() + "\n";
+}
+esc += "--------------------------------\n";
+esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
     // --- EKSEKUSI ---
     if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
