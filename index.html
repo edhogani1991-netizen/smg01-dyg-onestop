@@ -223,11 +223,14 @@
 .banner-container {
     width: 100%;
     overflow: hidden;
-    height: 200px; /* Atur tinggi tetap sesuai keinginan Anda */
     position: relative;
+    /* Jangan kasih height tetap (misal 200px) agar bisa menyesuaikan */
 }
-#banner-track { display: flex; transition: transform 0.4s ease; height: 100%; }
-#banner-track img { min-width: 100%; object-fit: cover; }
+
+#banner-track {
+    display: flex;
+    transition: transform 0.4s ease;
+}
 .mode-item.disabled {
     background: #F1F1F1;
     color: #AAA;
@@ -1810,9 +1813,9 @@ async function initBanner() {
 
         // Render banner
         track.innerHTML = banners.map(b =>
-    `<div style="min-width: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden;">
+    `<div style="min-width: 100%; display: flex; justify-content: center; align-items: center; background-color: #f0f0f0;">
         <img src="${b.image}" 
-             style="width: 100%; height: auto; object-fit: cover; display: block;" 
+             style="width: 100%; height: auto; object-fit: contain; display: block;" 
              draggable="false" 
              onerror="this.src='https://dummyimage.com/800x300/cccccc/000&text=Promo'">
      </div>`
