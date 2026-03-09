@@ -299,11 +299,14 @@ async function submitOrder() {
     esc += "Pembulatan     : Rp " + nominalPembulatan.toLocaleString() + "\n";
     esc += "--------------------------------\n";
     
-    if (member) {
+   if (member) {
         const poinDapat = Math.floor(totalFinal / 20000) * 100;
         const poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
-        esc += "Member         : " + member.nama + "\n";
+        
+        esc += "Nama Member    : " + member.nama + "\n";
+        esc += "Poin Didapat   : +" + poinDapat + "\n"; // BARIS BARU
         esc += "Poin Akumulasi : " + poinAkumulasi + "\n";
+        if (redeemQty > 0) esc += "Poin Digunakan : " + redeemQty + "\n";
     }
 
     esc += "Total Sebelum PB1 : Rp " + totalFinal.toLocaleString() + "\n";
@@ -730,8 +733,12 @@ function reprintStruk(index) {
         esc += "Metode        : " + (data.metode || "CASH") + "\n";
         
         if (data.namaMember && data.namaMember !== "-") {
-            esc += "Nama Member   : " + data.namaMember + "\n";
-        }
+        esc += "Nama Member    : " + data.namaMember + "\n";
+        
+        // Asumsi perhitungan poin: (Total / 20000) * 100
+        const poinDapat = Math.floor(Number(data.total) / 20000) * 100;
+        esc += "Poin Didapat   : +" + poinDapat + "\n"; // BARIS BARU
+    }
 
         esc += "--------------------------------\n";
         esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
