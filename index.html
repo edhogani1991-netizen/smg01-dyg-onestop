@@ -689,7 +689,7 @@ mark {
         <div onclick="toggleMenuDropdown()" style="cursor:pointer; padding: 5px; font-size: 20px;">☰</div>
         
         <div id="menuDropdown" style="display:none; position:absolute; top:35px; left:0; background:white; color:black; border-radius:12px; width:150px; box-shadow:0 8px 20px rgba(0,0,0,0.2); z-index:2000; overflow:hidden;">
-            <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
+            <div onclick="openVoucherInfo()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🎫 Voucher</div>
             <div onclick="openMemberModal()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">🪙 Poin</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700; border-bottom:1px solid #eee;">❓ Bantuan</div>
             <div onclick="openComingSoon()" style="padding:12px; font-size:13px; font-weight:700;">📝 Saran & Kritik</div>
@@ -2189,6 +2189,27 @@ function showInfoIklan() {
     }).then(() => openIklanForm()); // Kembali ke form setelah baca info
 }
 
+function openVoucherInfo() {
+    Swal.fire({
+        title: 'Info Voucher',
+        html: `
+            <div class="close-btn" onclick="Swal.close()">×</div>
+            <div style="text-align: center; padding: 10px;">
+                <p>Voucher akan kita bagikan di halaman WhatsApp Channel kita.</p>
+                <p>Yuk, gabung sekarang untuk dapatkan promo eksklusif!</p>
+            </div>
+        `,
+        showConfirmButton: true,
+        confirmButtonText: 'INFO PROMO',
+        confirmButtonColor: '#1B4332',
+        // Tambahkan aksi setelah tombol diklik
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Ganti link di bawah dengan link WhatsApp Channel Anda
+            window.open('https://whatsapp.com/channel/LINK_CHANNEL_ANDA_DISINI', '_blank');
+        }
+    });
+}
 </script>
 
 <div id="modalComingSoon" class="modal-overlay">
