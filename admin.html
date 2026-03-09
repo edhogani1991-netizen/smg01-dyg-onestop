@@ -253,65 +253,60 @@ async function submitOrder() {
     const m = document.getElementById("metode").value;
     if (!m) { openModalMetode(); return; }
 
+    // Hitung total dasar
+    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
+    const totalBersihAwal = totalKotor - pointDiscount - voucherDiscount;
+    
+    // --- LOGIKA PEMBULATAN SAMA DENGAN RENDER CART ---
+    const sisa = totalBersihAwal % 1000;
+    const nominalPembulatan = (sisa >= 500) ? (1000 - sisa) : -sisa;
+    const totalFinal = totalBersihAwal + nominalPembulatan;
+    // -------------------------------------------------
+
     if (m === "CASH") {
         const bayarInput = document.getElementById("bayar");
-        if (!bayarInput || !bayarInput.value || Number(bayarInput.value) <= 0) {
-            alert("Silakan masukkan nominal uang bayar!");
+        if (!bayarInput || !bayarInput.value || Number(bayarInput.value) < totalFinal) {
+            alert("Nominal bayar kurang dari total: Rp " + totalFinal.toLocaleString());
             if(bayarInput) bayarInput.focus();
             return;
         }
     }
 
     const btn = document.getElementById("btnSubmitOrder");
-    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
-    const diskon = pointDiscount;
-    const totalBersih = totalKotor - diskon;
     const trxId = "TRX-" + Date.now();
     const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
     
     btn.innerText = "MENCETAK..."; btn.disabled = true;
 
-    pendingOrder = { total: totalBersih, noWA: document.getElementById("nohp").value || "-", pesanan, metode: m, trxId };
-
-    // --- FORMULASI STRUK (IDENTIK DENGAN ASLINYA) ---
+    // --- FORMULASI STRUK ---
     let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
     esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
     Object.values(cart).forEach(i => {
         esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
     });
     esc += "--------------------------------\n";
-    esc += "Total Kotor   : Rp " + totalKotor.toLocaleString() + "\n";
-    esc += "Metode        : " + pendingOrder.metode + "\n";
-    if (member) {
-        const poinDapat = Math.floor(totalBersih / 20000) * 100;
-        const poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
-        esc += "Nama Member   : " + member.nama + "\n";
-        esc += "Poin Didapat  : +" + poinDapat + "\n";
-        esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
-        if (redeemQty > 0) esc += "Poin Digunakan: " + redeemQty + "\n";
-    }
-    esc += "Voucher       : Rp 0\n"; 
-    esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
+    esc += "Subtotal      : Rp " + totalKotor.toLocaleString() + "\n";
+    esc += "Diskon        : Rp " + (pointDiscount + voucherDiscount).toLocaleString() + "\n";
+    
+    // Tambahkan baris pembulatan
+    esc += "Pembulatan    : Rp " + nominalPembulatan.toLocaleString() + "\n";
     esc += "--------------------------------\n";
-    esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
+    esc += "\x1B\x21\x10TOTAL BAYAR   : Rp " + totalFinal.toLocaleString() + "\x1B\x21\x00\n";
+    
     if (m === "CASH") {
         const bVal = Number(document.getElementById("bayar").value);
         esc += "Bayar         : Rp " + bVal.toLocaleString() + "\n";
-        esc += "Kembali       : Rp " + (bVal - totalBersih).toLocaleString() + "\n";
+        esc += "Kembali       : Rp " + (bVal - totalFinal).toLocaleString() + "\n";
     }
     esc += "--------------------------------\n";
     esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
-    // --- EKSEKUSI INSTAN ---
+    // --- EKSEKUSI ---
     if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
     
-    // Simpan ke cloud tanpa 'await' (jalan di background)
     prosesSimpanKeCloud(); 
-
-    // Langsung reload setelah jeda 800ms
     setTimeout(() => { location.reload(); }, 800);
 }
-
 // ==========================================
 // 3. FUNGSI PENDUKUNG (TIDAK BERUBAH)
 // ==========================================
@@ -666,41 +661,44 @@ function reprintStruk(index) {
         let totalKotorManual = 0;
 
         items.forEach(itemStr => {
-            // Pecah "Nama Menu xQty" -> ["Nama Menu", "Qty"]
             const parts = itemStr.split(" x");
             const namaMenu = parts[0].trim();
             const qty = parseInt(parts[1]) || 1;
-            
-            // CARI HARGA DI DAFTAR MENU AKTIF
             const menuAsli = MENU.find(m => m.nama === namaMenu);
             const hargaSatuan = menuAsli ? menuAsli.harga : 0;
             const subTotal = hargaSatuan * qty;
             totalKotorManual += subTotal;
 
-            // FORMAT PERSIS STRUK ASLI
             esc += `${namaMenu}\n${qty} x ${hargaSatuan.toLocaleString()} = ${subTotal.toLocaleString()}\n`;
         });
         
         esc += "--------------------------------\n";
         
-        const bersih = Number(data.total) || 0;
-        const diskon = Number(data.diskon) || 0;
-        // Gunakan total kotor dari hasil hitung ulang item di atas
-        const kotor = totalKotorManual > 0 ? totalKotorManual : (bersih + diskon);
+        // --- LOGIKA PEMBULATAN RE-CALC ---
+        const totalBersihDiskon = Number(data.total) || 0; // Total setelah diskon sebelum pembulatan
+        // Jika di database tidak ada field pembulatan, kita hitung selisihnya
+        // atau jika 'data.total' sudah final (setelah pembulatan), kita tampilkan apa adanya.
+        
+        // Untuk menampilkan kolom Pembulatan:
+        const totalFinal = Number(data.total); // Asumsi ini adalah nilai yang dibayar
+        // Memastikan nilai sebelum modulus selalu positif
+const totalSebelumBulat = Math.max(0, totalKotorManual - (Number(data.diskon) || 0));
+const sisa = totalSebelumBulat % 1000;
+        const nominalPembulatan = (sisa >= 500) ? (1000 - sisa) : -sisa;
+        // ---------------------------------
 
-        esc += "Total Kotor   : Rp " + kotor.toLocaleString() + "\n";
+        esc += "Subtotal      : Rp " + totalKotorManual.toLocaleString() + "\n";
+        esc += "Diskon        : Rp " + (Number(data.diskon) || 0).toLocaleString() + "\n";
+        esc += "Pembulatan    : Rp " + nominalPembulatan.toLocaleString() + "\n";
+        esc += "--------------------------------\n";
+        esc += "\x1B\x21\x10TOTAL BAYAR   : Rp " + totalFinal.toLocaleString() + "\x1B\x21\x00\n";
+        
         esc += "Metode        : " + (data.metode || "CASH") + "\n";
         
         if (data.namaMember && data.namaMember !== "-") {
             esc += "Nama Member   : " + data.namaMember + "\n";
-            esc += "Poin Didapat  : +" + (data.poinDapat || 0) + "\n";
-            esc += "Poin Akumulasi: (Cek App)\n";
         }
 
-        esc += "Voucher       : Rp 0\n";
-        esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
-        esc += "--------------------------------\n";
-        esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + bersih.toLocaleString() + "\x1B\x21\x00\n";
         esc += "--------------------------------\n";
         esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
@@ -714,7 +712,6 @@ function reprintStruk(index) {
         alert("Gagal memproses struk: " + err.message);
     }
 }
-
 function cetakSemuaTransaksi() {
     const container = document.getElementById("listTrxContent");
     if (!window.currentShiftData || window.currentShiftData.length === 0) {
