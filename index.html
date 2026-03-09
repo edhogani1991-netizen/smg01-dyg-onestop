@@ -1122,7 +1122,7 @@ async function apiCekMember() {
 // Tambahkan 'antrean = 0' di deretan variabel global
 let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, antrean = 0;
     const CONFIG = {
-        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbx5xhUlK6eaZNDmTccQa772BOVRGRDYq7x9CmsjHN7RQLxgKfkluBEAvGQ3OTkUCre4aQ/exec',
+        WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbw-TBIjPXsjYSgXggh-AMI5wG5ZIi4Y5BV_dfVzkovHHfiSqxt8ATMpfP0F4Be-rPjRdQ/exec',
  	MENU_CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv',
         WARUNG_LOCATION: [-7.045132799426078, 110.39216011095742],
         WA_NUMBERS: { DINE_IN: '6281393048132', DELIVERY: '6289601522700' },
@@ -1134,7 +1134,6 @@ let menuData = [], cart = [], currentMode = null, userDist = 0, bannerIdx = 0, a
     const VARIAN_MIE_GORENG = [{n:'Original',e:0},{n:'Rendang',e:0},{n:'Salero Padang',e:0}];
     const VARIAN_MIE_REBUS = [{n:'Ayam Bawang',e:0},{n:'Soto',e:0}];
     const VARIAN_SUHU = [{n:'Es',e:0},{n:'Panas',e:0}];
-    const MY_BANNERS = ["https://i.ibb.co/rGp9JRTt/489229283-648243944838626-4378363602972113737-n.jpg","https://i.ibb.co/M56XzvBL/Chat-GPT-Image-Jan-20-2026-07-46-53-PM-jpg.jpg","https://i.ibb.co/B2KrvQPj/Chat-GPT-Image-Jan-20-2026-07-44-52-PM.jpg"];
 
 function toggleMenuDropdown() {
     const dropdown = document.getElementById('menuDropdown');
@@ -1797,77 +1796,50 @@ function changeMode(m, el) {
     let bannerTimer = null;
 let isBannerTouched = false;
 
-function initBanner() {
+async function initBanner() {
     const track = document.getElementById('banner-track');
     const container = document.querySelector('.banner-container');
-    if (!track || !container || !MY_BANNERS?.length) return;
+    if (!track || !container) return;
 
-    // Cegah init ulang
-    if (track.dataset.ready) return;
-    track.dataset.ready = "1";
+    // Kita gabungkan URL Web App dengan parameter yang dibutuhkan
+    const fetchURL = `${CONFIG.WEB_APP_URL}?action=getBanner&token=${CONFIG.TOKEN}`;
 
-    // Render banner
-    track.innerHTML = MY_BANNERS.map(src =>
-        `<img src="${src}" draggable="false">`
-    ).join('');
+    try {
+        const res = await fetch(fetchURL);
+        const json = await res.json();
+        const banners = json.data;
 
-    bannerIdx = 0;
-    track.style.transform = `translateX(0%)`;
+        if (!banners || banners.length === 0) return;
 
-    // ==== AUTO SLIDE ====
-    function startAutoSlide() {
-        stopAutoSlide();
-        bannerTimer = setInterval(() => {
-            if (isBannerTouched) return;
-            bannerIdx = (bannerIdx + 1) % MY_BANNERS.length;
-            track.style.transition = 'transform 0.4s ease';
-            track.style.transform = `translateX(-${bannerIdx * 100}%)`;
-        }, 4000);
+        // Render banner
+        track.innerHTML = banners.map(b =>
+            `<a href="${b.link}" style="display:block; min-width:100%;"><img src="${b.image}" draggable="false" onerror="this.src='https://dummyimage.com/800x300/cccccc/000&text=Promo'"></a>`
+        ).join('');
+
+        bannerIdx = 0;
+        track.style.transform = `translateX(0%)`;
+        startAutoSlide(banners.length);
+    } catch (e) { 
+        console.error("Banner gagal dimuat", e); 
     }
+}
 
-    function stopAutoSlide() {
-        if (bannerTimer) {
-            clearInterval(bannerTimer);
-            bannerTimer = null;
-        }
-    }
-
-    startAutoSlide();
-
-    // ==== SWIPE MANUAL ====
-    let startX = 0;
-    let deltaX = 0;
-
-    container.addEventListener('touchstart', e => {
-        isBannerTouched = true;
-        stopAutoSlide();
-        startX = e.touches[0].clientX;
-        track.style.transition = 'none';
-    }, { passive: true });
-
-    container.addEventListener('touchmove', e => {
-        deltaX = e.touches[0].clientX - startX;
-        track.style.transform =
-            `translateX(calc(-${bannerIdx * 100}% + ${deltaX}px))`;
-    }, { passive: true });
-
-    container.addEventListener('touchend', () => {
-        const threshold = container.offsetWidth * 0.25;
-
-        if (deltaX > threshold && bannerIdx > 0) {
-            bannerIdx--;
-        } else if (deltaX < -threshold && bannerIdx < MY_BANNERS.length - 1) {
-            bannerIdx++;
-        }
-
+function stopAutoSlide() { if (bannerTimer) { clearInterval(bannerTimer); bannerTimer = null; } }
+function startAutoSlide(totalBanners) {
+    stopAutoSlide(); // Bersihkan timer lama jika ada
+    bannerTimer = setInterval(() => {
+        if (isBannerTouched) return;
+        // Gunakan variabel bannerIdx yang sudah ada di scope global Anda
+        bannerIdx = (bannerIdx + 1) % totalBanners;
+        const track = document.getElementById('banner-track');
         track.style.transition = 'transform 0.4s ease';
         track.style.transform = `translateX(-${bannerIdx * 100}%)`;
-
-        deltaX = 0;
-        isBannerTouched = false;
-        startAutoSlide();
-    });
+    }, 4000); // Geser setiap 4 detik
 }
+// Panggil ini saat load halaman
+document.addEventListener("DOMContentLoaded", () => {
+    initBanner();
+});
 
 
     function filterMenu() {
