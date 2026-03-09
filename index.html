@@ -1342,37 +1342,57 @@ ${m.deskripsi ? `
 }
 
 function updateCart(id, change) {
-    // Panggil validasi ini setiap kali user ingin menambah menu
+    // 1. Validasi mode (misal: dine-in/takeaway)
     if (change > 0 && !checkModeSelected()) {
         return; 
     }
-    // -------------------------
 
     const item = menuData.find(m => m.id === id);
     if (!item) return;
 
+    // --- LOGIKA PENENTUAN VARIAN (Sama dengan renderMenu) ---
+    const nl = item.nama.toLowerCase().trim();
+    const kl = item.kat.toLowerCase();
+    const noSuhuList = [
+        "kopi klothok", "kopi lelet", "kopi coklat", "kopi jahe", "es kopi item", 
+        "es kopiko", "kopi ka'amel", "kopi susu beri", "es susu mantan", "es jossu", 
+        "es bissu", "es jeruk susu", "es choco oren", "es jeruk yakult", "es milksex beri", 
+        "es matcha", "es squash oren", "jus mangga", "jus stoberi", "smoothies mary", 
+        "float mangga", "float stoberi", "nescafe panas", "kopi kapal api", "kopi abc susu", 
+        "nutrisari jeruk", "extra joss", "kukubima"
+    ];
+
+    const isNasi = (kl.includes("hemat") || (kl.includes("wardoy") && nl.includes("nasi"))) && !nl.includes("mie lik");
+    const isMieG = nl.includes("mie") && nl.includes("goreng") && !kl.includes("mie lik") && !nl.includes("mie lik");
+    const isMieR = (nl.includes("mie") && (nl.includes("rebus") || nl.includes("kuah"))) && !kl.includes("mie lik") && !nl.includes("mie lik");
+    const isSuhu = (kl.includes("paket hemat") || kl.includes("drink") || kl.includes("sachetan")) && !noSuhuList.includes(nl);
+    
+    const hasVariant = isNasi || isMieG || isMieR || isSuhu;
+    // --------------------------------------------------------
+
     if (change > 0) {
-        // 1. Tambah ke keranjang
+        // Tambah ke keranjang
         cart.push({ ...item, vN: null, vM: null, vR: null, vS: null, ex: 0 });
         
-        // 2. Tampilkan pilihan varian
-        const vDisplay = document.getElementById(`variant-display-${id}`);
-        if (vDisplay) {
-            vDisplay.style.display = 'block'; 
-            
-            vDisplay.style.background = "#fff9e6";
-            setTimeout(() => vDisplay.style.background = "transparent", 1000);
-            
-            // Pop-up instruksi yang lebih user-friendly dibanding alert
-            Swal.fire({
-                title: 'Pilih Varian',
-                text: 'Silakan tentukan varian untuk menu yang baru Anda pilih.',
-                icon: 'info',
-                timer: 2000,
-                showConfirmButton: false
-            });
+        // HANYA tampilkan varian jika menu memang membutuhkan varian
+        if (hasVariant) {
+            const vDisplay = document.getElementById(`variant-display-${id}`);
+            if (vDisplay) {
+                vDisplay.style.display = 'block'; 
+                vDisplay.style.background = "#fff9e6";
+                setTimeout(() => vDisplay.style.background = "transparent", 1000);
+                
+                Swal.fire({
+                    title: 'Pilih Varian',
+                    text: 'Silakan tentukan varian untuk menu ini.',
+                    icon: 'info',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
         }
     } else {
+        // Kurangi dari keranjang
         let idx = cart.findLastIndex(c => c.id === id);
         if (idx !== -1) cart.splice(idx, 1);
         
