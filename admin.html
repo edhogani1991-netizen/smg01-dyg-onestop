@@ -340,14 +340,12 @@ function updateUI() {
 }
 
 function renderCart() {
+    // 1. Panggil validasi voucher otomatis (update nilai voucherDiscount)
+    validateAndApplyVoucher();
+
     const list = document.getElementById("cartList");
     let html = "", total = 0;
     const items = Object.keys(cart);
-
-    // 1. Panggil fungsi pengecekan otomatis setiap kali renderCart berjalan
-    if (window.appliedVoucherCode) {
-        validateAndApplyVoucher();
-    }
 
     if (items.length === 0) {
         list.innerHTML = '<div class="text-center text-slate-300 text-[10px] mt-10">Kosong</div>';
@@ -356,7 +354,8 @@ function renderCart() {
         document.getElementById("cashBox").innerHTML = "";
         return;
     }
-    
+
+    // 2. Loop item untuk menghitung total kotor
     items.forEach(i => {
         const item = cart[i];
         total += item.qty * item.harga;
@@ -372,13 +371,25 @@ function renderCart() {
             </div>
         </div>`;
     });
-    
-    const bersih = Math.max(0, total - pointDiscount);
-    document.getElementById("total").innerText = bersih.toLocaleString();
+
+    // 3. Hitung total diskon (Poin Member + Voucher)
+    const totalDiskon = pointDiscount + voucherDiscount;
+    const bersih = Math.max(0, total - totalDiskon);
+
+    // 4. Update UI
     list.innerHTML = html;
-    document.getElementById("pointDiscWrapper").classList.toggle("hidden", pointDiscount <= 0);
-    document.getElementById("pointDiscNominal").innerText = pointDiscount.toLocaleString();
-    
+    document.getElementById("total").innerText = bersih.toLocaleString();
+
+    // 5. Tampilkan Wrapper jika ada diskon yang aktif
+    const discWrapper = document.getElementById("pointDiscWrapper");
+    if (totalDiskon > 0) {
+        discWrapper.classList.remove("hidden");
+        document.getElementById("pointDiscNominal").innerText = totalDiskon.toLocaleString();
+    } else {
+        discWrapper.classList.add("hidden");
+    }
+
+    // 6. Render box bayar jika metode CASH
     if (document.getElementById("metode").value === "CASH") renderCash();
 }
 
@@ -864,29 +875,23 @@ function applyVoucher() {
     validateAndApplyVoucher();
 }
 
-// Fungsi utama untuk validasi dan update diskon
 function validateAndApplyVoucher() {
     const code = window.appliedVoucherCode;
-    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
-    
-    if (!code) return;
+    if (!code) {
+        voucherDiscount = 0;
+        return;
+    }
 
+    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
     const v = VOUCHER_LIST.find(item => item.kode === code.trim().toUpperCase());
     
-    // Logika Otomatis Lepas (Jika syarat tidak terpenuhi)
     if (!v || totalKotor < v.min_belanja) {
-        if (code) alert("Voucher tidak valid atau tidak memenuhi syarat minimum belanja!");
-        document.getElementById("voucher").value = "";
-        window.appliedVoucherCode = "";
-        pointDiscount = 0;
+        voucherDiscount = 0;
     } else {
-        // Hitung diskon
         let diskon = (v.tipe === "%") ? (v.nilai / 100) * totalKotor : v.nilai;
         if (v.max_diskon > 0 && diskon > v.max_diskon) diskon = v.max_diskon;
-        pointDiscount = Math.floor(diskon);
+        voucherDiscount = Math.floor(diskon);
     }
-    
-    renderCart(); // Update UI
 }
 
 </script>
