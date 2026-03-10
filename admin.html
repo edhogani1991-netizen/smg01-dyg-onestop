@@ -756,33 +756,72 @@ function handleVoucherInput(el) {
         memberInput.classList.remove("opacity-50");
     }
 }
-// Fungsi untuk mengambil data voucher dari CSV Google Sheets
-function loadVoucher() {
-    fetch(VOUCHER_CSV)
-        .then(r => r.text())
-        .then(csv => {
-            // Memproses baris CSV, melewati header
-            const rows = csv.split("\n").slice(1);
-            VOUCHER_LIST = rows.filter(row => row.trim() !== "").map(row => {
-                const cols = row.split(",");
-                return { 
-                    kode: cols[0].trim().toUpperCase(), 
-                    nominal: parseInt(cols[1]) || 0 
-                };
-            });
-            console.log("Voucher dimuat:", VOUCHER_LIST);
-        })
-        .catch(err => console.error("Gagal memuat voucher:", err));
+// Perbarui fungsi loadVoucher menjadi seperti ini
+async function loadVoucher() {
+    try {
+        const response = await fetch(VOUCHER_CSV);
+        const csv = await response.text();
+        const rows = csv.split("\n").slice(1);
+        
+        VOUCHER_LIST = rows.filter(row => row.trim() !== "").map(row => {
+            const cols = row.split(",");
+            return { 
+                kode: cols[0].trim().toUpperCase(),
+                menu: cols[1].trim(),
+                kategori: cols[2].trim(),
+                nilai: parseFloat(cols[3]) || 0,
+                tipe: cols[4].trim(), // '%' atau 'nominal'
+                tglMulai: new Date(cols[5]),
+                tglBerakhir: new Date(cols[6]),
+                minBelanja: parseFloat(cols[7]) || 0,
+                maxDiskon: parseFloat(cols[8]) || 0
+            };
+        });
+        console.log("Voucher dimuat:", VOUCHER_LIST);
+    } catch (err) { console.error("Gagal memuat voucher:", err); }
 }
 
-// Fungsi untuk mengecek validitas voucher
 function hitungVoucher(kode) {
     const v = VOUCHER_LIST.find(item => item.kode === kode.trim().toUpperCase());
-    if (v) {
-        return v.nominal;
-    } else {
-        alert("Kode voucher tidak valid atau tidak ditemukan!");
+    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
+    const today = new Date();
+
+    if (!v) { alert("Voucher tidak ditemukan!"); return 0; }
+
+    // 1. Cek Tanggal
+    if (today < v.tglMulai || today > v.tglBerakhir) {
+        alert("Voucher sudah kedaluwarsa atau belum berlaku!");
         return 0;
+    }
+
+    // 2. Cek Minimum Belanja
+    if (totalKotor < v.minBelanja) {
+        alert(`Minimal belanja Rp ${v.minBelanja.toLocaleString()} untuk voucher ini!`);
+        return 0;
+    }
+
+    // 3. Hitung Diskon
+    let diskon = 0;
+    if (v.tipe === "%") {
+        diskon = (v.nilai / 100) * totalKotor;
+    } else {
+        diskon = v.nilai;
+    }
+
+    // 4. Batasi dengan Max Diskon
+    if (diskon > v.maxDiskon && v.maxDiskon > 0) {
+        diskon = v.maxDiskon;
+    }
+
+    return Math.floor(diskon);
+}
+// Tambahkan event listener di HTML untuk memicu re-render saat voucher diinput
+function applyVoucher() {
+    const vInput = document.getElementById("voucher").value;
+    if (vInput) {
+        // Hitung ulang diskon dan perbarui UI
+        pointDiscount = hitungVoucher(vInput);
+        renderCart();
     }
 }
 
