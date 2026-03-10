@@ -373,21 +373,35 @@ function hitungKembali() {
 }
 
 function cekMember() {
-    const no = document.getElementById("nohp").value.trim();
+    let inputNo = document.getElementById("nohp").value.trim();
+    // Ambil 4 digit terakhir jika panjangnya lebih dari 4
+    const no = inputNo.slice(-4); 
+    
     if (!no) return;
-    document.getElementById("memberInfo").innerText = "Checking...";
-    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`).then(r => r.json()).then(d => {
-        if (d.exists) {
-            member = d;
-            document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin} P)</span>`;
-            if (d.poin >= 500) {
-                let maxTukar = Math.floor(d.poin / 500) * 500;
-                if (confirm(`Tukarkan ${maxTukar} poin (Rp${(maxTukar * 10).toLocaleString()})?`)) {
-                    redeemQty = maxTukar; pointDiscount = maxTukar * 10; renderCart();
+    document.getElementById("memberInfo").innerText = "Mencari...";
+    
+    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`)
+        .then(r => r.json())
+        .then(d => {
+            if (d.exists) {
+                member = d;
+                document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin} P)</span>`;
+                
+                // Cek otomatis jika poin >= 500
+                if (parseInt(d.poin) >= 500) {
+                    let maxTukar = Math.floor(parseInt(d.poin) / 500) * 500;
+                    if (confirm(`Poin ${d.nama} adalah ${d.poin}. Tukarkan ${maxTukar} poin (Rp${(maxTukar * 10).toLocaleString()})?`)) {
+                        redeemQty = maxTukar; 
+                        pointDiscount = maxTukar * 10; 
+                        renderCart();
+                    }
                 }
+            } else {
+                alert("Member dengan 4 digit tersebut tidak ditemukan.");
+                member = null;
+                document.getElementById("memberInfo").innerText = "Tidak ditemukan";
             }
-        } else { alert("Member Tidak Ditemukan"); member = null; }
-    });
+        });
 }
 
 async function prosesSimpanKeCloud() {
