@@ -98,6 +98,8 @@ const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xf
 const TOKEN = "dyg-access-v2";
 let VOUCHER_LIST = []; // Variabel penampung data voucher 
 let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
+let pointDiscount = 0;   // Diskon dari Poin Member
+let voucherDiscount = 0; // Diskon dari Voucher CSV
 function closeModalTrx() {
     document.getElementById("modalTrx").classList.add("hidden");
     document.getElementById("modalTrx").classList.remove("flex");
@@ -866,13 +868,27 @@ function triggerVoucher() {
 // Tambahkan fungsi ini untuk menangani apply
 function applyVoucher() {
     const vInput = document.getElementById("voucher").value;
-    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
+    if (!vInput) return;
     
-    // Simpan kode voucher ke variabel global agar bisa dicek ulang nanti
-    window.appliedVoucherCode = vInput; 
+    // Simpan kode
+    window.appliedVoucherCode = vInput;
     
-    // Trigger hitung ulang
+    // Panggil validasi langsung
     validateAndApplyVoucher();
+    
+    // Beri notifikasi jika gagal
+    const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
+    const v = VOUCHER_LIST.find(item => item.kode === vInput.trim().toUpperCase());
+    
+    if (!v) {
+        alert("Kode voucher tidak ditemukan!");
+    } else if (totalKotor < v.minBelanja) {
+        alert("Belanja belum mencapai minimum Rp " + v.minBelanja.toLocaleString());
+    } else {
+        alert("Voucher berhasil dipasang!");
+    }
+    
+    renderCart(); // Perbarui tampilan
 }
 
 function validateAndApplyVoucher() {
@@ -885,11 +901,17 @@ function validateAndApplyVoucher() {
     const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
     const v = VOUCHER_LIST.find(item => item.kode === code.trim().toUpperCase());
     
-    if (!v || totalKotor < v.min_belanja) {
+    // Logika yang diperbaiki:
+    if (!v) {
         voucherDiscount = 0;
+    } else if (totalKotor < v.minBelanja) {
+        // Jika total kotor kurang dari syarat, set diskon ke 0
+        voucherDiscount = 0; 
     } else {
+        // Hitung diskon
         let diskon = (v.tipe === "%") ? (v.nilai / 100) * totalKotor : v.nilai;
-        if (v.max_diskon > 0 && diskon > v.max_diskon) diskon = v.max_diskon;
+        // Batasi dengan Max Diskon
+        if (v.maxDiskon > 0 && diskon > v.maxDiskon) diskon = v.maxDiskon;
         voucherDiscount = Math.floor(diskon);
     }
 }
