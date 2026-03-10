@@ -36,7 +36,7 @@
         <button id="btnCloseShift" onclick="manageShift('close')" class="bg-rose-600 text-white px-2 py-1 rounded text-[9px] font-bold hidden">TUTUP SHIFT</button>
     </div>
     <div class="flex items-center gap-1 border-l pl-2">
-        <input id="nohp" type="text" placeholder="No WA" class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
+        <input id="nohp" type="text" placeholder="No WA (4 Digit)" onblur="cekMember()" class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
         <button onclick="cekMember()" class="bg-blue-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek</button>
     </div>
 </header>
@@ -372,38 +372,6 @@ function hitungKembali() {
     document.getElementById("kembali").innerText = Math.max(0, b - t).toLocaleString();
 }
 
-function cekMember() {
-    let inputNo = document.getElementById("nohp").value.trim();
-    // Ambil 4 digit terakhir jika panjangnya lebih dari 4
-    const no = inputNo.slice(-4); 
-    
-    if (!no) return;
-    document.getElementById("memberInfo").innerText = "Mencari...";
-    
-    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`)
-        .then(r => r.json())
-        .then(d => {
-            if (d.exists) {
-                member = d;
-                document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin} P)</span>`;
-                
-                // Cek otomatis jika poin >= 500
-                if (parseInt(d.poin) >= 500) {
-                    let maxTukar = Math.floor(parseInt(d.poin) / 500) * 500;
-                    if (confirm(`Poin ${d.nama} adalah ${d.poin}. Tukarkan ${maxTukar} poin (Rp${(maxTukar * 10).toLocaleString()})?`)) {
-                        redeemQty = maxTukar; 
-                        pointDiscount = maxTukar * 10; 
-                        renderCart();
-                    }
-                }
-            } else {
-                alert("Member dengan 4 digit tersebut tidak ditemukan.");
-                member = null;
-                document.getElementById("memberInfo").innerText = "Tidak ditemukan";
-            }
-        });
-}
-
 async function prosesSimpanKeCloud() {
     const p = new URLSearchParams({
         token: TOKEN, action: "processPayment",
@@ -440,7 +408,56 @@ async function manageShift(type) {
     }
 }
 
-window.onload = () => { loadMenu(); checkShiftStatus(); };
+window.onload = () => { 
+    loadMenu(); 
+    checkShiftStatus(); 
+
+    // Gabungkan event listener di sini agar aman
+    const elNohp = document.getElementById('nohp');
+    if (elNohp) {
+        elNohp.addEventListener('input', function(e) {
+            // Cek jika sudah mencapai 4 digit
+            if (e.target.value.length >= 4) {
+                cekMember();
+                // Opsional: pindahkan fokus agar kasir bisa langsung lanjut
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) searchInput.focus();
+            }
+        });
+    }
+};
+
+// Pastikan fungsi cekMember Anda juga sudah diperbarui untuk memotong 4 digit
+function cekMember() {
+    const noInput = document.getElementById("nohp").value.trim();
+    const no = noInput.slice(-4); // Ambil 4 digit terakhir
+    
+    if (no.length < 4) return;
+    
+    document.getElementById("memberInfo").innerText = "Mencari...";
+    
+    fetch(`${API_URL}?token=${TOKEN}&action=cekMember&noHP=${no}`)
+        .then(r => r.json())
+        .then(d => {
+            if (d.exists) {
+                member = d;
+                document.getElementById("memberInfo").innerHTML = `<span class="text-blue-600 font-bold">✅ ${d.nama} (${d.poin} P)</span>`;
+                
+                // Pop-up tukar poin otomatis (SYARAT POINT >= 500)
+                if (parseInt(d.poin) >= 500) {
+                    let maxTukar = Math.floor(parseInt(d.poin) / 500) * 500;
+                    if (confirm(`Poin ${d.nama} adalah ${d.poin}. Tukarkan ${maxTukar} poin (Rp${(maxTukar * 10).toLocaleString()})?`)) {
+                        redeemQty = maxTukar; 
+                        pointDiscount = maxTukar * 10; 
+                        renderCart();
+                    }
+                }
+            } else {
+                document.getElementById("memberInfo").innerText = "Member tidak ditemukan";
+                member = null;
+            }
+        });
+}
 
 async function cekDaftarTransaksi() {
     const btn = document.getElementById("btnCekTrx");
