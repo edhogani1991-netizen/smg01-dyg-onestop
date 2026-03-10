@@ -39,6 +39,9 @@
         <input id="nohp" type="text" placeholder="No WA (4 Digit)" onblur="cekMember()" class="bg-slate-100 rounded px-2 py-1 text-[9px] w-24">
         <button onclick="cekMember()" class="bg-blue-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Cek</button>
     </div>
+<input id="voucher" type="text" placeholder="Kode Voucher" oninput="handleVoucherInput(this)" class="bg-yellow-50 border border-yellow-200 rounded px-2 py-1 text-[9px] w-20">
+</div>
+<div id="memberInfo" class="text-[9px]"></div>
 </header>
 
 <main class="flex-1 overflow-hidden main-container">
@@ -86,9 +89,10 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbx6xJqddfEoLQnAj10xhm9NHeYBYlweKWrTbf8U9wpI_5PlbuI-Dl3NMpNJjFJc7yGlvw/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
-const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv"; 
+const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
+const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
-
+let VOUCHER_LIST = []; // Variabel penampung data voucher 
 let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
 function closeModalTrx() {
     document.getElementById("modalTrx").classList.add("hidden");
@@ -153,8 +157,25 @@ async function submitOrder() {
 
     const btn = document.getElementById("btnSubmitOrder");
     const totalKotor = Object.values(cart).reduce((a, b) => a + (b.qty * b.harga), 0);
-    const diskon = pointDiscount;
-    const totalBersih = totalKotor - diskon;
+    
+    // --- LOGIKA DISKON (POIN ATAU VOUCHER) ---
+    let totalDiskon = 0;
+    let labelDiskon = "Diskon"; 
+    
+    if (redeemQty > 0) {
+        totalDiskon = pointDiscount;
+        labelDiskon = "Diskon Poin";
+    } else {
+        const vInput = document.getElementById("voucher");
+        if (vInput && vInput.value.trim() !== "") {
+            // Pastikan fungsi hitungVoucher() sudah ada di skrip Anda
+            totalDiskon = typeof hitungVoucher === 'function' ? hitungVoucher(vInput.value.trim()) : 0;
+            labelDiskon = "Diskon Voucher";
+        }
+    }
+    // -----------------------------------------
+
+    const totalBersih = totalKotor - totalDiskon;
     const trxId = "TRX-" + Date.now();
     const pesanan = Object.values(cart).map(i => `${i.nama} x${i.qty}`).join(", ");
     
@@ -162,15 +183,18 @@ async function submitOrder() {
 
     pendingOrder = { total: totalBersih, noWA: document.getElementById("nohp").value || "-", pesanan, metode: m, trxId };
 
-    // --- FORMULASI STRUK (IDENTIK DENGAN ASLINYA) ---
+    // --- FORMULASI STRUK (STRUKTUR TETAP SAMA) ---
     let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10dyg++ CLOUD KITCHEN\x1B\x21\x00\n";
     esc += "ID: " + trxId + "\n--------------------------------\n\x1B\x61\x00";
+    
     Object.values(cart).forEach(i => {
         esc += `${i.nama}\n${i.qty} x ${i.harga.toLocaleString()} = ${(i.qty * i.harga).toLocaleString()}\n`;
     });
+    
     esc += "--------------------------------\n";
     esc += "Total Kotor   : Rp " + totalKotor.toLocaleString() + "\n";
     esc += "Metode        : " + pendingOrder.metode + "\n";
+    
     if (member) {
         const poinDapat = Math.floor(totalBersih / 20000) * 100;
         const poinAkumulasi = (Number(member.poin) + poinDapat - redeemQty);
@@ -179,10 +203,12 @@ async function submitOrder() {
         esc += "Poin Akumulasi: " + poinAkumulasi + "\n";
         if (redeemQty > 0) esc += "Poin Digunakan: " + redeemQty + "\n";
     }
-    esc += "Voucher       : Rp 0\n"; 
-    esc += "Diskon        : Rp " + diskon.toLocaleString() + "\n";
+    
+    // Menampilkan label diskon dinamis
+    esc += `${labelDiskon} : Rp ${totalDiskon.toLocaleString()}\n`; 
     esc += "--------------------------------\n";
     esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + totalBersih.toLocaleString() + "\x1B\x21\x00\n";
+    
     if (m === "CASH") {
         const bVal = Number(document.getElementById("bayar").value);
         esc += "Bayar         : Rp " + bVal.toLocaleString() + "\n";
@@ -191,13 +217,10 @@ async function submitOrder() {
     esc += "--------------------------------\n";
     esc += "\x1B\x61\x01TERIMA KASIH\n\n\n\n\n";
 
-    // --- EKSEKUSI INSTAN ---
+    // --- EKSEKUSI ---
     if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
     
-    // Simpan ke cloud tanpa 'await' (jalan di background)
     prosesSimpanKeCloud(); 
-
-    // Langsung reload setelah jeda 800ms
     setTimeout(() => { location.reload(); }, 800);
 }
 
@@ -411,17 +434,15 @@ async function manageShift(type) {
 window.onload = () => { 
     loadMenu(); 
     checkShiftStatus(); 
-
-    // Gabungkan event listener di sini agar aman
+    loadVoucher(); // Panggil fungsi di sini
+    
+    // Inisialisasi listener member
     const elNohp = document.getElementById('nohp');
     if (elNohp) {
         elNohp.addEventListener('input', function(e) {
-            // Cek jika sudah mencapai 4 digit
             if (e.target.value.length >= 4) {
                 cekMember();
-                // Opsional: pindahkan fokus agar kasir bisa langsung lanjut
-                const searchInput = document.getElementById('searchInput');
-                if (searchInput) searchInput.focus();
+                document.getElementById('searchInput').focus(); 
             }
         });
     }
@@ -679,6 +700,63 @@ function cetakSemuaTransaksi() {
         console.log(esc);
     }
 }
+// Fungsi untuk toggle input
+function handleMemberInput(el) {
+    const voucherInput = document.getElementById("voucher");
+    if (el.value.length > 0) {
+        voucherInput.disabled = true; // Kunci voucher
+        voucherInput.classList.add("opacity-50");
+        // Jalankan logika cek member jika sudah 4 digit
+        if (el.value.length >= 4) cekMember();
+    } else {
+        voucherInput.disabled = false; // Buka kunci jika input member kosong
+        voucherInput.classList.remove("opacity-50");
+        member = null;
+        document.getElementById("memberInfo").innerText = "";
+    }
+}
+
+function handleVoucherInput(el) {
+    const memberInput = document.getElementById("nohp");
+    if (el.value.length > 0) {
+        memberInput.disabled = true; // Kunci input member
+        memberInput.classList.add("opacity-50");
+    } else {
+        memberInput.disabled = false; // Buka kunci jika input voucher kosong
+        memberInput.classList.remove("opacity-50");
+    }
+}
+// Fungsi untuk mengambil data voucher dari CSV Google Sheets
+function loadVoucher() {
+    fetch(VOUCHER_CSV)
+        .then(r => r.text())
+        .then(csv => {
+            // Memproses baris CSV, melewati header
+            const rows = csv.split("\n").slice(1);
+            VOUCHER_LIST = rows.filter(row => row.trim() !== "").map(row => {
+                const cols = row.split(",");
+                return { 
+                    kode: cols[0].trim().toUpperCase(), 
+                    nominal: parseInt(cols[1]) || 0 
+                };
+            });
+            console.log("Voucher dimuat:", VOUCHER_LIST);
+        })
+        .catch(err => console.error("Gagal memuat voucher:", err));
+}
+
+// Fungsi untuk mengecek validitas voucher
+function hitungVoucher(kode) {
+    const v = VOUCHER_LIST.find(item => item.kode === kode.trim().toUpperCase());
+    if (v) {
+        return v.nominal;
+    } else {
+        alert("Kode voucher tidak valid atau tidak ditemukan!");
+        return 0;
+    }
+}
+
+
 </script>
 <div id="modalMetode" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-lg shadow-xl w-full max-w-xs overflow-hidden">
