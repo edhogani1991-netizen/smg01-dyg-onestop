@@ -434,15 +434,45 @@ async function manageShift(type) {
 window.onload = () => { 
     loadMenu(); 
     checkShiftStatus(); 
-    loadVoucher(); // Panggil fungsi di sini
+    loadVoucher(); 
     
-    // Inisialisasi listener member
     const elNohp = document.getElementById('nohp');
+    const elVoucher = document.getElementById('voucher');
+
+    // 1. Logic untuk Input Member (Kunci Voucher saat Member diisi)
     if (elNohp) {
         elNohp.addEventListener('input', function(e) {
+            if (e.target.value.length > 0) {
+                if(elVoucher) {
+                    elVoucher.disabled = true;
+                    elVoucher.classList.add("opacity-50");
+                }
+            } else {
+                if(elVoucher) {
+                    elVoucher.disabled = false;
+                    elVoucher.classList.remove("opacity-50");
+                }
+            }
+
+            // Pemicu otomatis Cek Member saat 4 digit
             if (e.target.value.length >= 4) {
                 cekMember();
                 document.getElementById('searchInput').focus(); 
+            }
+        });
+    }
+
+    // 2. Logic untuk Input Voucher (Kunci Member saat Voucher diisi)
+    if (elVoucher) {
+        elVoucher.addEventListener('input', function(e) {
+            if (elNohp) {
+                if (e.target.value.length > 0) {
+                    elNohp.disabled = true;
+                    elNohp.classList.add("opacity-50");
+                } else {
+                    elNohp.disabled = false;
+                    elNohp.classList.remove("opacity-50");
+                }
             }
         });
     }
