@@ -96,10 +96,10 @@ const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
 const TOKEN = "dyg-access-v2";
-let VOUCHER_LIST = []; // Variabel penampung data voucher 
-let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
 let pointDiscount = 0;   // Diskon dari Poin Member
 let voucherDiscount = 0; // Diskon dari Voucher CSV
+let VOUCHER_LIST = []; // Variabel penampung data voucher 
+let MENU = [], cart = {}, member = null, redeemQty = 0, pointDiscount = 0, shiftOpen = false, pendingOrder = null;
 function closeModalTrx() {
     document.getElementById("modalTrx").classList.add("hidden");
     document.getElementById("modalTrx").classList.remove("flex");
