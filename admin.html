@@ -100,7 +100,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbx6xJqddfEoLQnAj10xhm9NHeYBYlweKWrTbf8U9wpI_5PlbuI-Dl3NMpNJjFJc7yGlvw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxBjq3ZdtNIajG578Vjfu8gow9rgTx8rp9THrL4UG2UtnzivjvLmGyt2ii21L-_b22J6A/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -447,25 +447,55 @@ async function prosesSimpanKeCloud() {
 }
 
 async function manageShift(type) {
+    const loader = document.getElementById("fullLoader");
+    
+    // Tampilkan overlay loader
+    loader.classList.remove("hidden");
+    loader.classList.add("flex");
+
     if (type === 'open') {
-        if (!confirm("Buka shift?")) return;
-        await fetch(`${API_URL}?token=${TOKEN}&action=openShift`, { mode: 'no-cors' });
+        // Input Modal Awal
+        const modalAwal = prompt("Masukkan Modal Awal (Rp):");
+        if (!modalAwal || isNaN(modalAwal) || parseInt(modalAwal) < 0) {
+            loader.classList.add("hidden");
+            return;
+        }
+
+        if (!confirm("Buka shift dengan modal Rp " + parseInt(modalAwal).toLocaleString() + "?")) {
+            loader.classList.add("hidden");
+            return;
+        }
+
+        // Kirim modal ke server (tambahkan parameter &modal=)
+        await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${modalAwal}`, { mode: 'no-cors' });
         location.reload();
     } else {
-        if (!confirm("Tutup shift & Cetak Laporan?")) return;
+        if (!confirm("Tutup shift & Cetak Laporan?")) {
+            loader.classList.add("hidden");
+            return;
+        }
         try {
             const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
             const r = await res.json();
+            
+            // Cetak Laporan dengan Modal Awal
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\n";
+            esc += "MODAL AWAL      : Rp " + (r.modalAwal ? r.modalAwal.toLocaleString() : "0") + "\n";
             esc += (r.shiftName || "No Name") + "\n--------------------------------\n\x1B\x61\x00";
             esc += "Total Transaksi   : " + r.totalTrx + "\nTotal Member Trx  : " + (r.totalMemberTrx || 0) + "\n--------------------------------\n";
             esc += "Pemasukan Kotor   : Rp " + r.pemasukanKotor.toLocaleString() + "\nTotal Diskon      : Rp " + r.totalDiskon.toLocaleString() + "\n--------------------------------\n";
             esc += "TOTAL CASH        : Rp " + r.cash.toLocaleString() + "\nTOTAL QRIS        : Rp " + r.qris.toLocaleString() + "\nTOTAL CARD        : Rp " + r.card.toLocaleString() + "\n--------------------------------\n";
             esc += "\x1B\x21\x10TOTAL BERSIH : Rp " + r.pemasukanBersih.toLocaleString() + "\x1B\x21\x00\n--------------------------------\n\x1B\x61\x01Waktu Cetak: " + new Date().toLocaleString() + "\n\n\n\n\n";
+            
             if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
+            
             await fetch(`${API_URL}?token=${TOKEN}&action=closeShift`, { mode: 'no-cors' });
-            alert("Shift Ditutup!"); location.reload();
-        } catch (e) { alert("Gagal!"); }
+            alert("Shift Ditutup!"); 
+            location.reload();
+        } catch (e) { 
+            loader.classList.add("hidden");
+            alert("Gagal memproses shift!"); 
+        }
     }
 }
 
@@ -495,7 +525,8 @@ window.onload = () => {
             // Pemicu otomatis Cek Member saat 4 digit
             if (e.target.value.length >= 4) {
                 cekMember();
-                document.getElementById('searchInput').focus(); 
+                const searchInput = document.getElementById('searchInput');
+                if(searchInput) searchInput.focus(); 
             }
         });
     }
@@ -960,5 +991,12 @@ function validateAndApplyVoucher() {
         </div>
     </div>
 </div>
+<div id="fullLoader" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-[100]">
+    <div class="bg-white p-5 rounded-lg shadow-xl flex flex-col items-center gap-3">
+        <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div class="text-xs font-bold text-slate-700 uppercase tracking-wider">Sedang Memproses...</div>
+    </div>
+</div>
+
 </body>
 </html>
