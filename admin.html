@@ -454,22 +454,33 @@ async function manageShift(type) {
     loader.classList.add("flex");
 
     if (type === 'open') {
-        if (!confirm("Buka shift?")) {
-            loader.classList.add("hidden"); // Sembunyikan jika batal
+        // Input Modal Awal
+        const modalAwal = prompt("Masukkan Modal Awal (Rp):");
+        if (!modalAwal || isNaN(modalAwal) || parseInt(modalAwal) < 0) {
+            loader.classList.add("hidden");
             return;
         }
-        await fetch(`${API_URL}?token=${TOKEN}&action=openShift`, { mode: 'no-cors' });
+
+        if (!confirm("Buka shift dengan modal Rp " + parseInt(modalAwal).toLocaleString() + "?")) {
+            loader.classList.add("hidden");
+            return;
+        }
+
+        // Kirim modal ke server (tambahkan parameter &modal=)
+        await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${modalAwal}`, { mode: 'no-cors' });
         location.reload();
     } else {
         if (!confirm("Tutup shift & Cetak Laporan?")) {
-            loader.classList.add("hidden"); // Sembunyikan jika batal
+            loader.classList.add("hidden");
             return;
         }
         try {
             const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
             const r = await res.json();
             
+            // Cetak Laporan dengan Modal Awal
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\n";
+            esc += "MODAL AWAL      : Rp " + (r.modalAwal ? r.modalAwal.toLocaleString() : "0") + "\n";
             esc += (r.shiftName || "No Name") + "\n--------------------------------\n\x1B\x61\x00";
             esc += "Total Transaksi   : " + r.totalTrx + "\nTotal Member Trx  : " + (r.totalMemberTrx || 0) + "\n--------------------------------\n";
             esc += "Pemasukan Kotor   : Rp " + r.pemasukanKotor.toLocaleString() + "\nTotal Diskon      : Rp " + r.totalDiskon.toLocaleString() + "\n--------------------------------\n";
@@ -482,7 +493,7 @@ async function manageShift(type) {
             alert("Shift Ditutup!"); 
             location.reload();
         } catch (e) { 
-            loader.classList.add("hidden"); // Sembunyikan jika gagal
+            loader.classList.add("hidden");
             alert("Gagal memproses shift!"); 
         }
     }
@@ -514,7 +525,8 @@ window.onload = () => {
             // Pemicu otomatis Cek Member saat 4 digit
             if (e.target.value.length >= 4) {
                 cekMember();
-                document.getElementById('searchInput').focus(); 
+                const searchInput = document.getElementById('searchInput');
+                if(searchInput) searchInput.focus(); 
             }
         });
     }
