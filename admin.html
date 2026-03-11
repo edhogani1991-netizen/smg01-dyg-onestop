@@ -263,12 +263,38 @@ async function cekPemasukan() {
         btn.innerText = "..."; btn.disabled = true;
         const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
         const r = await res.json();
-        if (r.status === "NO_ACTIVE_SHIFT") { alert("Belum ada shift!"); return; }
-        const rincian = `=== REAL-TIME REPORT ===\nShift  : ${r.shiftName}\nTrx    : ${r.totalTrx}\nMember : ${r.totalMemberTrx || 0}\n-----------------------\nKOTOR  : Rp ${(r.pemasukanKotor || 0).toLocaleString()}\nDISKON : Rp ${(r.totalDiskon || 0).toLocaleString()}\n-----------------------\nCASH   : Rp ${(r.cash || 0).toLocaleString()}\nQRIS   : Rp ${(r.qris || 0).toLocaleString()}\nCARD   : Rp ${(r.card || 0).toLocaleString()}\n-----------------------\nBERSIH : Rp ${(r.pemasukanBersih || 0).toLocaleString()}\n\nPoin Baru : ${r.totalPoinDapat || 0}\nPoin Cair : ${r.totalPoinRedeem || 0}`;
-        alert(rincian);
-    } catch (e) { alert("Gagal!"); } finally { btn.innerText = originalText; btn.disabled = false; }
-}
+        
+        if (r.status === "NO_ACTIVE_SHIFT") { 
+            alert("Belum ada shift!"); 
+            return; 
+        }
 
+        const rincian = `=== REAL-TIME REPORT ===\n` +
+            `Shift    : ${r.shiftName}\n` +
+            `Modal    : Rp ${(r.modalAwal || 0).toLocaleString()}\n` +
+            `-----------------------\n` +
+            `Trx      : ${r.totalTrx}\n` +
+            `Member   : ${r.totalMemberTrx || 0}\n` +
+            `-----------------------\n` +
+            `KOTOR    : Rp ${(r.pemasukanKotor || 0).toLocaleString()}\n` +
+            `DISKON   : Rp ${(r.totalDiskon || 0).toLocaleString()}\n` +
+            `-----------------------\n` +
+            `CASH     : Rp ${(r.cash || 0).toLocaleString()}\n` +
+            `QRIS     : Rp ${(r.qris || 0).toLocaleString()}\n` +
+            `CARD     : Rp ${(r.card || 0).toLocaleString()}\n` +
+            `-----------------------\n` +
+            `BERSIH   : Rp ${(r.pemasukanBersih || 0).toLocaleString()}\n\n` +
+            `Poin Baru : ${r.totalPoinDapat || 0}\n` +
+            `Poin Cair : ${r.totalPoinRedeem || 0}`;
+            
+        alert(rincian);
+    } catch (e) { 
+        alert("Gagal!"); 
+    } finally { 
+        btn.innerText = originalText; 
+        btn.disabled = false; 
+    }
+}
 async function checkShiftStatus() {
     const btnSubmit = document.getElementById("btnSubmitOrder");
     try {
