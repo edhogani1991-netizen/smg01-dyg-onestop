@@ -59,7 +59,7 @@
 <script>
 /* ================= CONFIG ================= */
 const CONFIG = {
-    API_URL: "https://script.google.com/macros/s/AKfycbyPzV7z5ynFGH2KvjEU2VYnwJp6a-CtLg2x9kqmEOaEiFQ_tk_LMT9mdd44a9Z5RXD9Rw/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbzQLOQV-1M4fE33TvG7QphkH_myYLZHb8WIq_7ufmtCI8PD7b7_i-p85sabaxDjb6XP/exec",
     TOKEN: "dyg-access-v2",
     REFRESH: 8000 
 };
@@ -249,14 +249,32 @@ function printOrder(order) {
     const pesanan = order.Pesanan || order.pesanan || "";
     const catatan = order.Catatan || order.catatan || "";
 
+    // 1. Format teks tetap sama
     let txt = `      dyg++ KITCHEN\n================================\nAntrean : #${antrean}\nNama    : ${nama}\nLayanan : ${mode}\n`;
     if (order.Meja || order.meja) txt += `Meja    : ${order.Meja || order.meja}\n`;
     txt += `Waktu   : ${new Date().toLocaleTimeString()}\n--------------------------------\nPESANAN:\n${pesanan}\n`;
     if (catatan) txt += `--------------------------------\nCATATAN:\n${catatan}\n`;
     txt += `--------------------------------\n\n\n\n`; 
 
-    const base64Data = btoa(unescape(encodeURIComponent(txt)));
-    window.location.href = "rawbt:base64," + base64Data;
+    // 2. Deteksi apakah dibuka di Android (RawBT) atau PC/Browser lain
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
+    if (isAndroid) {
+        // Tetap menggunakan base64 untuk RawBT Android
+        const base64Data = btoa(unescape(encodeURIComponent(txt)));
+        window.location.href = "rawbt:base64," + base64Data;
+    } else {
+        // Untuk PC: Gunakan mode print standar browser agar tidak error
+        // Kita buat elemen tersembunyi agar cepat dan tidak mengganggu UI
+        const printWindow = window.open('', '_blank', 'width=300,height=500');
+        printWindow.document.write(`
+            <pre style="font-family: monospace; font-size: 14px;">${txt}</pre>
+            <script>
+                window.onload = function() { window.print(); window.close(); }
+            </script>
+        `);
+        printWindow.document.close();
+    }
 }
 
 /* ================= START ================= */
