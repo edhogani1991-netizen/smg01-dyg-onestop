@@ -249,30 +249,24 @@ function printOrder(order) {
     const pesanan = order.Pesanan || order.pesanan || "";
     const catatan = order.Catatan || order.catatan || "";
 
-    // 1. Format teks tetap sama
     let txt = `      dyg++ KITCHEN\n================================\nAntrean : #${antrean}\nNama    : ${nama}\nLayanan : ${mode}\n`;
     if (order.Meja || order.meja) txt += `Meja    : ${order.Meja || order.meja}\n`;
     txt += `Waktu   : ${new Date().toLocaleTimeString()}\n--------------------------------\nPESANAN:\n${pesanan}\n`;
     if (catatan) txt += `--------------------------------\nCATATAN:\n${catatan}\n`;
     txt += `--------------------------------\n\n\n\n`; 
 
-    // 2. Deteksi apakah dibuka di Android (RawBT) atau PC/Browser lain
+    // Deteksi Android vs PC
     const isAndroid = /Android/i.test(navigator.userAgent);
 
     if (isAndroid) {
-        // Tetap menggunakan base64 untuk RawBT Android
+        // Tetap pakai Base64 untuk RawBT di Android
         const base64Data = btoa(unescape(encodeURIComponent(txt)));
         window.location.href = "rawbt:base64," + base64Data;
     } else {
-        // Untuk PC: Gunakan mode print standar browser agar tidak error
-        // Kita buat elemen tersembunyi agar cepat dan tidak mengganggu UI
+        // Gunakan Print Standar untuk PC (menghindari error rawbt:)
         const printWindow = window.open('', '_blank', 'width=300,height=500');
-        printWindow.document.write(`
-            <pre style="font-family: monospace; font-size: 14px;">${txt}</pre>
-            <script>
-                window.onload = function() { window.print(); window.close(); }
-            </script>
-        `);
+        printWindow.document.write(`<pre style="font-family: monospace;">${txt}</pre>`);
+        printWindow.document.write('<script>window.print(); window.close();</script>');
         printWindow.document.close();
     }
 }
