@@ -306,14 +306,14 @@ async function cekPemasukan() {
         // Kita gunakan r.modalAwal yang sekarang sudah pasti terisi dari server
         const rincian = `=== REAL-TIME REPORT ===\n` +
             `Shift    : ${r.shiftName}\n` +
-            `Modal    : Rp ${(r.modalAwal || 0).toLocaleString()}\n` +
             `-----------------------\n` +
             `Trx      : ${r.totalTrx}\n` +
             `Member   : ${r.totalMemberTrx || 0}\n` +
             `-----------------------\n` +
+	    `Modal    : Rp ${(r.modalAwal || 0).toLocaleString()}\n` +
             `KOTOR    : Rp ${(r.pemasukanKotor || 0).toLocaleString()}\n` +
             `DISKON   : Rp ${(r.totalDiskon || 0).toLocaleString()}\n` +
-	`TOTAL PENGELUARAN : Rp ${r.totalPengeluaran ? r.totalPengeluaran.toLocaleString() : "0"}\n` +
+	    `TOTAL PENGELUARAN : Rp ${r.totalPengeluaran ? r.totalPengeluaran.toLocaleString() : "0"}\n` +
             `-----------------------\n` +
             `CASH     : Rp ${(r.cash || 0).toLocaleString()}\n` +
             `QRIS     : Rp ${(r.qris || 0).toLocaleString()}\n` +
