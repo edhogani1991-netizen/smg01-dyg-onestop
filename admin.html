@@ -102,7 +102,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxdfyCdkvcTFrw2W-m0FM7oxJFmxmk78NySa_DgQt1H2TizAaduWm2RWRM5_DlU_R-Y4Q/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzGOkCdA3nAev7c9dOaD_rwx_I5Xze-Q8isekCsLx4FK0xwBxpxXCLG9F_exTbVntqDsQ/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -529,13 +529,10 @@ async function prosesSimpanKeCloud() {
 
 async function manageShift(type) {
     const loader = document.getElementById("fullLoader");
-    
-    // Tampilkan overlay loader
     loader.classList.remove("hidden");
     loader.classList.add("flex");
 
     if (type === 'open') {
-        // Input Modal Awal
         const modalAwal = prompt("Masukkan Modal Awal (Rp):");
         localStorage.setItem("modalAwal", modalAwal);
         
@@ -549,11 +546,9 @@ async function manageShift(type) {
             return;
         }
 
-        // Kirim modal ke server
         await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${modalAwal}`, { mode: 'no-cors' });
         location.reload();
     } else {
-        // 1. Prompt untuk Uang di Laci dan Nama Kasir (Fitur Baru)
         const uangLaci = prompt("Masukkan total UANG DI LACI (Rp):");
         const namaKasir = prompt("Masukkan NAMA KASIR:");
 
@@ -568,27 +563,23 @@ async function manageShift(type) {
         }
 
         try {
-            // 2. Ambil data laporan dari server
             const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
             const r = await res.json();
             
-            // 3. Logika Perhitungan (Konsep Asli Anda)
             const modalAwal = parseFloat(r.modalAwal || 0);
             const cashDiterima = parseFloat(r.cash || 0);
             const totalBersih = parseFloat(r.pemasukanBersih || 0);
-            const totalUangDiLaci = modalAwal + cashDiterima;
             
-            // Perhitungan Selisih untuk Laporan
+            // Logika Selisih & Keterangan
             const selisih = parseFloat(uangLaci) - totalBersih; 
             const statusUang = selisih === 0 ? "PAS" : (selisih > 0 ? "LEBIH" : "KURANG");
 
-            // 4. Format Laporan Cetak (FORMAT ASLI ANDA - TIDAK DIUBAH)
+            // FORMAT LAPORAN (Sesuai variabel yang dikirim GAS Anda)
             let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
             esc += `${r.shiftName || 'SHIFT'}-${new Date().toLocaleDateString('id-ID')}-${new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})}\n`;
             esc += "--------------------------------\n\x1B\x61\x00";
 
             esc += `Total Transaksi      : ${r.totalTrx || 0}\n`;
-            esc += `Total Member Trx    : ${r.totalMemberTrx || 0}\n`;
             esc += `Modal Awal          : Rp ${modalAwal.toLocaleString('id-ID')}\n`;
             esc += "--------------------------------\n";
             esc += `Total QRIS          : Rp ${(r.qris || 0).toLocaleString('id-ID')}\n`;
@@ -596,8 +587,7 @@ async function manageShift(type) {
             esc += `Total Card          : Rp ${(r.card || 0).toLocaleString('id-ID')}\n`;
             esc += "--------------------------------\n";
             esc += `Pemasukan Kotor     : Rp ${(r.pemasukanKotor || 0).toLocaleString('id-ID')}\n`;
-            esc += `Total Diskon Vchr   : Rp ${(r.totalDiskonVoucher || 0).toLocaleString('id-ID')}\n`;
-            esc += `Total Diskon Mbr    : Rp ${(r.totalDiskonMember || 0).toLocaleString('id-ID')}\n`;
+            esc += `Total Diskon        : Rp ${(r.totalDiskon || 0).toLocaleString('id-ID')}\n`;
             esc += `Total Pengeluaran   : Rp ${(r.totalPengeluaran || 0).toLocaleString('id-ID')}\n`;
             esc += "--------------------------------\n";
             esc += `TOTAL BERSIH        : Rp ${totalBersih.toLocaleString('id-ID')}\n`;
@@ -608,10 +598,9 @@ async function manageShift(type) {
             esc += `Kasir : ${namaKasir}\n`;
             esc += `Waktu : ${new Date().toLocaleString('id-ID')}\n\n\n\n\n`;
                 
-            // Jalankan Perintah Cetak ke App Inventor
             if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
             
-            // 5. Simpan ke Backend (Kolom O, P, Q, R)
+            // Kirim data ke Backend (Action closeShift)
             const closeUrl = `${API_URL}?token=${TOKEN}&action=closeShift&uangLaci=${uangLaci}&namaKasir=${encodeURIComponent(namaKasir)}&selisih=${selisih}&keterangan=${statusUang}`;
             await fetch(closeUrl, { mode: 'no-cors' });
             
