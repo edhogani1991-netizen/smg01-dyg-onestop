@@ -544,18 +544,21 @@ function manageShift(type) {
     modal.classList.add("flex");
 }
 
-document.getElementById("btnShiftKonfirmasi").onclick = async () => {
-    const val1 = document.getElementById("shiftModalAwal").value; 
-    const val2 = document.getElementById("shiftUangLaci").value;
-    const val3 = document.getElementById("shiftNamaKasir").value;
+document.addEventListener("DOMContentLoaded", function() {
+    const btnKonfirmasi = document.getElementById("btnShiftKonfirmasi");
+    if (btnKonfirmasi) {
+        btnKonfirmasi.onclick = async () => {
+            const val1 = document.getElementById("shiftModalAwal").value; 
+            const val2 = document.getElementById("shiftUangLaci").value;
+            const val3 = document.getElementById("shiftNamaKasir").value;
 
-    // VALIDASI SEDERHANA
-    if (modeShift === 'open' && !val1) { alert("Masukkan Modal Awal!"); return; }
-    if (modeShift === 'close' && (!val2 || !val3)) { alert("Lengkapi Uang Laci dan Nama Kasir!"); return; }
+            // VALIDASI
+            if (modeShift === 'open' && !val1) { alert("Masukkan Modal Awal!"); return; }
+            if (modeShift === 'close' && (!val2 || !val3)) { alert("Lengkapi Uang Laci dan Nama Kasir!"); return; }
 
-    const loader = document.getElementById("fullLoader");
-    document.getElementById("modalShift").classList.add("hidden");
-    loader.classList.remove("hidden");
+            const loader = document.getElementById("fullLoader");
+            document.getElementById("modalShift").classList.add("hidden");
+            loader.classList.remove("hidden");
     
     try {
         if (modeShift === 'open') {
