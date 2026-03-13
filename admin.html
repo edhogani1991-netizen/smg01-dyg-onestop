@@ -564,13 +564,18 @@ document.addEventListener("DOMContentLoaded", function() {
             try {
                 if (modeShift === 'open') {
                     const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${val1 || 0}`);
-                    const responseText = await res.text();
-                    if (responseText.includes("SHIFT-")) {
-                        alert("Shift Berhasil Dibuka!");
-                        location.reload();
-                    } else {
-                        throw new Error("Gagal membuka shift: " + responseText);
-                    }
+const responseText = (await res.text()).trim();
+
+if (responseText.startsWith("SHIFT-")) {
+    alert("Shift Berhasil Dibuka!");
+    location.reload();
+
+} else if (responseText === "SHIFT_ALREADY_OPEN") {
+    alert("Shift sudah terbuka!");
+
+} else {
+    throw new Error("Gagal membuka shift: " + responseText);
+}
                 } else {
                     // Tutup Shift
                     const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
