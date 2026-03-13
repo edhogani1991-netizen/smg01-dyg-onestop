@@ -544,6 +544,7 @@ function manageShift(type) {
     modal.classList.add("flex");
 }
 
+// PERBAIKAN: Pindahkan event listener ke luar dan perbaiki struktur
 document.addEventListener("DOMContentLoaded", function() {
     const btnKonfirmasi = document.getElementById("btnShiftKonfirmasi");
     if (btnKonfirmasi) {
@@ -560,50 +561,59 @@ document.addEventListener("DOMContentLoaded", function() {
             document.getElementById("modalShift").classList.add("hidden");
             loader.classList.remove("hidden");
     
-    try {
-        if (modeShift === 'open') {
-            const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${val1 || 0}`);
-            if ((await res.text()).includes("SHIFT-")) {
-                alert("Shift Berhasil Dibuka!");
-                location.reload();
-            } else throw new Error("Gagal membuka shift");
-        } else {
-            // Tutup Shift
-            const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
-            const r = await res.json();
-            
-            const uangLaci = parseFloat(val2 || 0);
-            const totalBersih = parseFloat(r.pemasukanBersih || 0);
-            const totalPengeluaran = parseFloat(r.totalPengeluaran || 0);
-            const selisih = uangLaci - totalBersih;
-            const statusUang = selisih === 0 ? "PAS" : (selisih > 0 ? "LEBIH" : "KURANG");
+            try {
+                if (modeShift === 'open') {
+                    const res = await fetch(`${API_URL}?token=${TOKEN}&action=openShift&modal=${val1 || 0}`);
+                    const responseText = await res.text();
+                    if (responseText.includes("SHIFT-")) {
+                        alert("Shift Berhasil Dibuka!");
+                        location.reload();
+                    } else {
+                        throw new Error("Gagal membuka shift: " + responseText);
+                    }
+                } else {
+                    // Tutup Shift
+                    const res = await fetch(`${API_URL}?token=${TOKEN}&action=getShiftReport`);
+                    const r = await res.json();
+                    
+                    const uangLaci = parseFloat(val2 || 0);
+                    const totalBersih = parseFloat(r.pemasukanBersih || 0);
+                    const totalPengeluaran = parseFloat(r.totalPengeluaran || 0);
+                    const selisih = uangLaci - totalBersih;
+                    const statusUang = selisih === 0 ? "PAS" : (selisih > 0 ? "LEBIH" : "KURANG");
 
-            let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
-            esc += `${r.shiftName || 'SHIFT'}-${new Date().toLocaleDateString('id-ID')}\n`;
-            esc += "--------------------------------\n\x1B\x61\x00";
-            esc += `Modal Awal      : Rp ${parseFloat(r.modalAwal).toLocaleString('id-ID')}\n`;
-            esc += `Total QRIS      : Rp ${(r.qris || 0).toLocaleString('id-ID')}\n`;
-            esc += `Total Cash      : Rp ${(r.cash || 0).toLocaleString('id-ID')}\n`;
-            esc += `Total Card      : Rp ${(r.card || 0).toLocaleString('id-ID')}\n`;
-            esc += `Pengeluaran     : Rp ${totalPengeluaran.toLocaleString('id-ID')}\n`;
-            esc += "--------------------------------\n";
-            esc += `TOTAL BERSIH    : Rp ${totalBersih.toLocaleString('id-ID')}\n`;
-            esc += `UANG DI LACI    : Rp ${uangLaci.toLocaleString('id-ID')}\n`;
-            esc += `SELISIH         : Rp ${selisih.toLocaleString('id-ID')} (${statusUang})\n`;
-            esc += "--------------------------------\n";
-            esc += `Kasir : ${val3}\n\n\n\n\n`;
+                    let esc = "\x1B\x40\x1B\x61\x01\x1B\x21\x10LAPORAN TUTUP SHIFT\x1B\x21\x00\n";
+                    esc += `${r.shiftName || 'SHIFT'}-${new Date().toLocaleDateString('id-ID')}\n`;
+                    esc += "--------------------------------\n\x1B\x61\x00";
+                    esc += `Modal Awal      : Rp ${parseFloat(r.modalAwal).toLocaleString('id-ID')}\n`;
+                    esc += `Total QRIS      : Rp ${(r.qris || 0).toLocaleString('id-ID')}\n`;
+                    esc += `Total Cash      : Rp ${(r.cash || 0).toLocaleString('id-ID')}\n`;
+                    esc += `Total Card      : Rp ${(r.card || 0).toLocaleString('id-ID')}\n`;
+                    esc += `Pengeluaran     : Rp ${totalPengeluaran.toLocaleString('id-ID')}\n`;
+                    esc += "--------------------------------\n";
+                    esc += `TOTAL BERSIH    : Rp ${totalBersih.toLocaleString('id-ID')}\n`;
+                    esc += `UANG DI LACI    : Rp ${uangLaci.toLocaleString('id-ID')}\n`;
+                    esc += `SELISIH         : Rp ${selisih.toLocaleString('id-ID')} (${statusUang})\n`;
+                    esc += "--------------------------------\n";
+                    esc += `Kasir : ${val3}\n\n\n\n\n`;
 
-            const closeRes = await fetch(`${API_URL}?token=${TOKEN}&action=closeShift&uangLaci=${val2}&namaKasir=${encodeURIComponent(val3)}&selisih=${selisih}&keterangan=${statusUang}`);
-            if ((await closeRes.text()) === "CLOSED") {
-                if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
-                alert("Shift Ditutup!");
-                location.reload();
-            } else throw new Error("Gagal menyimpan ke server");
-        }
-    } catch (e) { alert("Error: " + e.message); }
-    finally { loader.classList.add("hidden"); }
-};
+                    const closeRes = await fetch(`${API_URL}?token=${TOKEN}&action=closeShift&uangLaci=${val2}&namaKasir=${encodeURIComponent(val3)}&selisih=${selisih}&keterangan=${statusUang}`);
+                    if ((await closeRes.text()) === "CLOSED") {
+                        if (window.AppInventor) window.AppInventor.setWebViewString("PRINT|" + esc);
+                        alert("Shift Ditutup!");
+                        location.reload();
+                    } else throw new Error("Gagal menyimpan ke server");
+                }
+            } catch (e) { 
+                alert("Error: " + e.message); 
+            } finally { 
+                loader.classList.add("hidden"); 
+            }
+        };
+    }
+});
 
+// PERBAIKAN: Pisahkan window.onload dari DOMContentLoaded
 window.onload = () => { 
     loadMenu(); 
     checkShiftStatus(); 
