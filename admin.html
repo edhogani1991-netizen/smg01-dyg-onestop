@@ -591,9 +591,17 @@ document.addEventListener("DOMContentLoaded", function() {
                     const totalDiskon = parseFloat(r.totalDiskon || 0);
                     const totalBersih = parseFloat(r.pemasukanBersih || 0);
                     
-                    const cashSeharusnya = modalAwal + totalPendapatan - totalPengeluaran - totalDiskon;
-                    const selisih = uangLaci - cashSeharusnya;
-                    const statusUang = Math.abs(selisih) < 1 ? "PAS" : (selisih > 0 ? "LEBIH" : "KURANG");
+                    // Pastikan variabel didefinisikan dengan benar di admin.html
+const cashSeharusnya = modalAwal + totalPendapatan - totalPengeluaran - totalDiskon;
+const selisih = uangLaci - cashSeharusnya;
+
+// Logika yang tepat:
+let statusUang = "PAS";
+if (selisih > 0) {
+    statusUang = "LEBIH";
+} else if (selisih < 0) {
+    statusUang = "KURANG";
+}
 
 
 // FORMAT STRUK
