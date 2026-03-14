@@ -102,7 +102,7 @@
 </main>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxWU7wXQc04ntc7EeJBdkmeXT19w8RMwqLTcQ3iPoEUb5-hcCLaab0zK8uUrNCDGdo_Bg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzCHVKg0qaQZ6m_--gWdjJNO8BfGIh_j7QfoZGjrJNiFRDCm6j82p_M50fLezZuY6FA4Q/exec";
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2132421401&single=true&output=csv";
 const MEMBER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSFTa4S3JgvUf20F_uinNgUF1ETfT4H2ZvFV-zqFVJ67Q4ANb544rqWZL_ychD1PCHI7E9hsmw7ihS6/pub?gid=1136451280&single=true&output=csv";
 const VOUCHER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQZGCGtu4xfKCj0zCGB2BldzF2fLjFCIOfVSXBAMeTM-3KGHfC9mZ_bhfaTnikwxd5427w4ULtotTJH/pub?gid=2009777502&single=true&output=csv";
@@ -592,11 +592,9 @@ document.addEventListener("DOMContentLoaded", function() {
                     const totalBersih = parseFloat(r.pemasukanBersih || 0);
                     
 // Temukan bagian ini di admin.html dan ubah menjadi:
-const cashSeharusnya = modalAwal + totalPendapatan - totalPengeluaran - totalDiskon;
+const cashSeharusnya = modalAwal + r.pemasukanKotor - totalPengeluaran - totalDiskon;;
 const selisih = uangLaci - cashSeharusnya;
-
-// Gunakan pembulatan agar selisih yang sangat kecil (karena desimal) dianggap 0
-const selisihBulat = Math.round(selisih); 
+const selisihBulat = Math.round(selisih);
 
 let statusUang = "PAS";
 if (selisihBulat > 0) {
